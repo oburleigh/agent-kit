@@ -1,6 +1,7 @@
 ---
 name: git-commit
-description: "Create high-quality git commits: review/stage intended changes, split into logical commits, and write clear commit messages following Conventional Commits (conventionalcommits.org/en/v1.0.0). Use when the user asks to commit, craft a commit message, stage changes, or split work into multiple commits."
+description: "Create high-quality git commits: review and stage intended changes, split into logical commits, and write clear commit messages following Conventional Commits v1.0.0. Use when the user asks to commit, save their work, craft a commit message, stage changes, or split work into multiple commits. Also use when the user says they're done with a task or wants to checkpoint progress, even if they don't explicitly say 'commit'."
+compatibility: Requires git
 ---
 
 # Git commit

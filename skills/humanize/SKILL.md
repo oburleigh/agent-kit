@@ -1,6 +1,6 @@
 ---
 name: humanize
-description: Apply natural, human writing patterns to professional artifacts like technical docs, analysis, research, PR descriptions, and commit messages. Invoke this skill whenever producing written artifacts - documentation, guides, analyses, reports, summaries, PR summaries, commit messages, or any formal prose output. Other documentation and writing skills should call this skill to ensure output doesn't read like AI-generated text. Use whenever Claude needs to write or revise any substantial text artifact, even if not explicitly asked to "humanize" it.
+description: Apply natural, human writing patterns to professional artifacts like technical docs, analysis, research, PR descriptions, and commit messages. Use when producing or revising written artifacts - documentation, guides, analyses, reports, summaries, PR descriptions, commit messages, or any formal prose output. Other documentation and writing skills should call this skill to ensure output reads naturally. Use whenever the agent writes or revises any substantial text artifact, even if the user doesn't explicitly mention "humanize," "rewrite," or "tone."
 ---
 
 # Humanize

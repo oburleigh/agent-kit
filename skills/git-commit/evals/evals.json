@@ -1,0 +1,43 @@
+{
+  "skill_name": "git-commit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I just finished adding input validation to the signup form. The changes are in src/components/SignupForm.tsx and src/utils/validate.ts. Can you commit this for me?",
+      "expected_output": "A single Conventional Commits message with type feat or fix, scoped appropriately, that stages only the two named files explicitly (no git add . or git add -A), reviews the diff for secrets or debug code before committing, and uses imperative mood in the subject line.",
+      "assertions": [
+        "The agent checks the current branch before committing",
+        "Files are staged by explicit name, not with git add . or git add -A",
+        "The agent runs git diff --cached to review staged changes before committing",
+        "The commit message follows Conventional Commits format: type(scope): description",
+        "The subject line uses imperative mood and is under 70 characters",
+        "The commit message is written via HEREDOC, not an interactive editor",
+        "The agent runs git log after committing to verify the result"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I've been working on a few things today. I reformatted the config files with prettier, added a new /health endpoint to the API, and updated the README with the new setup instructions. Can you commit all of this?",
+      "expected_output": "Three separate commits splitting unrelated changes: one for formatting (chore or style), one for the health endpoint (feat), and one for the README (docs). Each commit stages only the relevant files and has its own Conventional Commits message.",
+      "assertions": [
+        "The agent identifies that changes span unrelated concerns and proposes splitting into multiple commits",
+        "Formatting changes are committed separately from feature work",
+        "Documentation changes are committed separately from code changes",
+        "Each commit uses the appropriate Conventional Commits type (style/chore, feat, docs)",
+        "Each commit stages only the files relevant to that logical change"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Save my work, I'm done for the day. I think I left a console.log in there somewhere and there might be a .env.local that got modified too.",
+      "expected_output": "The agent inspects the working tree, flags the console.log as debug code that should be removed or excluded, refuses to stage .env.local (potential secrets), and only commits clean changes after the issues are resolved.",
+      "assertions": [
+        "The agent runs git status and git diff to inspect the full working tree before staging",
+        "The agent identifies and flags the console.log as debug code that should not be committed",
+        "The agent refuses to stage or warns about .env.local due to potential secrets",
+        "The agent does not use --no-verify to bypass any hooks",
+        "The commit message does not include a Co-Authored-By footer unless the user requested one"
+      ]
+    }
+  ]
+}
