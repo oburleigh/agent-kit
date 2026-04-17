@@ -8,7 +8,7 @@ This is a living collection. Each skill is tested in real workflows before it la
 
 ## Quick nav
 
-**[Skills](#skills)** | **[Commands](#commands)** | **[Installation](#installation)** | **[Writing your own](#writing-your-own)** | **[Contributing](#contributing)**
+**[Skills](#skills)** | **[Commands](#commands)** | **[Installation](#installation)** | **[Learn more](#learn-more)** | **[Contributing](#contributing)**
 
 ---
 
@@ -63,46 +63,9 @@ The principles and reference files are agent-agnostic. Only the loading mechanis
 
 ---
 
-## New to agent skills?
+## Learn more
 
-Most AI coding tools let you give the agent extra instructions beyond the default system prompt. Claude Code calls these "skills." Cursor calls them "rules." Copilot has "custom instructions." Different names, same idea: a file the agent reads at startup that changes how it works.
-
-A bare prompt like "write good commit messages" gives the agent almost nothing to work with. A skill like `git-commit` gives it the Conventional Commits spec, branch protection checks, a staging workflow, message templates, and the reasoning behind each step. The difference in output quality is significant.
-
-Skills in this repo follow a common structure:
-
-```
-skill-name/
-  SKILL.md              # What the agent loads (required)
-  README.md             # Human-readable docs
-  references/           # Material the skill reads at runtime
-  evals/                # Tests to verify the skill works
-```
-
-`SKILL.md` is the only required file. Everything else supports it.
-
----
-
-## Writing your own
-
-A skill is a markdown file with YAML frontmatter. The frontmatter tells the agent when to activate:
-
-```yaml
----
-name: my-skill
-description: One line explaining when to trigger this. Be specific or the agent will fire it too often or ignore it entirely.
----
-```
-
-The body contains the actual instructions. A few things that separate good skills from bad ones:
-
-**Explain the why, not just the what.** An agent that understands the reasoning behind a rule handles edge cases on its own. One that's following a rigid checklist breaks the moment something unexpected happens.
-
-**Include reference material.** If the skill needs a vocabulary list, a template, or a set of examples, put them in a `references/` directory. The agent can read them at runtime instead of you cramming everything into one file.
-
-**Define what success looks like.** If the agent can self-check its output against a clear standard, it catches its own mistakes before you have to.
-
-**Write the description carefully.** The one-line `description` field in the frontmatter is what determines whether the agent activates the skill. Vague descriptions like "helps with code" mean it triggers on everything or nothing. "Creates git commits following Conventional Commits v1.0.0 when the user asks to commit or stage changes" tells the agent exactly when to fire.
+New to skills? [agentskills.io](https://agentskills.io) covers the format, frontmatter, and authoring patterns in detail.
 
 ---
 
