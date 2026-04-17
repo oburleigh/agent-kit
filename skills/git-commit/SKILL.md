@@ -49,7 +49,7 @@ Before starting, check for project-specific commit conventions:
    - Prerequisites that must pass before committing (test gates, reviews)
    - Branch protection rules (e.g. never commit to `main`)
 3. If it does not exist, fall back to the Conventional Commits spec above with no project-specific constraints.
-4. Also check `CLAUDE.md` for commit-related rules.
+4. Also check AI assistant config files for commit-related rules (`CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `.cursor/rules`, or equivalent for your platform).
 
 ## Workflow
 
