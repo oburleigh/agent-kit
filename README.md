@@ -25,13 +25,19 @@ Skills are packaged instructions that teach an agent how to handle a specific ta
 
 Slash commands and shorter task-specific instructions. This section is growing.
 
+| Command | Description |
+|---------|-------------|
+| [nobs](commands/nobs.md) | Serious-mode prompt wrapper. Forces deep, critical thinking and cuts sycophancy, fabrication, and filler. Usage: `/nobs <your prompt>`. |
+
 ---
 
 ## Installation
 
 ### Claude Code
 
-**Option 1: Copy the skill directory**
+**Option 1: Copy what you need**
+
+Skills (directory):
 
 ```bash
 # Available in all your projects
@@ -41,7 +47,17 @@ cp -r skills/humanize ~/.claude/skills/humanize
 cp -r skills/humanize .claude/skills/humanize
 ```
 
-The agent picks it up on the next conversation. No config changes needed.
+Commands (single file):
+
+```bash
+# Available in all your projects
+cp commands/nobs.md ~/.claude/commands/nobs.md
+
+# Or scoped to a single repo
+cp commands/nobs.md .claude/commands/nobs.md
+```
+
+The agent picks skills up on the next conversation. Commands are invocable immediately as `/nobs <prompt>`. No config changes needed.
 
 **Option 2: Clone the whole repo**
 
