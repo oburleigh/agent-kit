@@ -24,6 +24,12 @@ The skill automatically loads `docs/commit-conventions.md` from the repo root wh
 
 When no project conventions exist, it falls back to standard Conventional Commits.
 
+## What it does NOT do
+
+- Push to remote — the user must explicitly ask
+- Run the project's full review chain (e.g. Codex reviews) — those are prerequisites, not part of this skill
+- Create branches or worktrees — use other tools for that
+
 ## Trigger phrases
 
 - "commit this work"
@@ -33,5 +39,5 @@ When no project conventions exist, it falls back to standard Conventional Commit
 
 ## References
 
-- `references/commit-message-template.md` — message format, types, examples
+- `references/examples.md` — house-style commit message examples
 - [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
