@@ -11,7 +11,7 @@ A skill for creating review-ready git commits following Conventional Commits v1.
 5. Stages files explicitly (no `git add .`, no interactive `git add -p`)
 6. Reviews staged changes for secrets, debug code, unrelated churn
 7. Writes Conventional Commits messages via HEREDOC (no interactive editors)
-8. Respects commitlint hooks — fixes messages on rejection, never bypasses
+8. Respects commitlint hooks and fixes rejected messages instead of bypassing
 
 ## Project-aware
 
@@ -26,9 +26,9 @@ When no project conventions exist, it falls back to standard Conventional Commit
 
 ## What it does NOT do
 
-- Push to remote — the user must explicitly ask
-- Run the project's full review chain (e.g. Codex reviews) — those are prerequisites, not part of this skill
-- Create branches or worktrees — use other tools for that
+- Push to remote (the user must explicitly ask)
+- Run the project's full review chain (e.g. Codex reviews). Those are prerequisites, not part of this skill.
+- Create branches or worktrees (use other tools for that)
 
 ## Trigger phrases
 
@@ -39,5 +39,5 @@ When no project conventions exist, it falls back to standard Conventional Commit
 
 ## References
 
-- `references/examples.md` — house-style commit message examples
+- `references/examples.md`: house-style commit message examples
 - [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)

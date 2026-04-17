@@ -14,7 +14,7 @@ Commits that are easy to review and safe to ship: only intended changes, logical
 
 Before committing, check for project-specific rules in this order:
 
-1. `docs/commit-conventions.md` — authoritative if present (may override allowed types, required scopes, subject length, test gates, branch protection)
+1. `docs/commit-conventions.md`: authoritative if present (may override allowed types, required scopes, subject length, test gates, or branch protection)
 2. AI assistant config files for commit rules: `CLAUDE.md`, `GEMINI.md`, `AGENTS.md`, `.cursor/rules`
 3. Otherwise, standard Conventional Commits v1.0.0
 
@@ -22,7 +22,7 @@ Before committing, check for project-specific rules in this order:
 
 ### 0. Pre-flight
 
-- `git branch --show-current` — if on `main`/`master` or another protected branch, STOP and tell the user.
+- Run `git branch --show-current`. If on `main`/`master` or another protected branch, STOP and tell the user.
 - If project defines prerequisite gates (tests, lint, typecheck), they must have passed in this session. Run them if not; all must exit 0.
 
 ### 1. Inspect
@@ -37,8 +37,8 @@ Split into multiple commits when changes are unrelated: feature vs refactor, bac
 
 Stage files explicitly by name: `git add src/foo.ts src/bar.ts`.
 
-- **Never `git add .` or `git add -A`** — pulls in secrets, debug files, unrelated changes.
-- **Never `git add -p`** — requires interactive input. If one file spans multiple commits, stage it with the majority of its changes.
+- **Never `git add .` or `git add -A`**: pulls in secrets, debug files, and unrelated changes.
+- **Never `git add -p`**: requires interactive input. If one file spans multiple commits, stage it with the majority of its changes.
 
 ### 4. Review staged changes
 
@@ -58,7 +58,7 @@ Conventional Commits v1.0.0 format:
 ```
 <type>[(scope)][!]: <imperative summary>
 
-[body: what changed and why — not how. Wrap at 100 chars.]
+[body: what changed and why, not how. Wrap at 100 chars.]
 
 [footer(s): Fixes #N | Refs #N | BREAKING CHANGE: ...]
 ```
@@ -88,7 +88,7 @@ EOF
 If a hook rejects the commit:
 
 - Read the error, fix the message
-- Create a NEW commit — **never `--amend` unless the user asks** (amending can destroy the previous commit's work)
+- Create a NEW commit. **Never `--amend` unless the user asks** (amending can destroy the previous commit's work).
 - **Never `--no-verify`**
 
 ### 7. Repeat

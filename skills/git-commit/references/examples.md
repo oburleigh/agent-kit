@@ -1,6 +1,6 @@
 # Commit message examples
 
-House-style examples for Conventional Commits v1.0.0. Match the voice, body length, and specificity shown below — concise bodies that explain *why*, not essays.
+House-style examples for Conventional Commits v1.0.0. Bodies should be concise and explain *why*, not turn into essays.
 
 ## Format
 
@@ -73,5 +73,5 @@ unavailable in CI.
 ```
 chore(deps): Bump zod from 3.22.4 to 3.23.8
 
-Patch release — no schema API changes affecting this codebase.
+Patch release. No schema API changes affecting this codebase.
 ```
