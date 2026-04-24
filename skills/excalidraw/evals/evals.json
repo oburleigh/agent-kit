@@ -1,0 +1,41 @@
+{
+  "skill_name": "excalidraw",
+  "evals": [
+    {
+      "id": "arch-social-platform",
+      "prompt": "Create an Excalidraw architecture diagram for a social-media platform backend: web clients and mobile clients connect through a load balancer to an API gateway. Behind the gateway are a Feed service, a Users service, a Media service, and a Messaging service. Feed reads from a Feed DB and a Redis cache. Users reads from a Users DB. Media stores to S3-compatible object storage. Messaging uses a Postgres DB and a Kafka topic for fan-out. Save to /tmp/eval-arch.excalidraw.",
+      "rubric": {
+        "correctness": "All 12 named components present; all stated connections exist with correct direction",
+        "layout":      "No overlapping elements; no arrow crossings; components visually grouped by tier or function",
+        "labels":      "Every arrow has a label OR the relationship is visually unambiguous; labels do not collide",
+        "shapes":      "Services/datastores/queues/external kinds visibly distinct (colour OR shape)",
+        "typography":  "Helvetica; labels inside shapes; font size >= 14px; all labels render",
+        "colour":      "<=4 accent colours for architecture, <=3 for other types; stroke darker than fill; semantic colour per kind"
+      }
+    },
+    {
+      "id": "sequence-password-reset",
+      "prompt": "Create a Mermaid sequence diagram for a password-reset flow: User, Web app, API, Auth service, Email provider. User enters email in the Web app, Web app POSTs to API, API asks Auth service to generate a reset token, Auth service stores the token and asks Email provider to send a link, Email provider returns success, User clicks the link, Web app shows reset form, user submits new password, API asks Auth service to verify token and update password, Auth returns OK. Save the Mermaid source to /tmp/eval-sequence.mmd and tell the user the three-step import procedure.",
+      "rubric": {
+        "correctness": "All 5 actors named; all messages in correct order; both request and response arcs present for remote calls",
+        "layout":      "Actors at top spaced horizontally; vertical lifelines; messages time-ordered",
+        "labels":      "Every message labelled; requests vs responses distinguished",
+        "shapes":      "Actors consistent (boxes or stick figures)",
+        "typography":  "Readable font size; consistent family",
+        "colour":      "Neutral or minimal colour; no overload"
+      }
+    },
+    {
+      "id": "flow-pr-review",
+      "prompt": "Create a Mermaid flowchart for a PR review process: developer opens PR, CI runs tests, if tests fail developer fixes and re-pushes, if tests pass a reviewer is auto-assigned, reviewer approves or requests changes, if changes requested developer addresses and re-pushes (back to CI), if approved the PR is merged to main, triggering a deploy pipeline. Save to /tmp/eval-flow.mmd.",
+      "rubric": {
+        "correctness": "All named steps present; decision points correctly branching; feedback loops back to CI",
+        "layout":      "Top-to-bottom flow; decision diamonds branch clearly; loops readable",
+        "labels":      "Decision branches labelled yes/no or accept/reject; processes clearly named",
+        "shapes":      "Rectangles for processes, diamonds for decisions, terminal nodes correctly shaped",
+        "typography":  "Consistent sizing; readable",
+        "colour":      "Minimal; optional semantic colour for failure/success path"
+      }
+    }
+  ]
+}
