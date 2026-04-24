@@ -21,9 +21,12 @@
 
 | Key | What it sets | Default |
 |---|---|---|
-| `roundness.type` | Excalidraw `roundness` object. `null` for sharp corners, `{"type": 3}` for default rounded | `{"type": 3}` |
-| `strokeWidth` | Stroke width on every node rectangle | `2` |
+| `roundness` | Excalidraw `roundness` object. `null` for sharp corners, `{"type": 3}` for default rounded | `null` |
+| `strokeWidth` | Stroke width on node rectangles | `2` |
 | `frameStrokeWidth` | Stroke width on dashed section frames | `1` |
+| `arrowStrokeWidth` | Stroke width on arrows | `2` |
+| `roughness` | Hand-drawn jitter on every element. `0` = precise lines, `1` = sketch, `2` = whiteboard | `0` |
+| `fillStyle` | How shape fills render. `"solid"`, `"hachure"`, or `"cross-hatch"` | `"solid"` |
 
 ### `colors`
 
@@ -99,13 +102,14 @@ Inverted canvas, lighter text, brighter accents.
 
 ### Hand-drawn casual
 
-Virgil font, sharp corners, softer palette. Pair this theme with `roughness: 1` overrides if a sketch aesthetic is wanted (the script itself emits roughness 0; the user must change it after import for that effect).
+Excalifont, sketch roughness, hachure fills, thin strokes. Produces whiteboard output from the theme alone — no post-process pass needed.
 
 ```json
 {
-  "typography": { "fontFamily": 1, "titleSize": 38, "subtitleSize": 18,
+  "typography": { "fontFamily": 5, "titleSize": 38, "subtitleSize": 18,
                   "sectionHeaderSize": 18, "bodySize": 18, "arrowLabelSize": 16 },
-  "shapes": { "roundness": null, "strokeWidth": 2, "frameStrokeWidth": 1 },
+  "shapes": { "roundness": null, "strokeWidth": 1, "frameStrokeWidth": 1,
+              "arrowStrokeWidth": 1, "roughness": 1, "fillStyle": "hachure" },
   "colors": {
     "service":   { "stroke": "#1971c2", "fill": "#a5d8ff" },
     "datastore": { "stroke": "#6741d9", "fill": "#d0bfff" },

@@ -2,39 +2,72 @@
   "skill_name": "excalidraw",
   "evals": [
     {
-      "id": "arch-social-platform",
+      "id": 1,
       "prompt": "Create an Excalidraw architecture diagram for a social-media platform backend: web clients and mobile clients connect through a load balancer to an API gateway. Behind the gateway are a Feed service, a Users service, a Media service, and a Messaging service. Feed reads from a Feed DB and a Redis cache. Users reads from a Users DB. Media stores to S3-compatible object storage. Messaging uses a Postgres DB and a Kafka topic for fan-out. Save to /tmp/eval-arch.excalidraw.",
+      "expected_output": "A valid .excalidraw file with all named components arranged in a layered architecture with orthogonal arrow routing and no overlaps.",
+      "files": [],
+      "expectations": [
+        "Output file /tmp/eval-arch.excalidraw is valid Excalidraw JSON with type 'excalidraw' and version 2",
+        "Diagram contains all named components as rectangle elements with bound text labels",
+        "Every connection is represented by an arrow with startBinding and endBinding set to real element IDs",
+        "No two shape elements overlap",
+        "At most 4 distinct fill colours",
+        "All text elements use fontFamily 2 or 3",
+        "All elements have roughness 0",
+        "All text fits within its container (no truncation)"
+      ],
       "rubric": {
-        "correctness": "All 12 named components present; all stated connections exist with correct direction",
-        "layout":      "No overlapping elements; no arrow crossings; components visually grouped by tier or function",
-        "labels":      "Every arrow has a label OR the relationship is visually unambiguous; labels do not collide",
-        "shapes":      "Services/datastores/queues/external kinds visibly distinct (colour OR shape)",
-        "typography":  "Helvetica; labels inside shapes; font size >= 14px; all labels render",
-        "colour":      "<=4 accent colours for architecture, <=3 for other types; stroke darker than fill; semantic colour per kind"
+        "correctness": "All named components present; all stated connections exist with correct direction",
+        "layout": "No overlapping elements; no arrow crossings; components visually grouped by tier or function",
+        "labels": "Every label fully readable; no truncation; no collisions",
+        "shapes": "Services/datastores/queues/external kinds visibly distinct by colour",
+        "typography": "Helvetica; labels inside shapes; font size >= 14px",
+        "colour": "<=4 accent colours; stroke darker than fill; semantic colour per kind"
       }
     },
     {
-      "id": "sequence-password-reset",
-      "prompt": "Create a Mermaid sequence diagram for a password-reset flow: User, Web app, API, Auth service, Email provider. User enters email in the Web app, Web app POSTs to API, API asks Auth service to generate a reset token, Auth service stores the token and asks Email provider to send a link, Email provider returns success, User clicks the link, Web app shows reset form, user submits new password, API asks Auth service to verify token and update password, Auth returns OK. Save the Mermaid source to /tmp/eval-sequence.mmd and tell the user the three-step import procedure.",
+      "id": 2,
+      "prompt": "Create an Excalidraw diagram for a password-reset flow with these actors: User, Web App, API, Auth Service, Email Provider. User enters email in Web App, Web App POSTs to API, API asks Auth Service to generate a reset token, Auth Service stores the token and asks Email Provider to send a link, Email Provider returns success, User clicks the link, Web App shows reset form, user submits new password, API asks Auth Service to verify token and update password, Auth returns OK. Save to /tmp/eval-sequence.excalidraw.",
+      "expected_output": "A valid .excalidraw file showing the password-reset flow with all 5 actors and the complete message sequence, using orthogonal arrows.",
+      "files": [],
+      "expectations": [
+        "Output file /tmp/eval-sequence.excalidraw is valid Excalidraw JSON",
+        "Diagram contains nodes for all 5 actors: User, Web App, API, Auth Service, Email Provider",
+        "All message edges are present covering the full request-response flow",
+        "Every arrow has startBinding and endBinding to real element IDs",
+        "All text fits within its container",
+        "All elements have roughness 0"
+      ],
       "rubric": {
-        "correctness": "All 5 actors named; all messages in correct order; both request and response arcs present for remote calls",
-        "layout":      "Actors at top spaced horizontally; vertical lifelines; messages time-ordered",
-        "labels":      "Every message labelled; requests vs responses distinguished",
-        "shapes":      "Actors consistent (boxes or stick figures)",
-        "typography":  "Readable font size; consistent family",
-        "colour":      "Neutral or minimal colour; no overload"
+        "correctness": "All 5 actors present; all messages in correct order; request and response arcs present",
+        "layout": "Clean orthogonal routing; no arrow crossings; actors clearly separated",
+        "labels": "Every message labelled and fully readable; requests vs responses distinguishable",
+        "shapes": "Actor types visually consistent",
+        "typography": "Readable font size; consistent family",
+        "colour": "Semantic colour distinguishes actor types"
       }
     },
     {
-      "id": "flow-pr-review",
-      "prompt": "Create a Mermaid flowchart for a PR review process: developer opens PR, CI runs tests, if tests fail developer fixes and re-pushes, if tests pass a reviewer is auto-assigned, reviewer approves or requests changes, if changes requested developer addresses and re-pushes (back to CI), if approved the PR is merged to main, triggering a deploy pipeline. Save to /tmp/eval-flow.mmd.",
+      "id": 3,
+      "prompt": "Create an Excalidraw flowchart for a PR review process: developer opens PR, CI runs tests, if tests fail developer fixes and re-pushes, if tests pass a reviewer is auto-assigned, reviewer approves or requests changes, if changes requested developer addresses and re-pushes (back to CI), if approved the PR is merged to main, triggering a deploy pipeline. Save to /tmp/eval-flow.excalidraw.",
+      "expected_output": "A valid .excalidraw file showing the PR review flowchart with process steps, decision points, and feedback loops, using orthogonal arrows.",
+      "files": [],
+      "expectations": [
+        "Output file /tmp/eval-flow.excalidraw is valid Excalidraw JSON",
+        "Diagram contains decision nodes (kind: decision) for test pass/fail and review approve/reject",
+        "Diagram contains a feedback loop from changes-requested back to CI",
+        "Diagram ends with merge and deploy steps",
+        "Every arrow has startBinding and endBinding to real element IDs",
+        "All text fits within its container",
+        "All elements have roughness 0"
+      ],
       "rubric": {
         "correctness": "All named steps present; decision points correctly branching; feedback loops back to CI",
-        "layout":      "Top-to-bottom flow; decision diamonds branch clearly; loops readable",
-        "labels":      "Decision branches labelled yes/no or accept/reject; processes clearly named",
-        "shapes":      "Rectangles for processes, diamonds for decisions, terminal nodes correctly shaped",
-        "typography":  "Consistent sizing; readable",
-        "colour":      "Minimal; optional semantic colour for failure/success path"
+        "layout": "Top-to-bottom flow; clean orthogonal routing; decision branches clearly separated; loops readable",
+        "labels": "Decision branches labelled; all text fully readable; no truncation",
+        "shapes": "Rectangles for processes, diamonds/different colour for decisions",
+        "typography": "Consistent sizing; readable",
+        "colour": "Semantic colour for decision vs process vs terminal"
       }
     }
   ]

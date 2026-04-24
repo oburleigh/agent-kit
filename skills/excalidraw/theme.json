@@ -8,9 +8,12 @@
     "arrowLabelSize": 14
   },
   "shapes": {
-    "roundness": { "type": 3 },
+    "roundness": null,
     "strokeWidth": 2,
-    "frameStrokeWidth": 1
+    "frameStrokeWidth": 1,
+    "arrowStrokeWidth": 2,
+    "roughness": 0,
+    "fillStyle": "solid"
   },
   "colors": {
     "service":   { "stroke": "#3b82f6", "fill": "#dbeafe" },

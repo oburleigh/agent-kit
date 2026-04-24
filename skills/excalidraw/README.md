@@ -1,16 +1,10 @@
 # Excalidraw Diagram Skill
 
-A skill that turns text descriptions into styled architecture diagrams. You describe the system; the skill writes a semantic model, runs graphviz for layout, and emits a valid `.excalidraw` file. For sequence diagrams, flowcharts, class diagrams, state diagrams, ERDs, and DFDs, it writes Mermaid source and converts that instead.
-
-The output looks hand-placed but every coordinate comes from graphviz `dot` with orthogonal routing. No manual positioning, no arrow crossings, no guesswork.
-
-## What it produces
-
-Architecture diagrams from a plain-English description of your system. The skill generates `.excalidraw` files with proper element bindings, consistent colour semantics, zero roughness, and evidence artifacts for technical diagrams. Mermaid-lane diagrams go through the official Excalidraw converter via Playwright.
+Generates `.excalidraw` files from text descriptions. Handles architecture, flowcharts, sequence, class, state, ERD, and DFD diagrams. Layout comes from graphviz `dot` (orthogonal routing, no crossings), styling comes from `theme.json`, and every output is rendered to PNG so the agent can see what the reader will see before delivery.
 
 ## Install
 
-You need `graphviz` (for layout), `uv` (for the Python venv), and Playwright's Chromium binary (for rendering and Mermaid conversion). Total disk footprint is about 205 MB.
+Three dependencies: `graphviz` for layout, `uv` for the Python environment, Playwright's Chromium binary for rendering. Total footprint ~205 MB.
 
 ### macOS
 
@@ -34,59 +28,93 @@ uv sync
 uv run playwright install chromium
 ```
 
-Verify the install:
+Verify:
 
 ```bash
 dot -V                                 # graphviz 2.42+
 uv run python -c "import playwright"   # silent on success
 ```
 
-## Quick start
+## Using the skill
 
-Ask your agent to create an architecture diagram for any system. The skill will read its feedback log, classify the diagram type, build a semantic model, run the layout script, render a PNG for visual inspection, and deliver the `.excalidraw` file.
+Ask the agent to create a diagram. It will:
 
-The semantic model is a JSON file with nodes, edges, sections, and evidence artifacts. You describe what the system does; the agent fills in the model; graphviz computes every coordinate.
+1. Read `references/corrections.md` to pick up prior feedback.
+2. Classify the request — diagram type, and conceptual vs technical depth.
+3. Write a semantic model: `nodes`, `edges`, optional `sections` and `evidence` artifacts.
+4. Run `scripts/layout_architecture.py` to compute coordinates via graphviz and emit the `.excalidraw` file.
+5. Render the file to PNG with `scripts/render.py` and inspect the image.
+6. Revise the model and repeat until the render reads cleanly.
+7. Deliver the `.excalidraw` path and invite a rating.
 
-## Customise the look
+The agent never hand-edits coordinates. If the layout looks wrong, the fix happens in the semantic model, not the JSON.
 
-All visual choices live in `theme.json` at the skill root: colour palette, font family, font sizes, corner radius, canvas background. Edit it to reskin every diagram.
+## Styling
 
-The layout script also accepts `--theme <path>` and the `EXCALIDRAW_THEME` env var for one-off overrides.
+All visual choices route through `theme.json` at the skill root. Edit it to reskin every diagram the skill produces.
 
-To change the service colour from blue to corporate navy, edit `theme.json`:
+### What `theme.json` controls
 
-```json
-"service": { "stroke": "#0b5394", "fill": "#cfe2f3" }
-```
+| Section | Controls |
+|---|---|
+| `typography` | Font family (`1` Virgil, `2` Helvetica, `3` Cascadia, `5` Excalifont). Sizes for title, subtitle, section headers, body, arrow labels. |
+| `shapes.strokeWidth` | Stroke width on node shapes. |
+| `shapes.frameStrokeWidth` | Stroke width on section frames. |
+| `shapes.arrowStrokeWidth` | Stroke width on arrows. |
+| `shapes.roundness` | Corner style. `null` for sharp, `{"type": 3}` for rounded. |
+| `shapes.roughness` | Hand-drawn jitter. `0` precise, `1` sketch, `2` whiteboard. |
+| `shapes.fillStyle` | Shape fill treatment. `"solid"`, `"hachure"`, or `"cross-hatch"`. |
+| `colors` | Per-role palette: `service`, `datastore`, `queue`, `external`, `ui`, `decision`, `ai`, `error`, plus special roles `evidence`, `frame`, `text`. Each role has a `stroke` / `fill` hex pair. |
+| `canvas.backgroundColor` | Excalidraw canvas background. Flip to a dark hex for dark-mode output. |
 
-See `references/theming.md` for every key explained, plus three drop-in palette examples (corporate blue, dark mode, hand-drawn casual).
+Every visual token the output depends on is in this file. Change corporate blue to whiteboard sketch to dark-mode neon by editing `theme.json` alone — no post-process step, no script edit. `references/theming.md` has three drop-in example themes (corporate blue, dark mode, hand-drawn casual) and notes on the constraints a custom palette should respect.
 
-## How it works
+### One-off theme without editing the default
 
-The agent writes a semantic model JSON (nodes, edges, sections). The layout script feeds that to graphviz `dot` with `splines=ortho`, maps the positions into Excalidraw elements with full bindings and theme colours, and writes the `.excalidraw` file. Playwright renders a PNG so the agent can inspect for overlaps, missing labels, or off-canvas nodes. If something looks wrong, the agent revises the model and re-runs (up to two passes).
-
-## Feedback loop
-
-When you rate a diagram and say what would improve it, the agent updates the relevant reference file immediately in the same session. `references/corrections.md` logs every correction so the change history is visible.
-
-## Run evals
+Every invocation of the layout script accepts an override path:
 
 ```bash
-uv run python scripts/run_evals.py --workspace /tmp/excalidraw-ws-N
+uv run python scripts/layout_architecture.py \
+  --input model.json \
+  --output diagram.excalidraw \
+  --theme /path/to/custom-theme.json
 ```
 
-## Validate after edits
+Keep multiple theme files side by side and pass whichever matches the audience.
+
+## Repository layout
+
+```
+README.md                  this file
+SKILL.md                   agent-facing workflow spec
+theme.json                 default visual tokens
+pyproject.toml, uv.lock    Python env
+references/
+  corrections.md           feedback log, read at the start of every run
+  design-principles.md     colour, spacing, typography, arrow semantics
+  diagram-patterns.md      per-type conventions (architecture, sequence, ...)
+  layout-formulas.md       coordinate arithmetic and validation checklist
+  json-reference.md        Excalidraw JSON element fields
+  theming.md               theme.json keys and palette examples
+  rating-log.jsonl         append-only rating history
+scripts/
+  layout_architecture.py   semantic model -> .excalidraw (graphviz dot layout)
+  render.py                .excalidraw -> PNG via Playwright
+  validate_skill.py        structural checks over the skill tree
+  tests/                   unit tests for the layout script
+evals/                     skill-creator eval definitions
+handoffs/                  design / decision notes from skill authors
+```
+
+## Validate and test
 
 ```bash
 uv run python scripts/validate_skill.py --skill .
-```
-
-## Run the tests
-
-```bash
 for f in scripts/tests/*.test.py; do uv run python "$f" || break; done
 ```
 
+Evals are defined in `evals/evals.json` and run via `/skill-creator` in a Claude Code session.
+
 ## Credits
 
-[coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill).
+Based on [coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill).

@@ -50,6 +50,9 @@ _DEFAULT_THEME: dict[str, Any] = {
         "roundness": None,
         "strokeWidth": 2,
         "frameStrokeWidth": 1,
+        "arrowStrokeWidth": 2,
+        "roughness": 0,
+        "fillStyle": "solid",
     },
     "colors": {
         "service":   {"stroke": "#1971c2", "fill": "#a5d8ff"},
@@ -351,6 +354,7 @@ def _base_element(
     stroke_style: str = "solid",
     bound: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
+    shapes_cfg = _shapes_cfg()
     return {
         "id": el_id,
         "type": el_type,
@@ -361,12 +365,12 @@ def _base_element(
         "angle": 0,
         "strokeColor": stroke,
         "backgroundColor": fill,
-        "fillStyle": "solid",
+        "fillStyle": shapes_cfg.get("fillStyle", "solid"),
         "strokeWidth": stroke_width,
         "strokeStyle": stroke_style,
-        "roughness": 0,
+        "roughness": int(shapes_cfg.get("roughness", 0)),
         "opacity": 100,
-        "roundness": None,
+        "roundness": shapes_cfg.get("roundness"),
         "seed": _rand_int(),
         "version": 1,
         "versionNonce": _rand_int(),
@@ -650,6 +654,7 @@ def build_excalidraw(model: dict[str, Any], gv: dict[str, Any]) -> dict[str, Any
     shapes_cfg = _shapes_cfg()
     node_stroke_w = int(shapes_cfg.get("strokeWidth", 2))
     frame_stroke_w = int(shapes_cfg.get("frameStrokeWidth", 1))
+    arrow_stroke_w = int(shapes_cfg.get("arrowStrokeWidth", node_stroke_w))
 
     # --- Title / subtitle block -------------------------------------------
     if title:
@@ -944,6 +949,7 @@ def build_excalidraw(model: dict[str, Any], gv: dict[str, Any]) -> dict[str, Any
             points=simplified,
             index=next_index(),
             stroke_style=stroke_style,
+            stroke_width=arrow_stroke_w,
         )
         elements.append(arrow_el)
 
