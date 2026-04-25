@@ -28,6 +28,7 @@ Slash commands and shorter task-specific instructions. This section is growing.
 | Command | Description |
 |---------|-------------|
 | [nobs](commands/nobs.md) | Serious-mode prompt wrapper. Forces deep, critical thinking and cuts sycophancy, fabrication, and filler. Usage: `/nobs <your prompt>`. |
+| [interview](commands/interview.md) | Stress-tests thinking on a spec, proposal, or idea. Interviews to find gaps, ambiguities, contradictions, and unstated assumptions. Usage: `/interview <name> <topic or paste spec>`. |
 
 ---
 
