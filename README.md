@@ -20,7 +20,6 @@ Skills are packaged instructions that teach an agent how to handle a specific ta
 |-------|-------------|
 | [humanize](skills/humanize/) | Catches and rewrites AI writing patterns in docs, PRs, commit messages, and reports. Maintains a 60+ word blacklist, detects structural tics, and learns from corrections over time. |
 | [git-commit](skills/git-commit/) | Produces clean git commits following Conventional Commits v1.0.0. Checks branch protection, stages files selectively, splits unrelated changes into separate commits, and respects project-specific conventions. |
-| [excalidraw](skills/excalidraw/) | Generates `.excalidraw` diagrams from text descriptions. Handles architecture, flowcharts, sequence, class, state, ERD, and DFD diagrams. Uses graphviz for layout, a themeable palette, and Playwright rendering so the agent verifies output visually before delivery. |
 
 ## Commands
 
