@@ -28,6 +28,9 @@ export function createGenerationPlan(
     ].join("; ");
     throw new Error(`Invalid package name ${project.name}: ${reasons}`);
   }
+  if (profile.license === "mit" && project.author.trim() === "") {
+    throw new Error("The MIT licence requires an author");
+  }
   const context = createProviderContext(profile, project, {});
 
   validateGlobalCompatibility(profile);
@@ -196,6 +199,9 @@ function validateGlobalCompatibility(profile: ScaffoldProfile): void {
   }
   if (profile.http === "nestjs" && profile.tests === "node-test") {
     throw new Error("NestJS requires Vitest or Jest because Node type stripping cannot transform decorators");
+  }
+  if (profile.http === "nestjs" && profile.build !== "tsc") {
+    throw new Error("NestJS requires the tsc build provider to emit decorator metadata");
   }
   if (profile.module === "commonjs" && profile.preset === "cli") {
     throw new Error("The CLI preset requires ESM");

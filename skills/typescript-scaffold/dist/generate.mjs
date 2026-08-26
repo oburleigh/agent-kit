@@ -57528,7 +57528,7 @@ function json(value) {
 }
 
 // providers/build.ts
-function tsconfig(module, nestjs) {
+function tsconfig(module, nestjs, tests) {
   return json({
     compilerOptions: {
       target: "ES2023",
@@ -57540,7 +57540,7 @@ function tsconfig(module, nestjs) {
       declaration: true,
       sourceMap: true,
       skipLibCheck: true,
-      types: ["node"],
+      types: tests === "jest" ? ["node", "jest"] : ["node"],
       ...nestjs ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}
     },
     include: ["src", "test", "*.config.*"]
@@ -57559,9 +57559,16 @@ var buildProviders = [
     id: "build-tsc",
     selected: (profile) => profile.build === "tsc" && profile.workspace === "none",
     devDependencies: { typescript: "^6.0.3", "@types/node": "^24.13.3" },
-    scripts: { build: "tsc -p tsconfig.build.json", typecheck: "tsc --noEmit" },
+    scripts: ({ profile }) => ({
+      build: "tsc -p tsconfig.build.json",
+      typecheck: profile.tests === "node-test" ? "tsc --noEmit --allowImportingTsExtensions" : "tsc --noEmit"
+    }),
     files: (context) => ({
-      "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.json": tsconfig(
+        context.profile.module,
+        context.profile.http === "nestjs",
+        context.profile.tests
+      ),
       "tsconfig.build.json": buildTsconfig()
     })
   },
@@ -57581,9 +57588,16 @@ var buildProviders = [
       "@types/node": "^24.13.3",
       tsup: "^8.5.1"
     },
-    scripts: { build: "tsup", typecheck: "tsc --noEmit" },
+    scripts: ({ profile }) => ({
+      build: "tsup",
+      typecheck: profile.tests === "node-test" ? "tsc --noEmit --allowImportingTsExtensions" : "tsc --noEmit"
+    }),
     files: (context) => ({
-      "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.json": tsconfig(
+        context.profile.module,
+        context.profile.http === "nestjs",
+        context.profile.tests
+      ),
       "tsconfig.build.json": buildTsconfig(),
       "tsup.config.ts": `import { defineConfig } from "tsup";
 
@@ -57936,10 +57950,11 @@ Run the CLI in development with \`${packageRun} dev -- Ada\`.`;
   }
   return "\n\n## Usage\n\nImport public functions from the package entry point.";
 }
-function licenseText(license) {
+function licenseText(license, author) {
   if (license === "none") return void 0;
   const entry = license === "apache-2.0" ? Apache_2_0_default : MIT_default;
-  return `${entry.licenseText}
+  const text = license === "mit" ? entry.licenseText.replace("<year>", String((/* @__PURE__ */ new Date()).getUTCFullYear())).replace("<copyright holders>", author) : entry.licenseText;
+  return `${text}
 `;
 }
 var commonProvider = {
@@ -58002,7 +58017,7 @@ var commonProvider = {
         hasLicense
       )
     };
-    const selectedLicense = licenseText(context.profile.license);
+    const selectedLicense = licenseText(context.profile.license, context.project.author);
     if (selectedLicense) files.LICENSE = selectedLicense;
     return files;
   }
@@ -58120,7 +58135,7 @@ ${teardown}
   }
   if (provider === "vitest" || provider === "jest") {
     const testImport = provider === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
-    const sourceExtension = provider === "vitest" ? ".js" : "";
+    const sourceExtension = ".js";
     return `import { createServer } from "node:http";
 ${testImport}import { buildApp } from "../src/app${sourceExtension}";
 
@@ -58140,7 +58155,7 @@ function honoTest(provider) {
   }
   if (provider === "vitest" || provider === "jest") {
     const testImport = provider === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
-    const sourceExtension = provider === "vitest" ? ".js" : "";
+    const sourceExtension = ".js";
     return `${testImport}import { app } from "../src/app${sourceExtension}";
 
 test("returns service health", async () => {
@@ -58158,7 +58173,7 @@ function nestTest(provider) {
   }
   if (provider === "vitest" || provider === "jest") {
     const testImport = provider === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
-    const sourceExtension = provider === "vitest" ? ".js" : "";
+    const sourceExtension = ".js";
     return `${testImport}import { AppController } from "../src/app.controller${sourceExtension}";
 
 test("returns service health", () => {
@@ -58231,7 +58246,7 @@ import { buildApp } from "../src/app.js";
 ${body}`;
   }
   if (provider === "jest") {
-    return `import { buildApp } from "../src/app";
+    return `import { buildApp } from "../src/app.js";
 
 ${body}`;
   }
@@ -58452,9 +58467,9 @@ var testProviders = [
     },
     scripts: { test: "jest", "test:watch": "jest --watch" },
     files: ({ profile }) => ({
-      "jest.config.mjs": 'export default {\n  testEnvironment: "node",\n  transform: {\n    "^.+\\\\.tsx?$": ["@swc/jest", {\n      jsc: {\n        parser: { syntax: "typescript", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: "commonjs" },\n    }],\n  },\n};\n',
+      "jest.config.mjs": 'export default {\n  testEnvironment: "node",\n  moduleNameMapper: { "^(\\\\.{1,2}/.*)\\\\.js$": "$1" },\n  transform: {\n    "^.+\\\\.tsx?$": ["@swc/jest", {\n      jsc: {\n        parser: { syntax: "typescript", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: "commonjs" },\n    }],\n  },\n};\n',
       ...profile.preset === "library" ? {
-        "test/index.test.ts": 'import { greet } from "../src/index";\n\ntest("greets a named user", () => {\n  expect(greet("Ada")).toBe("Hello, Ada!");\n});\n'
+        "test/index.test.ts": 'import { greet } from "../src/index.js";\n\ntest("greets a named user", () => {\n  expect(greet("Ada")).toBe("Hello, Ada!");\n});\n'
       } : {}
     })
   }
@@ -58577,6 +58592,9 @@ function createGenerationPlan(profile, project) {
       ...packageNameResult.warnings ?? []
     ].join("; ");
     throw new Error(`Invalid package name ${project.name}: ${reasons}`);
+  }
+  if (profile.license === "mit" && project.author.trim() === "") {
+    throw new Error("The MIT licence requires an author");
   }
   const context = createProviderContext(profile, project, {});
   validateGlobalCompatibility(profile);
@@ -58723,6 +58741,9 @@ function validateGlobalCompatibility(profile) {
   }
   if (profile.http === "nestjs" && profile.tests === "node-test") {
     throw new Error("NestJS requires Vitest or Jest because Node type stripping cannot transform decorators");
+  }
+  if (profile.http === "nestjs" && profile.build !== "tsc") {
+    throw new Error("NestJS requires the tsc build provider to emit decorator metadata");
   }
   if (profile.module === "commonjs" && profile.preset === "cli") {
     throw new Error("The CLI preset requires ESM");

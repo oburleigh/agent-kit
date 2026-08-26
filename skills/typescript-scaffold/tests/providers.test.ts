@@ -119,6 +119,15 @@ describe("first-class provider catalog", () => {
       .toThrow(/NestJS.*Vitest or Jest/);
   });
 
+  test("rejects tsup for NestJS decorator metadata", () => {
+    expect(() => plan({
+      http: "nestjs",
+      tests: "vitest",
+      build: "tsup",
+      package_versions: { typescript: "^5.9.3" },
+    })).toThrow(/NestJS requires the tsc build provider/);
+  });
+
   test("rejects integrations not wired into the selected HTTP provider", () => {
     expect(() => plan({ http: "express", runtime_validation: "zod" }))
       .toThrow(/runtime validation.*Fastify/i);
@@ -142,6 +151,29 @@ describe("first-class provider catalog", () => {
     ["vitest", "vitest run"],
   ] as const)("plans the %s test provider", (tests, command) => {
     expect(plan({ tests }).packageJson.scripts.test).toBe(command);
+  });
+
+  test("typechecks Node test imports without changing emitted builds", () => {
+    const result = plan({
+      tests: "node-test",
+      preset: "cli",
+      http: "none",
+      build: "tsup",
+      package_versions: { typescript: "^5.9.3" },
+    });
+
+    expect(result.packageJson.scripts.typecheck)
+      .toBe("tsc --noEmit --allowImportingTsExtensions");
+    expect(result.files.get("test/cli.test.ts")).toContain('../src/cli.ts');
+  });
+
+  test("makes Jest imports compatible with NodeNext typechecking and Jest resolution", () => {
+    const result = plan({ tests: "jest" });
+    const tsconfig = JSON.parse(result.files.get("tsconfig.json")!);
+
+    expect(tsconfig.compilerOptions.types).toEqual(["node", "jest"]);
+    expect(result.files.get("test/server.test.ts")).toContain('../src/app.js');
+    expect(result.files.get("jest.config.mjs")).toContain("moduleNameMapper");
   });
 
   test("uses SWC rather than a TypeScript-version-bound Jest transformer", () => {

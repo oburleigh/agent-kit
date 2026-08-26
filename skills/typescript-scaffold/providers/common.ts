@@ -51,10 +51,18 @@ function presetGuide(
   return "\n\n## Usage\n\nImport public functions from the package entry point.";
 }
 
-function licenseText(license: "apache-2.0" | "mit" | "none"): string | undefined {
+function licenseText(
+  license: "apache-2.0" | "mit" | "none",
+  author: string,
+): string | undefined {
   if (license === "none") return undefined;
   const entry = license === "apache-2.0" ? apacheLicense : mitLicense;
-  return `${entry.licenseText}\n`;
+  const text = license === "mit"
+    ? entry.licenseText
+      .replace("<year>", String(new Date().getUTCFullYear()))
+      .replace("<copyright holders>", author)
+    : entry.licenseText;
+  return `${text}\n`;
 }
 
 export const commonProvider: ProviderContribution = {
@@ -119,7 +127,7 @@ export const commonProvider: ProviderContribution = {
         hasLicense,
       ),
     };
-    const selectedLicense = licenseText(context.profile.license);
+    const selectedLicense = licenseText(context.profile.license, context.project.author);
     if (selectedLicense) files.LICENSE = selectedLicense;
     return files;
   },

@@ -67,9 +67,9 @@ export const testProviders: ProviderContribution[] = [
     },
     scripts: { test: "jest", "test:watch": "jest --watch" },
     files: ({ profile }) => ({
-      "jest.config.mjs": "export default {\n  testEnvironment: \"node\",\n  transform: {\n    \"^.+\\\\.tsx?$\": [\"@swc/jest\", {\n      jsc: {\n        parser: { syntax: \"typescript\", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: \"commonjs\" },\n    }],\n  },\n};\n",
+      "jest.config.mjs": "export default {\n  testEnvironment: \"node\",\n  moduleNameMapper: { \"^(\\\\.{1,2}/.*)\\\\.js$\": \"$1\" },\n  transform: {\n    \"^.+\\\\.tsx?$\": [\"@swc/jest\", {\n      jsc: {\n        parser: { syntax: \"typescript\", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: \"commonjs\" },\n    }],\n  },\n};\n",
       ...(profile.preset === "library" ? {
-        "test/index.test.ts": "import { greet } from \"../src/index\";\n\ntest(\"greets a named user\", () => {\n  expect(greet(\"Ada\")).toBe(\"Hello, Ada!\");\n});\n",
+        "test/index.test.ts": "import { greet } from \"../src/index.js\";\n\ntest(\"greets a named user\", () => {\n  expect(greet(\"Ada\")).toBe(\"Hello, Ada!\");\n});\n",
       } : {}),
     }),
   },

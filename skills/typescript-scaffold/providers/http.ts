@@ -69,7 +69,7 @@ function expressTest(provider: string): string | undefined {
   }
   if (provider === "vitest" || provider === "jest") {
     const testImport = provider === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
-    const sourceExtension = provider === "vitest" ? ".js" : "";
+    const sourceExtension = ".js";
     return `import { createServer } from "node:http";\n${testImport}import { buildApp } from "../src/app${sourceExtension}";\n\ntest("returns service health", async () => {\n  ${setup}\n    expect(response.status).toBe(200);\n    expect(body).toEqual({ status: "ok" });\n${teardown}\n});\n`;
   }
   return undefined;
@@ -81,7 +81,7 @@ function honoTest(provider: string): string | undefined {
   }
   if (provider === "vitest" || provider === "jest") {
     const testImport = provider === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
-    const sourceExtension = provider === "vitest" ? ".js" : "";
+    const sourceExtension = ".js";
     return `${testImport}import { app } from "../src/app${sourceExtension}";\n\ntest("returns service health", async () => {\n  const response = await app.request("/health");\n  expect(response.status).toBe(200);\n  expect(await response.json()).toEqual({ status: "ok" });\n});\n`;
   }
   return undefined;
@@ -93,7 +93,7 @@ function nestTest(provider: string): string | undefined {
   }
   if (provider === "vitest" || provider === "jest") {
     const testImport = provider === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
-    const sourceExtension = provider === "vitest" ? ".js" : "";
+    const sourceExtension = ".js";
     return `${testImport}import { AppController } from "../src/app.controller${sourceExtension}";\n\ntest("returns service health", () => {\n  expect(new AppController().health()).toEqual({ status: "ok" });\n});\n`;
   }
   return undefined;
@@ -141,7 +141,7 @@ function fastifyTest(provider: string): string | undefined {
     return `import { afterAll, expect, test } from "vitest";\nimport { buildApp } from "../src/app.js";\n\n${body}`;
   }
   if (provider === "jest") {
-    return `import { buildApp } from "../src/app";\n\n${body}`;
+    return `import { buildApp } from "../src/app.js";\n\n${body}`;
   }
   if (provider === "node-test") {
     return "import assert from \"node:assert/strict\";\nimport { after, test } from \"node:test\";\nimport { buildApp } from \"../src/app.ts\";\n\nconst app = buildApp();\nafter(() => app.close());\n\ntest(\"returns service health\", async () => {\n  const response = await app.inject({ method: \"GET\", url: \"/health?name=Ada\" });\n  assert.equal(response.statusCode, 200);\n  assert.deepEqual(response.json(), { status: \"ok\", name: \"Ada\" });\n});\n";

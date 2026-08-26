@@ -2,7 +2,11 @@ import type { ProviderContribution } from "../src/types.js";
 import { intersects, validRange } from "semver";
 import { json } from "./helpers.js";
 
-function tsconfig(module: "esm" | "commonjs", nestjs: boolean): string {
+function tsconfig(
+  module: "esm" | "commonjs",
+  nestjs: boolean,
+  tests: "vitest" | "node-test" | "jest" | "none",
+): string {
   return json({
     compilerOptions: {
       target: "ES2023",
@@ -14,7 +18,7 @@ function tsconfig(module: "esm" | "commonjs", nestjs: boolean): string {
       declaration: true,
       sourceMap: true,
       skipLibCheck: true,
-      types: ["node"],
+      types: tests === "jest" ? ["node", "jest"] : ["node"],
       ...(nestjs ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}),
     },
     include: ["src", "test", "*.config.*"],
@@ -35,9 +39,18 @@ export const buildProviders: ProviderContribution[] = [
     id: "build-tsc",
     selected: (profile) => profile.build === "tsc" && profile.workspace === "none",
     devDependencies: { typescript: "^6.0.3", "@types/node": "^24.13.3" },
-    scripts: { build: "tsc -p tsconfig.build.json", typecheck: "tsc --noEmit" },
+    scripts: ({ profile }) => ({
+      build: "tsc -p tsconfig.build.json",
+      typecheck: profile.tests === "node-test"
+        ? "tsc --noEmit --allowImportingTsExtensions"
+        : "tsc --noEmit",
+    }),
     files: (context) => ({
-      "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.json": tsconfig(
+        context.profile.module,
+        context.profile.http === "nestjs",
+        context.profile.tests,
+      ),
       "tsconfig.build.json": buildTsconfig(),
     }),
   },
@@ -57,9 +70,18 @@ export const buildProviders: ProviderContribution[] = [
       "@types/node": "^24.13.3",
       tsup: "^8.5.1",
     },
-    scripts: { build: "tsup", typecheck: "tsc --noEmit" },
+    scripts: ({ profile }) => ({
+      build: "tsup",
+      typecheck: profile.tests === "node-test"
+        ? "tsc --noEmit --allowImportingTsExtensions"
+        : "tsc --noEmit",
+    }),
     files: (context) => ({
-      "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.json": tsconfig(
+        context.profile.module,
+        context.profile.http === "nestjs",
+        context.profile.tests,
+      ),
       "tsconfig.build.json": buildTsconfig(),
       "tsup.config.ts": `import { defineConfig } from "tsup";\n\nexport default defineConfig({\n  entry: ["${entryPoint(context.profile.preset)}"],\n  format: ["${context.profile.module === "esm" ? "esm" : "cjs"}"],\n  dts: true,\n  sourcemap: true,\n  clean: true,\n});\n`,
     }),

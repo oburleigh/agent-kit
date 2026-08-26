@@ -31,9 +31,18 @@ ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.claude/skills/typescript-
 
 ### Codex and other Agent Skills clients
 
+Use the shared Agent Skills directory when the same checkout should serve more than one client:
+
 ```sh
 mkdir -p ~/.agents/skills
 ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.agents/skills/typescript-scaffold
+```
+
+For a Codex-only installation, use the Codex skills directory instead:
+
+```sh
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+ln -s /path/to/agent-kit/skills/typescript-scaffold "${CODEX_HOME:-$HOME/.codex}/skills/typescript-scaffold"
 ```
 
 The two links can point to the same checkout. Edit the repository copy and both agents see the change. Pull repository updates with:

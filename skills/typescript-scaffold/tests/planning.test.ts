@@ -272,4 +272,28 @@ describe("provider planning", () => {
     expect(plan.files.get("CONTRIBUTING.md")).not.toContain("repository licence");
     expect(plan.packageJson.files).not.toContain("LICENSE");
   });
+
+  test("renders an attributed MIT licence without template placeholders", async () => {
+    const { createGenerationPlan } = await loadPlanner();
+    const plan = createGenerationPlan(profile({ license: "mit" }), {
+      name: "mit-library",
+      description: "MIT library.",
+      author: "Example Maintainer",
+    });
+    const license = plan.files.get("LICENSE");
+
+    expect(license).toMatch(/Copyright \(c\) \d{4} Example Maintainer/);
+    expect(license).not.toContain("<year>");
+    expect(license).not.toContain("<copyright holders>");
+  });
+
+  test("requires an author for an MIT licence", async () => {
+    const { createGenerationPlan } = await loadPlanner();
+
+    expect(() => createGenerationPlan(profile({ license: "mit" }), {
+      name: "anonymous-mit-library",
+      description: "MIT library.",
+      author: "",
+    })).toThrow(/MIT licence requires an author/);
+  });
 });
