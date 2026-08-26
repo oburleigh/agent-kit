@@ -6,14 +6,7 @@ import { describe, expect, test } from "vitest";
 import { loadBundledPreset } from "../src/profiles.js";
 
 async function loadCli() {
-  return import("../src/cli.js").catch(() => ({
-    main: () => {
-      throw new Error("CLI missing");
-    },
-    resolveProfileArgument: () => {
-      throw new Error("CLI missing");
-    },
-  }));
+  return import("../src/cli.js");
 }
 
 describe("generator CLI", () => {

@@ -2,11 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { ScaffoldProfile } from "../src/schema.js";
 
 async function loadPlanner() {
-  return import("../src/planning.js").catch(() => ({
-    createGenerationPlan: () => {
-      throw new Error("planner missing");
-    },
-  }));
+  return import("../src/planning.js");
 }
 
 function profile(overrides: Partial<ScaffoldProfile> = {}): ScaffoldProfile {
@@ -77,7 +73,7 @@ describe("provider planning", () => {
     expect(JSON.parse(plan.files.get("tsconfig.json")!)).toMatchObject({
       compilerOptions: { types: ["node"] },
     });
-    expect(plan.files.get("README.md")).toContain("HTTP: none");
+    expect(plan.files.get("README.md")).not.toContain("HTTP");
     expect(plan.packageJson.scripts).toMatchObject({
       build: "tsup",
       lint: "biome check .",
@@ -197,6 +193,42 @@ describe("provider planning", () => {
       description: "Invalid combination.",
       author: "",
     })).toThrow(/HTTP providers require the service preset/);
+  });
+
+  test("rejects quality gates when dependencies are not installed", async () => {
+    const { createGenerationPlan } = await loadPlanner();
+
+    expect(() => createGenerationPlan(profile({
+      install_dependencies: false,
+      run_quality_gates: true,
+    }), {
+      name: "missing-dependencies",
+      description: "Invalid execution controls.",
+      author: "",
+    })).toThrow(/quality gates require dependency installation/i);
+  });
+
+  test("rejects Vite outside a private library preset", async () => {
+    const { createGenerationPlan } = await loadPlanner();
+    const project = {
+      name: "vite-app",
+      description: "Vite application.",
+      author: "",
+    };
+
+    expect(() => createGenerationPlan(profile({
+      preset: "cli",
+      framework: "vite-react",
+      build: "framework-owned",
+      publishing: "none",
+      hooks: "none",
+    }), project)).toThrow(/Vite React.*library preset/i);
+    expect(() => createGenerationPlan(profile({
+      framework: "vite-react",
+      build: "framework-owned",
+      publishing: "npm",
+      hooks: "none",
+    }), project)).toThrow(/Vite React.*publishing disabled/i);
   });
 
   test("rejects an invalid package name", async () => {

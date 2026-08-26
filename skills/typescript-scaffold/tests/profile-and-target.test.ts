@@ -4,19 +4,11 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
 async function loadProfileModule() {
-  return import("../src/profile.js").catch(() => ({
-    loadProfileText: () => {
-      throw new Error("profile module missing");
-    },
-  }));
+  return import("../src/profile.js");
 }
 
 async function loadTargetModule() {
-  return import("../src/target.js").catch(() => ({
-    assertTargetAvailable: () => {
-      throw new Error("target module missing");
-    },
-  }));
+  return import("../src/target.js");
 }
 
 describe("profile validation", () => {

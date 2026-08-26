@@ -1,4 +1,4 @@
-import { chmod, mkdir, rename, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { execa } from "execa";
@@ -34,6 +34,7 @@ export async function generateRepository(
 ): Promise<void> {
   const absoluteTarget = resolve(target);
   await assertTargetAvailable(absoluteTarget);
+  await assertParentDirectory(dirname(absoluteTarget));
   const workTarget = join(
     dirname(absoluteTarget),
     `.${basename(absoluteTarget)}.agent-kit-${randomUUID()}`,
@@ -105,6 +106,20 @@ export async function generateRepository(
   } finally {
     unregisterSignalCleanup();
   }
+}
+
+async function assertParentDirectory(parent: string): Promise<void> {
+  try {
+    const metadata = await stat(parent);
+    if (!metadata.isDirectory()) throw new Error(`Parent path ${parent} is not a directory`);
+  } catch (error) {
+    if (isMissingPath(error)) throw new Error(`Parent directory ${parent} does not exist`);
+    throw error;
+  }
+}
+
+function isMissingPath(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
 async function verifyFrameworkPackageManager(

@@ -11,7 +11,7 @@ function viteProfile(): ScaffoldProfile {
   return {
     schema_version: 1,
     name: "vite-react",
-    preset: "service",
+    preset: "library",
     package_manager: "npm",
     package_manager_version: "11.17.0",
     module: "esm",
@@ -77,6 +77,7 @@ describe("official framework delegation", () => {
     const packageJson = JSON.parse(await readFile(join(target, "package.json"), "utf8"));
     expect(packageJson.scripts.dev).toBe("vite");
     expect(packageJson.dependencies.react).toBe("^19.0.0");
+    expect(packageJson).not.toHaveProperty("exports");
     expect(await readFile(join(target, "README.md"), "utf8")).toContain("# web-app");
   });
 
@@ -85,6 +86,7 @@ describe("official framework delegation", () => {
     const target = join(root, "web-app");
     const commands: string[] = [];
     const profile = viteProfile();
+    profile.install_dependencies = true;
     profile.run_quality_gates = true;
 
     await generateRepository(profile, target, {
@@ -105,6 +107,7 @@ describe("official framework delegation", () => {
 
     expect(commands).toEqual([
       "npm create vite@9.2.0 . -- --template react-ts",
+      "npm install --ignore-scripts",
       "npm run build",
     ]);
   });

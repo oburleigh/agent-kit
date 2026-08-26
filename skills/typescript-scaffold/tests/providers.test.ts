@@ -165,6 +165,19 @@ describe("first-class provider catalog", () => {
     expect(result.files.get(".gitignore")).toContain(`.${workspace}/`);
   });
 
+  test("writes pnpm workspace metadata for a pnpm monorepo", () => {
+    const result = plan({
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsc",
+      package_manager: "pnpm",
+      package_manager_version: "11.24.0",
+    });
+
+    expect(result.files.get("pnpm-workspace.yaml")).toBe("packages:\n  - packages/*\n");
+  });
+
   test("honors extra packages and scripts without inventing files", () => {
     const result = plan({
       extra_dependencies: [{ name: "nanoid", version: "^5.1.0" }],
@@ -198,6 +211,7 @@ describe("first-class provider catalog", () => {
       ci: "github-actions",
       package_manager: "pnpm",
       package_manager_version: "11.24.0",
+      install_dependencies: true,
     }).files.get(".github/workflows/ci.yml");
 
     const parsed = parse(workflow!);
@@ -208,6 +222,21 @@ describe("first-class provider catalog", () => {
         with: { "node-version-file": ".node-version", cache: "pnpm" },
       },
     ]));
+  });
+
+  test("uses an unfrozen CI install without lockfile-dependent caching", () => {
+    const workflow = plan({
+      ci: "github-actions",
+      package_manager: "npm",
+      install_dependencies: false,
+    }).files.get(".github/workflows/ci.yml");
+    const parsed = parse(workflow!);
+    const setupNode = parsed.jobs.test.steps.find(
+      (step: { uses?: string }) => step.uses === "actions/setup-node@v4",
+    );
+
+    expect(setupNode.with).toEqual({ "node-version-file": ".node-version" });
+    expect(parsed.jobs.test.steps).toContainEqual({ run: "npm install" });
   });
 
   test("bootstraps Bun without asking setup-node to cache it", () => {

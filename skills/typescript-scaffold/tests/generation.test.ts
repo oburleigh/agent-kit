@@ -6,11 +6,7 @@ import type { ScaffoldProfile } from "../src/schema.js";
 import type { SignalRuntime } from "../src/generate.js";
 
 async function loadGenerator() {
-  return import("../src/generate.js").catch(() => ({
-    generateRepository: () => {
-      throw new Error("generator missing");
-    },
-  }));
+  return import("../src/generate.js");
 }
 
 function profile(overrides: Partial<ScaffoldProfile> = {}): ScaffoldProfile {
@@ -170,6 +166,23 @@ describe("repository generation", () => {
     await expect(access(target)).rejects.toMatchObject({ code: "ENOENT" });
   });
 
+  test("removes staging output after dependency installation fails", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-install-failure-"));
+    const target = join(root, "failed-install");
+    const { generateRepository } = await loadGenerator();
+
+    await expect(generateRepository(profile({
+      install_dependencies: true,
+      ci: "none",
+    }), target, {
+      runCommand: async () => {
+        throw new Error("install failed");
+      },
+    })).rejects.toThrow(/install failed/);
+    await expect(access(target)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(await readdir(root)).toEqual([]);
+  });
+
   test("refuses an existing empty target without altering it", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-kit-empty-"));
     const target = join(root, "empty");
@@ -178,6 +191,15 @@ describe("repository generation", () => {
 
     await expect(generateRepository(profile(), target)).rejects.toThrow(/already exists/);
     expect(await readdir(target)).toEqual([]);
+  });
+
+  test("reports a missing target parent without leaking the staging path", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-parent-"));
+    const target = join(root, "missing", "nested-project");
+    const { generateRepository } = await loadGenerator();
+
+    await expect(generateRepository(profile(), target))
+      .rejects.toThrow(/Parent directory .* does not exist/);
   });
 
   test("removes staging output on an interruptible signal", async () => {

@@ -6,17 +6,7 @@ import { describe, expect, test } from "vitest";
 import { loadProfileText } from "../src/profile.js";
 
 async function loadProfilesModule() {
-  return import("../src/profiles.js").catch(() => ({
-    createProfileFromPreset: () => {
-      throw new Error("profiles module missing");
-    },
-    loadBundledPreset: () => {
-      throw new Error("profiles module missing");
-    },
-    resolveProfileDirectory: () => {
-      throw new Error("profiles module missing");
-    },
-  }));
+  return import("../src/profiles.js");
 }
 
 describe("bundled presets", () => {
@@ -40,6 +30,15 @@ describe("bundled presets", () => {
     expect(() => loadProfileText(stringify({ ...profile, package_manager_version: "11" })))
       .toThrow(/exact semantic version/);
   });
+
+  test.each(["cli", "workspace"] as const)(
+    "gives the %s preset a working CI default",
+    async (preset) => {
+      const { loadBundledPreset } = await loadProfilesModule();
+
+      expect((await loadBundledPreset(preset)).ci).toBe("github-actions");
+    },
+  );
 });
 
 describe("persistent profiles", () => {

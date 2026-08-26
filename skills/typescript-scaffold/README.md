@@ -2,6 +2,15 @@
 
 Create a new TypeScript repository through Claude Code, Codex, or another agent that supports skills. The generated repository has its own README, contribution guide, coding instructions, licence, package configuration, checks, CI, and Git repository.
 
+## Requirements
+
+- Node.js 24
+- Git when `initialize_git` is enabled
+- The exact package-manager version selected by the profile
+- External tools selected by the profile, such as Gitleaks
+
+The skill checks required versions and reports missing commands. It does not install global tools without permission.
+
 ## Use it
 
 Ask your agent for the repository you want:
@@ -20,10 +29,12 @@ Use my service profile to create ./billing-api, but use Hono with runtime valida
 
 - `library`: pnpm, tsup, Biome, Vitest, Lefthook, GitHub Actions, and npm publishing
 - `service`: npm, Fastify, Zod, Pino, ESLint, Prettier, Vitest, Husky, and GitHub Actions
-- `cli`: Yarn, tsup, Biome, and the Node.js test runner
-- `workspace`: Bun and Turbo
+- `cli`: Yarn, tsup, Biome, the Node.js test runner, and GitHub Actions
+- `workspace`: Bun, Turbo, and GitHub Actions, with an empty `packages/` directory ready for independently configured packages
 
 Every selection can be changed in a profile. Supported providers are listed in [references/profiles.md](references/profiles.md).
+
+Vite React uses the `library` preset with `framework: vite-react`, `build: framework-owned`, `publishing: none`, and `module: esm`. The skill runs the official Vite generator, then applies the selected agent-kit files and checks.
 
 ## Profiles
 

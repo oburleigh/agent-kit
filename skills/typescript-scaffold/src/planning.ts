@@ -150,6 +150,9 @@ export function rejectDependencyBucketConflicts(packageJson: PackageJsonPlan): v
 }
 
 function validateGlobalCompatibility(profile: ScaffoldProfile): void {
+  if (profile.run_quality_gates && !profile.install_dependencies) {
+    throw new Error("Quality gates require dependency installation");
+  }
   if (profile.http !== "none" && profile.preset !== "service") {
     throw new Error("HTTP providers require the service preset");
   }
@@ -162,8 +165,17 @@ function validateGlobalCompatibility(profile: ScaffoldProfile): void {
   if (profile.hooks === "husky-lint-staged" && profile.quality !== "eslint-prettier") {
     throw new Error("Husky with lint-staged requires the ESLint and Prettier provider");
   }
+  if (profile.framework === "vite-react" && profile.preset !== "library") {
+    throw new Error("The Vite React adapter requires the library preset");
+  }
+  if (profile.framework === "vite-react" && profile.publishing !== "none") {
+    throw new Error("The Vite React adapter requires publishing disabled");
+  }
   if (profile.framework === "vite-react" && profile.build !== "framework-owned") {
     throw new Error("The Vite React adapter requires framework-owned build");
+  }
+  if (profile.framework === "vite-react" && profile.module !== "esm") {
+    throw new Error("The Vite React adapter requires ESM");
   }
   if (profile.http !== "fastify" && profile.runtime_validation !== "none") {
     throw new Error("Runtime validation integrations currently require Fastify");

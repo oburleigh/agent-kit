@@ -11,7 +11,7 @@ runtime_validation: none
 http: none
 logging: none
 hooks: none
-ci: none
+ci: github-actions
 publishing: none
 workspace: turbo
 secret_scan: none

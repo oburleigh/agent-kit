@@ -3,7 +3,7 @@ import type { ProviderContribution } from "../src/types.js";
 export const presetProviders: ProviderContribution[] = [
   {
     id: "preset-library",
-    selected: (profile) => profile.preset === "library",
+    selected: (profile) => profile.preset === "library" && profile.framework === "none",
     packageJson: {
       exports: "./dist/index.js",
       types: "./dist/index.d.ts",

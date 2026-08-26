@@ -33736,18 +33736,18 @@ var require_async2 = __commonJS({
       ];
     }
     var defaultIsFile = function isFile(file2, cb) {
-      fs5.stat(file2, function(err, stat3) {
+      fs5.stat(file2, function(err, stat4) {
         if (!err) {
-          return cb(null, stat3.isFile() || stat3.isFIFO());
+          return cb(null, stat4.isFile() || stat4.isFIFO());
         }
         if (err.code === "ENOENT" || err.code === "ENOTDIR") return cb(null, false);
         return cb(err);
       });
     };
     var defaultIsDir = function isDirectory(dir, cb) {
-      fs5.stat(dir, function(err, stat3) {
+      fs5.stat(dir, function(err, stat4) {
         if (!err) {
-          return cb(null, stat3.isDirectory());
+          return cb(null, stat4.isDirectory());
         }
         if (err.code === "ENOENT" || err.code === "ENOTDIR") return cb(null, false);
         return cb(err);
@@ -34235,21 +34235,21 @@ var require_sync = __commonJS({
     }
     var defaultIsFile = function isFile(file2) {
       try {
-        var stat3 = fs5.statSync(file2, { throwIfNoEntry: false });
+        var stat4 = fs5.statSync(file2, { throwIfNoEntry: false });
       } catch (e) {
         if (e && (e.code === "ENOENT" || e.code === "ENOTDIR")) return false;
         throw e;
       }
-      return !!stat3 && (stat3.isFile() || stat3.isFIFO());
+      return !!stat4 && (stat4.isFile() || stat4.isFIFO());
     };
     var defaultIsDir = function isDirectory(dir) {
       try {
-        var stat3 = fs5.statSync(dir, { throwIfNoEntry: false });
+        var stat4 = fs5.statSync(dir, { throwIfNoEntry: false });
       } catch (e) {
         if (e && (e.code === "ENOENT" || e.code === "ENOTDIR")) return false;
         throw e;
       }
-      return !!stat3 && stat3.isDirectory();
+      return !!stat4 && stat4.isDirectory();
     };
     var defaultRealpathSync = function realpathSync2(x) {
       try {
@@ -34517,8 +34517,8 @@ var require_lib5 = __commonJS({
     }
     async function isBinaryFile(file2, size) {
       if (isString(file2)) {
-        const stat3 = await statAsync(file2);
-        isStatFile(stat3);
+        const stat4 = await statAsync(file2);
+        isStatFile(stat4);
         const fileDescriptor = await openAsync(file2, "r");
         const allocBuffer = Buffer.alloc(MAX_BYTES + UTF8_BOUNDARY_RESERVE);
         return new Promise((fulfill, reject) => {
@@ -34545,8 +34545,8 @@ var require_lib5 = __commonJS({
     exports.isBinaryFile = isBinaryFile;
     function isBinaryFileSync2(file2, size) {
       if (isString(file2)) {
-        const stat3 = fs5.statSync(file2);
-        isStatFile(stat3);
+        const stat4 = fs5.statSync(file2);
+        isStatFile(stat4);
         const fileDescriptor = fs5.openSync(file2, "r");
         const allocBuffer = Buffer.alloc(MAX_BYTES + UTF8_BOUNDARY_RESERVE);
         const bytesRead = fs5.readSync(fileDescriptor, allocBuffer, 0, MAX_BYTES + UTF8_BOUNDARY_RESERVE, 0);
@@ -34627,8 +34627,8 @@ var require_lib5 = __commonJS({
     function isString(x) {
       return typeof x === "string";
     }
-    function isStatFile(stat3) {
-      if (!stat3.isFile()) {
+    function isStatFile(stat4) {
+      if (!stat4.isFile()) {
         throw new Error(`Path provided was not a file!`);
       }
     }
@@ -45838,7 +45838,7 @@ import { pathToFileURL as pathToFileURL2 } from "node:url";
 import { parseArgs } from "node:util";
 
 // src/generate.ts
-import { chmod as chmod2, mkdir, rename, rm as rm3, writeFile as writeFile2 } from "node:fs/promises";
+import { chmod as chmod2, mkdir, rename, rm as rm3, stat as stat3, writeFile as writeFile2 } from "node:fs/promises";
 import { basename as basename2, dirname as dirname2, join as join2, resolve as resolve5 } from "node:path";
 import { randomUUID as randomUUID2 } from "node:crypto";
 
@@ -56306,10 +56306,10 @@ var resolveSymlinksAsync = function(path15, state, callback$1) {
   queue.enqueue();
   fs5.realpath(path15, (error51, resolvedPath) => {
     if (error51) return queue.dequeue(suppressErrors ? null : error51, state);
-    fs5.stat(resolvedPath, (error$1, stat3) => {
+    fs5.stat(resolvedPath, (error$1, stat4) => {
       if (error$1) return queue.dequeue(suppressErrors ? null : error$1, state);
-      if (stat3.isDirectory() && isRecursive(path15, resolvedPath, state)) return queue.dequeue(null, state);
-      callback$1(stat3, resolvedPath);
+      if (stat4.isDirectory() && isRecursive(path15, resolvedPath, state)) return queue.dequeue(null, state);
+      callback$1(stat4, resolvedPath);
       queue.dequeue(null, state);
     });
   });
@@ -56319,9 +56319,9 @@ var resolveSymlinks = function(path15, state, callback$1) {
   queue.enqueue();
   try {
     const resolvedPath = fs5.realpathSync(path15);
-    const stat3 = fs5.statSync(resolvedPath);
-    if (stat3.isDirectory() && isRecursive(path15, resolvedPath, state)) return;
-    callback$1(stat3, resolvedPath);
+    const stat4 = fs5.statSync(resolvedPath);
+    if (stat4.isDirectory() && isRecursive(path15, resolvedPath, state)) return;
+    callback$1(stat4, resolvedPath);
   } catch (e) {
     if (!suppressErrors) throw e;
   }
@@ -56518,8 +56518,8 @@ var Walker = class {
         this.walkDirectory(this.state, path15, path15, depth - 1, this.walk);
       } else if (this.resolveSymlink && entry.isSymbolicLink()) {
         let path15 = joinPathWithBasePath(entry.name, directoryPath);
-        this.resolveSymlink(path15, this.state, (stat3, resolvedPath) => {
-          if (stat3.isDirectory()) {
+        this.resolveSymlink(path15, this.state, (stat4, resolvedPath) => {
+          if (stat4.isDirectory()) {
             resolvedPath = normalizePath2(resolvedPath, this.state.options);
             if (exclude && exclude(entry.name, useRealPaths ? resolvedPath : path15 + pathSeparator)) return;
             this.walkDirectory(this.state, resolvedPath, useRealPaths ? resolvedPath : path15 + pathSeparator, depth - 1, this.walk);
@@ -57649,9 +57649,10 @@ function githubWorkflow(context) {
     { uses: "actions/checkout@v4" },
     ...githubPackageManagerSetup(
       context.profile.package_manager,
-      context.profile.package_manager_version
+      context.profile.package_manager_version,
+      context.profile.install_dependencies
     ),
-    { run: installCommand(context.profile.package_manager) },
+    { run: installCommand(context.profile.package_manager, context.profile.install_dependencies) },
     ...ciCommands(context).map((run) => ({ run }))
   ];
   return {
@@ -57681,7 +57682,7 @@ function gitlabWorkflow(context) {
     test: {
       stage: "test",
       ...gitlabPackageManagerSetup(packageManager, version2),
-      script: [installCommand(packageManager), ...ciCommands(context)]
+      script: [installCommand(packageManager, context.profile.install_dependencies), ...ciCommands(context)]
     },
     ...context.profile.secret_scan === "gitleaks" ? {
       secrets: {
@@ -57701,7 +57702,7 @@ function runScript(packageManager, script) {
   if (packageManager === "bun") return `bun run ${script}`;
   return `${packageManager} ${script}`;
 }
-function githubPackageManagerSetup(packageManager, version2) {
+function githubPackageManagerSetup(packageManager, version2, hasLockfile) {
   if (packageManager === "bun") {
     return [{ uses: "oven-sh/setup-bun@v2", with: { "bun-version": version2 } }];
   }
@@ -57710,7 +57711,10 @@ function githubPackageManagerSetup(packageManager, version2) {
       { uses: "pnpm/action-setup@v4", with: { version: version2 } },
       {
         uses: "actions/setup-node@v4",
-        with: { "node-version-file": ".node-version", cache: "pnpm" }
+        with: {
+          "node-version-file": ".node-version",
+          ...hasLockfile ? { cache: "pnpm" } : {}
+        }
       }
     ];
   }
@@ -57723,7 +57727,10 @@ function githubPackageManagerSetup(packageManager, version2) {
   }
   return [{
     uses: "actions/setup-node@v4",
-    with: { "node-version-file": ".node-version", cache: "npm" }
+    with: {
+      "node-version-file": ".node-version",
+      ...hasLockfile ? { cache: "npm" } : {}
+    }
   }, { run: `npm install --global npm@${version2}` }];
 }
 function gitlabImage(packageManager, version2) {
@@ -57741,7 +57748,8 @@ function gitlabPackageManagerSetup(packageManager, version2) {
     ]
   };
 }
-function installCommand(packageManager) {
+function installCommand(packageManager, hasLockfile) {
+  if (!hasLockfile) return `${packageManager} install`;
   if (packageManager === "npm") return "npm ci";
   if (packageManager === "yarn") return "yarn install --immutable";
   if (packageManager === "bun") return "bun install --frozen-lockfile";
@@ -57846,7 +57854,7 @@ ${description}
 
 ## Requirements
 
-Use the Node.js version declared in \`.node-version\` and the package manager declared in \`package.json\`.
+Use the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.
 
 ## Setup
 
@@ -57916,7 +57924,7 @@ Run the CLI in development with \`${packageRun} dev -- Ada\`.`;
     return "\n\n## API\n\nThe starter service exposes `GET /health`.";
   }
   if (preset === "workspace") {
-    return "\n\n## Packages\n\nAdd workspace packages under `packages/`.";
+    return "\n\n## Packages\n\nThis scaffold creates an empty monorepo root so it does not prescribe one package stack for the whole workspace. Add each TypeScript package under `packages/` with its own package manifest and checks.";
   }
   return "\n\n## Usage\n\nImport public functions from the package entry point.";
 }
@@ -57947,7 +57955,7 @@ var commonProvider = {
     const hasLicense = context.profile.license !== "none";
     const stack = [
       `Preset: ${context.profile.preset}`,
-      `Package manager: ${context.profile.package_manager}`,
+      `Package manager: ${context.profile.package_manager} ${context.profile.package_manager_version}`,
       `Module system: ${context.profile.module}`,
       `Build: ${context.profile.build}`,
       `Quality: ${context.profile.quality}`,
@@ -57960,7 +57968,7 @@ var commonProvider = {
       `Publishing: ${context.profile.publishing}`,
       `Workspace: ${context.profile.workspace}`,
       `Framework: ${context.profile.framework}`
-    ];
+    ].filter((item) => !item.endsWith(": none"));
     const files = {
       ".node-version": "24\n",
       "AGENTS.md": "# Repository instructions\n\n- Read the existing code, configuration, and tests before changing behavior.\n- Prefer a maintained package for solved, non-domain work. Check its licence, security record, types, runtime support, and scope before adding it.\n- Write custom infrastructure only when no suitable package meets the repository contract. Keep that code narrow and test it.\n- Keep environment-specific values in typed configuration rather than source code.\n- Add or update tests for changed behavior. Run the repository checks before reporting completion.\n- Keep comments short. Explain constraints or intent that the code cannot express.\n",
@@ -58263,7 +58271,7 @@ var moduleProviders = [
 var presetProviders = [
   {
     id: "preset-library",
-    selected: (profile) => profile.preset === "library",
+    selected: (profile) => profile.preset === "library" && profile.framework === "none",
     packageJson: {
       exports: "./dist/index.js",
       types: "./dist/index.d.ts",
@@ -58445,7 +58453,7 @@ var workspaceProviders = [
     scripts: { build: "turbo build", test: "turbo test", lint: "turbo lint" },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".turbo/"],
-    files: () => ({
+    files: (context) => ({
       "turbo.json": json({
         $schema: "https://turbo.build/schema.json",
         tasks: {
@@ -58453,7 +58461,8 @@ var workspaceProviders = [
           test: { dependsOn: ["^build"], outputs: ["coverage/**"] },
           lint: { dependsOn: ["^lint"] }
         }
-      })
+      }),
+      ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" } : {}
     })
   },
   {
@@ -58464,8 +58473,9 @@ var workspaceProviders = [
     scripts: { build: "nx run-many -t build", test: "nx run-many -t test", lint: "nx run-many -t lint" },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".nx/"],
-    files: () => ({
-      "nx.json": json({ namedInputs: { default: ["{projectRoot}/**/*"] } })
+    files: (context) => ({
+      "nx.json": json({ namedInputs: { default: ["{projectRoot}/**/*"] } }),
+      ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" } : {}
     })
   }
 ];
@@ -58604,6 +58614,9 @@ function rejectDependencyBucketConflicts(packageJson) {
   }
 }
 function validateGlobalCompatibility(profile) {
+  if (profile.run_quality_gates && !profile.install_dependencies) {
+    throw new Error("Quality gates require dependency installation");
+  }
   if (profile.http !== "none" && profile.preset !== "service") {
     throw new Error("HTTP providers require the service preset");
   }
@@ -58616,8 +58629,17 @@ function validateGlobalCompatibility(profile) {
   if (profile.hooks === "husky-lint-staged" && profile.quality !== "eslint-prettier") {
     throw new Error("Husky with lint-staged requires the ESLint and Prettier provider");
   }
+  if (profile.framework === "vite-react" && profile.preset !== "library") {
+    throw new Error("The Vite React adapter requires the library preset");
+  }
+  if (profile.framework === "vite-react" && profile.publishing !== "none") {
+    throw new Error("The Vite React adapter requires publishing disabled");
+  }
   if (profile.framework === "vite-react" && profile.build !== "framework-owned") {
     throw new Error("The Vite React adapter requires framework-owned build");
+  }
+  if (profile.framework === "vite-react" && profile.module !== "esm") {
+    throw new Error("The Vite React adapter requires ESM");
   }
   if (profile.http !== "fastify" && profile.runtime_validation !== "none") {
     throw new Error("Runtime validation integrations currently require Fastify");
@@ -58764,6 +58786,7 @@ function isMissingPath(error51) {
 async function generateRepository(profile, target, options = {}) {
   const absoluteTarget = resolve5(target);
   await assertTargetAvailable(absoluteTarget);
+  await assertParentDirectory(dirname2(absoluteTarget));
   const workTarget = join2(
     dirname2(absoluteTarget),
     `.${basename2(absoluteTarget)}.agent-kit-${randomUUID2()}`
@@ -58829,6 +58852,18 @@ async function generateRepository(profile, target, options = {}) {
   } finally {
     unregisterSignalCleanup();
   }
+}
+async function assertParentDirectory(parent) {
+  try {
+    const metadata = await stat3(parent);
+    if (!metadata.isDirectory()) throw new Error(`Parent path ${parent} is not a directory`);
+  } catch (error51) {
+    if (isMissingPath2(error51)) throw new Error(`Parent directory ${parent} does not exist`);
+    throw error51;
+  }
+}
+function isMissingPath2(error51) {
+  return error51 instanceof Error && "code" in error51 && error51.code === "ENOENT";
 }
 async function verifyFrameworkPackageManager(profile, target, readVersion) {
   const manifest = join2(target, "package.json");
@@ -73685,7 +73720,7 @@ async function resolveProfileArgument(value, environment = process.env) {
     await access(profilePath);
     return profilePath;
   } catch (error51) {
-    if (!isMissingPath2(error51)) throw error51;
+    if (!isMissingPath3(error51)) throw error51;
   }
   if (!isPresetName(presetCandidate)) {
     throw new Error(`Profile does not exist: ${profilePath}. Use <preset>:<profile-name> to create it.`);
@@ -73698,7 +73733,7 @@ function looksLikePath(value) {
 function isPresetName(value) {
   return ["library", "service", "cli", "workspace"].includes(value);
 }
-function isMissingPath2(error51) {
+function isMissingPath3(error51) {
   return error51 instanceof Error && "code" in error51 && error51.code === "ENOENT";
 }
 var executablePath = process.argv[1] ? pathToFileURL2(resolve6(process.argv[1])).href : "";

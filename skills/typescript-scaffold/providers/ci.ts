@@ -24,8 +24,9 @@ function githubWorkflow(context: ProviderContext): Record<string, unknown> {
     ...githubPackageManagerSetup(
       context.profile.package_manager,
       context.profile.package_manager_version,
+      context.profile.install_dependencies,
     ),
-    { run: installCommand(context.profile.package_manager) },
+    { run: installCommand(context.profile.package_manager, context.profile.install_dependencies) },
     ...ciCommands(context).map((run) => ({ run })),
   ];
   return {
@@ -56,7 +57,7 @@ function gitlabWorkflow(context: ProviderContext): Record<string, unknown> {
     test: {
       stage: "test",
       ...gitlabPackageManagerSetup(packageManager, version),
-      script: [installCommand(packageManager), ...ciCommands(context)],
+      script: [installCommand(packageManager, context.profile.install_dependencies), ...ciCommands(context)],
     },
     ...(context.profile.secret_scan === "gitleaks" ? {
       secrets: {
@@ -84,6 +85,7 @@ function runScript(packageManager: string, script: string): string {
 function githubPackageManagerSetup(
   packageManager: string,
   version: string,
+  hasLockfile: boolean,
 ): Array<Record<string, unknown>> {
   if (packageManager === "bun") {
     return [{ uses: "oven-sh/setup-bun@v2", with: { "bun-version": version } }];
@@ -93,7 +95,10 @@ function githubPackageManagerSetup(
       { uses: "pnpm/action-setup@v4", with: { version } },
       {
         uses: "actions/setup-node@v4",
-        with: { "node-version-file": ".node-version", cache: "pnpm" },
+        with: {
+          "node-version-file": ".node-version",
+          ...(hasLockfile ? { cache: "pnpm" } : {}),
+        },
       },
     ];
   }
@@ -106,7 +111,10 @@ function githubPackageManagerSetup(
   }
   return [{
     uses: "actions/setup-node@v4",
-    with: { "node-version-file": ".node-version", cache: "npm" },
+    with: {
+      "node-version-file": ".node-version",
+      ...(hasLockfile ? { cache: "npm" } : {}),
+    },
   }, { run: `npm install --global npm@${version}` }];
 }
 
@@ -130,7 +138,8 @@ function gitlabPackageManagerSetup(
   };
 }
 
-function installCommand(packageManager: string): string {
+function installCommand(packageManager: string, hasLockfile: boolean): string {
+  if (!hasLockfile) return `${packageManager} install`;
   if (packageManager === "npm") return "npm ci";
   if (packageManager === "yarn") return "yarn install --immutable";
   if (packageManager === "bun") return "bun install --frozen-lockfile";

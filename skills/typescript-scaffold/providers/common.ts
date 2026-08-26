@@ -13,7 +13,7 @@ function readme(
 ): string {
   const commands = scripts.map((script) => `${packageRun} ${script}`).join("\n");
   const license = hasLicense ? "\n\n## License\n\nSee [LICENSE](LICENSE)." : "";
-  return `# ${name}\n\n${description}\n\n## Requirements\n\nUse the Node.js version declared in \`.node-version\` and the package manager declared in \`package.json\`.\n\n## Setup\n\n\`\`\`sh\n${packageRun === "npm run" ? "npm install" : `${packageRun.split(" ")[0]} install`}\n\`\`\`\n\n## Development\n\n\`\`\`sh\n${commands}\n\`\`\`${presetGuide}\n\n## Stack\n\n${stack.map((item) => `- ${item}`).join("\n")}\n\n## Contributing\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md).${license}\n`;
+  return `# ${name}\n\n${description}\n\n## Requirements\n\nUse the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.\n\n## Setup\n\n\`\`\`sh\n${packageRun === "npm run" ? "npm install" : `${packageRun.split(" ")[0]} install`}\n\`\`\`\n\n## Development\n\n\`\`\`sh\n${commands}\n\`\`\`${presetGuide}\n\n## Stack\n\n${stack.map((item) => `- ${item}`).join("\n")}\n\n## Contributing\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md).${license}\n`;
 }
 
 function contributing(packageRun: string, scripts: string[], ciCommands: string[], hasLicense: boolean): string {
@@ -45,7 +45,7 @@ function presetGuide(
     return "\n\n## API\n\nThe starter service exposes `GET /health`.";
   }
   if (preset === "workspace") {
-    return "\n\n## Packages\n\nAdd workspace packages under `packages/`.";
+    return "\n\n## Packages\n\nThis scaffold creates an empty monorepo root so it does not prescribe one package stack for the whole workspace. Add each TypeScript package under `packages/` with its own package manifest and checks.";
   }
   return "\n\n## Usage\n\nImport public functions from the package entry point.";
 }
@@ -77,7 +77,7 @@ export const commonProvider: ProviderContribution = {
     const hasLicense = context.profile.license !== "none";
     const stack = [
       `Preset: ${context.profile.preset}`,
-      `Package manager: ${context.profile.package_manager}`,
+      `Package manager: ${context.profile.package_manager} ${context.profile.package_manager_version}`,
       `Module system: ${context.profile.module}`,
       `Build: ${context.profile.build}`,
       `Quality: ${context.profile.quality}`,
@@ -90,7 +90,7 @@ export const commonProvider: ProviderContribution = {
       `Publishing: ${context.profile.publishing}`,
       `Workspace: ${context.profile.workspace}`,
       `Framework: ${context.profile.framework}`,
-    ];
+    ].filter((item) => !item.endsWith(": none"));
     const files: Record<string, string> = {
       ".node-version": "24\n",
       "AGENTS.md": "# Repository instructions\n\n- Read the existing code, configuration, and tests before changing behavior.\n- Prefer a maintained package for solved, non-domain work. Check its licence, security record, types, runtime support, and scope before adding it.\n- Write custom infrastructure only when no suitable package meets the repository contract. Keep that code narrow and test it.\n- Keep environment-specific values in typed configuration rather than source code.\n- Add or update tests for changed behavior. Run the repository checks before reporting completion.\n- Keep comments short. Explain constraints or intent that the code cannot express.\n",

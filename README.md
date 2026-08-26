@@ -56,6 +56,8 @@ Use typescript-scaffold to create a Fastify service at ./catalog-api using the s
 
 See the [TypeScript scaffold guide](skills/typescript-scaffold/README.md) for presets, profiles, supported providers, and safety boundaries.
 
+The TypeScript scaffold requires Node.js 24. Its profile selects an exact package-manager version and may require an external command such as Gitleaks. The skill reports missing prerequisites before changing the requested target.
+
 ## Legacy commands
 
 The files under `commands/` remain available for Claude Code installations that use slash commands:

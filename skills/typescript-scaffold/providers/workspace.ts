@@ -14,7 +14,7 @@ export const workspaceProviders: ProviderContribution[] = [
     scripts: { build: "turbo build", test: "turbo test", lint: "turbo lint" },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".turbo/"],
-    files: () => ({
+    files: (context) => ({
       "turbo.json": json({
         $schema: "https://turbo.build/schema.json",
         tasks: {
@@ -23,6 +23,9 @@ export const workspaceProviders: ProviderContribution[] = [
           lint: { dependsOn: ["^lint"] },
         },
       }),
+      ...(context.profile.package_manager === "pnpm"
+        ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" }
+        : {}),
     }),
   },
   {
@@ -33,8 +36,11 @@ export const workspaceProviders: ProviderContribution[] = [
     scripts: { build: "nx run-many -t build", test: "nx run-many -t test", lint: "nx run-many -t lint" },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".nx/"],
-    files: () => ({
+    files: (context) => ({
       "nx.json": json({ namedInputs: { default: ["{projectRoot}/**/*"] } }),
+      ...(context.profile.package_manager === "pnpm"
+        ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" }
+        : {}),
     }),
   },
 ];
