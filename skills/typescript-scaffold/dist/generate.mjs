@@ -57539,13 +57539,19 @@ function tsconfig(module, nestjs) {
       exactOptionalPropertyTypes: true,
       declaration: true,
       sourceMap: true,
-      rootDir: "src",
-      outDir: "dist",
       skipLibCheck: true,
       types: ["node"],
       ...nestjs ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}
     },
-    include: ["src"]
+    include: ["src", "test", "*.config.*"]
+  });
+}
+function buildTsconfig() {
+  return json({
+    extends: "./tsconfig.json",
+    compilerOptions: { rootDir: "src", outDir: "dist" },
+    include: ["src"],
+    exclude: ["test", "**/*.test.ts", "**/*.test.tsx"]
   });
 }
 var buildProviders = [
@@ -57553,9 +57559,10 @@ var buildProviders = [
     id: "build-tsc",
     selected: (profile) => profile.build === "tsc" && profile.workspace === "none",
     devDependencies: { typescript: "^6.0.3", "@types/node": "^24.13.3" },
-    scripts: { build: "tsc -p tsconfig.json", typecheck: "tsc --noEmit" },
+    scripts: { build: "tsc -p tsconfig.build.json", typecheck: "tsc --noEmit" },
     files: (context) => ({
-      "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs")
+      "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.build.json": buildTsconfig()
     })
   },
   {
@@ -57577,6 +57584,7 @@ var buildProviders = [
     scripts: { build: "tsup", typecheck: "tsc --noEmit" },
     files: (context) => ({
       "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.build.json": buildTsconfig(),
       "tsup.config.ts": `import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -57845,7 +57853,7 @@ var MIT_default = {
 };
 
 // providers/common.ts
-function readme(name, description, packageRun, stack, scripts, hasLicense, presetGuide2) {
+function readme(name, description, packageRun, stack, scripts, hasLicense, presetGuide2, externalRequirements) {
   const commands = scripts.map((script) => `${packageRun} ${script}`).join("\n");
   const license = hasLicense ? "\n\n## License\n\nSee [LICENSE](LICENSE)." : "";
   return `# ${name}
@@ -57854,7 +57862,7 @@ ${description}
 
 ## Requirements
 
-Use the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.
+Use the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.${externalRequirements}
 
 ## Setup
 
@@ -57948,7 +57956,9 @@ var commonProvider = {
     ".env.*",
     "!.env.example",
     ".DS_Store",
-    "*.log"
+    "*.log",
+    "*.local",
+    "dist-ssr/"
   ],
   files(context) {
     const scripts = documentedScripts(context.scripts);
@@ -57967,7 +57977,9 @@ var commonProvider = {
       `CI: ${context.profile.ci}`,
       `Publishing: ${context.profile.publishing}`,
       `Workspace: ${context.profile.workspace}`,
-      `Framework: ${context.profile.framework}`
+      `Framework: ${context.profile.framework}`,
+      `Secret scanning: ${context.profile.secret_scan === "gitleaks" ? "Gitleaks" : "none"}`,
+      `Duplication: ${context.profile.duplication}`
     ].filter((item) => !item.endsWith(": none"));
     const files = {
       ".node-version": "24\n",
@@ -57980,7 +57992,8 @@ var commonProvider = {
         stack,
         scripts,
         hasLicense,
-        presetGuide(context.profile.preset, context.profile.framework, context.packageRun)
+        presetGuide(context.profile.preset, context.profile.framework, context.packageRun),
+        context.profile.secret_scan === "gitleaks" ? " Install Gitleaks before running the `secrets` check." : ""
       ),
       "CONTRIBUTING.md": contributing(
         context.packageRun,
@@ -58275,7 +58288,7 @@ var presetProviders = [
     packageJson: {
       exports: "./dist/index.js",
       types: "./dist/index.d.ts",
-      files: ["dist", "README.md", "LICENSE"]
+      files: ["dist", "README.md"]
     },
     files: () => ({
       "src/index.ts": "export function greet(name: string): string {\n  return `Hello, ${name}!`;\n}\n"
@@ -58319,7 +58332,7 @@ var publishingProviders = [
       }
     },
     packageJson: { private: false, publishConfig: { access: "public" } },
-    scripts: { prepublishOnly: "npm run build" }
+    scripts: (context) => ({ prepublishOnly: `${context.packageRun} build` })
   }
 ];
 
@@ -58377,7 +58390,7 @@ describe("greet", () => {
 var testProviders = [
   {
     id: "tests-vitest",
-    selected: (profile) => profile.tests === "vitest",
+    selected: (profile) => profile.tests === "vitest" && profile.framework === "none",
     devDependencies: { vitest: "^4.1.11", "@vitest/coverage-v8": "^4.1.11" },
     scripts: {
       test: "vitest run",
@@ -58387,6 +58400,27 @@ var testProviders = [
     files: ({ profile }) => ({
       "vitest.config.ts": 'import { defineConfig } from "vitest/config";\n\nexport default defineConfig({\n  test: { coverage: { provider: "v8", reporter: ["text", "json-summary"] } },\n});\n',
       ...profile.preset === "library" ? { "test/index.test.ts": sampleTest } : {}
+    })
+  },
+  {
+    id: "tests-vitest-vite",
+    selected: (profile) => profile.tests === "vitest" && profile.framework === "vite-react",
+    devDependencies: {
+      vitest: "^4.1.11",
+      "@vitest/coverage-v8": "^4.1.11",
+      "@testing-library/react": "^16.3.2",
+      "@testing-library/jest-dom": "^7.0.1",
+      jsdom: "^30.0.1"
+    },
+    scripts: {
+      test: "vitest run",
+      "test:watch": "vitest",
+      coverage: "vitest run --coverage"
+    },
+    files: () => ({
+      "vitest.config.ts": 'import react from "@vitejs/plugin-react";\nimport { defineConfig } from "vitest/config";\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment: "jsdom",\n    setupFiles: ["./src/test-setup.ts"],\n    coverage: { provider: "v8", reporter: ["text", "json-summary"] },\n  },\n});\n',
+      "src/test-setup.ts": 'import "@testing-library/jest-dom/vitest";\n',
+      "src/App.test.tsx": 'import { render } from "@testing-library/react";\nimport { describe, expect, test } from "vitest";\nimport App from "./App";\n\ndescribe("App", () => {\n  test("renders the application", () => {\n    const { container } = render(<App />);\n    expect(container.firstChild).not.toBeNull();\n  });\n});\n'
     })
   },
   {
@@ -58441,6 +58475,22 @@ var validationProviders = [
 ];
 
 // providers/workspace.ts
+var workspaceDevDependencies = {
+  typescript: "^6.0.3",
+  "@types/node": "^24.13.3"
+};
+var workspaceTsconfig = json({
+  compilerOptions: {
+    target: "ES2023",
+    module: "NodeNext",
+    moduleResolution: "NodeNext",
+    strict: true,
+    noUncheckedIndexedAccess: true,
+    exactOptionalPropertyTypes: true,
+    skipLibCheck: true,
+    types: ["node"]
+  }
+});
 function requireWorkspace(preset) {
   if (preset !== "workspace") throw new Error("Workspace providers require the workspace preset");
 }
@@ -58449,8 +58499,13 @@ var workspaceProviders = [
     id: "workspace-turbo",
     selected: (profile) => profile.workspace === "turbo",
     validate: ({ profile }) => requireWorkspace(profile.preset),
-    devDependencies: { turbo: "^2.10.12" },
-    scripts: { build: "turbo build", test: "turbo test", lint: "turbo lint" },
+    devDependencies: { turbo: "^2.10.12", ...workspaceDevDependencies },
+    scripts: {
+      build: "turbo build",
+      typecheck: "turbo typecheck",
+      test: "turbo test",
+      lint: "turbo lint"
+    },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".turbo/"],
     files: (context) => ({
@@ -58458,10 +58513,12 @@ var workspaceProviders = [
         $schema: "https://turbo.build/schema.json",
         tasks: {
           build: { dependsOn: ["^build"], outputs: ["dist/**"] },
+          typecheck: { dependsOn: ["^typecheck"] },
           test: { dependsOn: ["^build"], outputs: ["coverage/**"] },
           lint: { dependsOn: ["^lint"] }
         }
       }),
+      "tsconfig.base.json": workspaceTsconfig,
       ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" } : {}
     })
   },
@@ -58469,12 +58526,18 @@ var workspaceProviders = [
     id: "workspace-nx",
     selected: (profile) => profile.workspace === "nx",
     validate: ({ profile }) => requireWorkspace(profile.preset),
-    devDependencies: { nx: "^23.1.1" },
-    scripts: { build: "nx run-many -t build", test: "nx run-many -t test", lint: "nx run-many -t lint" },
+    devDependencies: { nx: "^23.1.1", ...workspaceDevDependencies },
+    scripts: {
+      build: "nx run-many -t build",
+      typecheck: "nx run-many -t typecheck",
+      test: "nx run-many -t test",
+      lint: "nx run-many -t lint"
+    },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".nx/"],
     files: (context) => ({
       "nx.json": json({ namedInputs: { default: ["{projectRoot}/**/*"] } }),
+      "tsconfig.base.json": workspaceTsconfig,
       ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" } : {}
     })
   }
@@ -58541,7 +58604,12 @@ function createGenerationPlan(profile, project) {
   let files = /* @__PURE__ */ new Map();
   for (const provider of selected) {
     mergePackageJson(packageJson, provider.packageJson, provider.id);
-    mergeStringRecord(packageJson.scripts, provider.scripts, "script", provider.id);
+    mergeStringRecord(
+      packageJson.scripts,
+      typeof provider.scripts === "function" ? provider.scripts(context) : provider.scripts,
+      "script",
+      provider.id
+    );
     mergeDependencies(packageJson.dependencies, provider.dependencies, context, provider.id);
     mergeDependencies(packageJson.devDependencies, provider.devDependencies, context, provider.id);
   }
@@ -58640,6 +58708,12 @@ function validateGlobalCompatibility(profile) {
   }
   if (profile.framework === "vite-react" && profile.module !== "esm") {
     throw new Error("The Vite React adapter requires ESM");
+  }
+  if (profile.framework === "vite-react" && profile.quality !== "none") {
+    throw new Error("The Vite React adapter requires quality set to none because Vite owns linting");
+  }
+  if (profile.framework === "vite-react" && !["none", "vitest"].includes(profile.tests)) {
+    throw new Error("The Vite React adapter supports Vitest or no test provider");
   }
   if (profile.http !== "fastify" && profile.runtime_validation !== "none") {
     throw new Error("Runtime validation integrations currently require Fastify");

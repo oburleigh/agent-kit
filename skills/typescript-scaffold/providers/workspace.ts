@@ -1,6 +1,24 @@
 import type { ProviderContribution } from "../src/types.js";
 import { json } from "./helpers.js";
 
+const workspaceDevDependencies = {
+  typescript: "^6.0.3",
+  "@types/node": "^24.13.3",
+};
+
+const workspaceTsconfig = json({
+  compilerOptions: {
+    target: "ES2023",
+    module: "NodeNext",
+    moduleResolution: "NodeNext",
+    strict: true,
+    noUncheckedIndexedAccess: true,
+    exactOptionalPropertyTypes: true,
+    skipLibCheck: true,
+    types: ["node"],
+  },
+});
+
 function requireWorkspace(preset: string): void {
   if (preset !== "workspace") throw new Error("Workspace providers require the workspace preset");
 }
@@ -10,8 +28,13 @@ export const workspaceProviders: ProviderContribution[] = [
     id: "workspace-turbo",
     selected: (profile) => profile.workspace === "turbo",
     validate: ({ profile }) => requireWorkspace(profile.preset),
-    devDependencies: { turbo: "^2.10.12" },
-    scripts: { build: "turbo build", test: "turbo test", lint: "turbo lint" },
+    devDependencies: { turbo: "^2.10.12", ...workspaceDevDependencies },
+    scripts: {
+      build: "turbo build",
+      typecheck: "turbo typecheck",
+      test: "turbo test",
+      lint: "turbo lint",
+    },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".turbo/"],
     files: (context) => ({
@@ -19,10 +42,12 @@ export const workspaceProviders: ProviderContribution[] = [
         $schema: "https://turbo.build/schema.json",
         tasks: {
           build: { dependsOn: ["^build"], outputs: ["dist/**"] },
+          typecheck: { dependsOn: ["^typecheck"] },
           test: { dependsOn: ["^build"], outputs: ["coverage/**"] },
           lint: { dependsOn: ["^lint"] },
         },
       }),
+      "tsconfig.base.json": workspaceTsconfig,
       ...(context.profile.package_manager === "pnpm"
         ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" }
         : {}),
@@ -32,12 +57,18 @@ export const workspaceProviders: ProviderContribution[] = [
     id: "workspace-nx",
     selected: (profile) => profile.workspace === "nx",
     validate: ({ profile }) => requireWorkspace(profile.preset),
-    devDependencies: { nx: "^23.1.1" },
-    scripts: { build: "nx run-many -t build", test: "nx run-many -t test", lint: "nx run-many -t lint" },
+    devDependencies: { nx: "^23.1.1", ...workspaceDevDependencies },
+    scripts: {
+      build: "nx run-many -t build",
+      typecheck: "nx run-many -t typecheck",
+      test: "nx run-many -t test",
+      lint: "nx run-many -t lint",
+    },
     packageJson: { workspaces: ["packages/*"] },
     ignore: [".nx/"],
     files: (context) => ({
       "nx.json": json({ namedInputs: { default: ["{projectRoot}/**/*"] } }),
+      "tsconfig.base.json": workspaceTsconfig,
       ...(context.profile.package_manager === "pnpm"
         ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" }
         : {}),

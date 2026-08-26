@@ -13,13 +13,20 @@ function tsconfig(module: "esm" | "commonjs", nestjs: boolean): string {
       exactOptionalPropertyTypes: true,
       declaration: true,
       sourceMap: true,
-      rootDir: "src",
-      outDir: "dist",
       skipLibCheck: true,
       types: ["node"],
       ...(nestjs ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}),
     },
+    include: ["src", "test", "*.config.*"],
+  });
+}
+
+function buildTsconfig(): string {
+  return json({
+    extends: "./tsconfig.json",
+    compilerOptions: { rootDir: "src", outDir: "dist" },
     include: ["src"],
+    exclude: ["test", "**/*.test.ts", "**/*.test.tsx"],
   });
 }
 
@@ -28,9 +35,10 @@ export const buildProviders: ProviderContribution[] = [
     id: "build-tsc",
     selected: (profile) => profile.build === "tsc" && profile.workspace === "none",
     devDependencies: { typescript: "^6.0.3", "@types/node": "^24.13.3" },
-    scripts: { build: "tsc -p tsconfig.json", typecheck: "tsc --noEmit" },
+    scripts: { build: "tsc -p tsconfig.build.json", typecheck: "tsc --noEmit" },
     files: (context) => ({
       "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.build.json": buildTsconfig(),
     }),
   },
   {
@@ -52,6 +60,7 @@ export const buildProviders: ProviderContribution[] = [
     scripts: { build: "tsup", typecheck: "tsc --noEmit" },
     files: (context) => ({
       "tsconfig.json": tsconfig(context.profile.module, context.profile.http === "nestjs"),
+      "tsconfig.build.json": buildTsconfig(),
       "tsup.config.ts": `import { defineConfig } from "tsup";\n\nexport default defineConfig({\n  entry: ["${entryPoint(context.profile.preset)}"],\n  format: ["${context.profile.module === "esm" ? "esm" : "cjs"}"],\n  dts: true,\n  sourcemap: true,\n  clean: true,\n});\n`,
     }),
   },

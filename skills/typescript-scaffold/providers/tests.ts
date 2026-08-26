@@ -5,7 +5,7 @@ const sampleTest = `import { describe, expect, test } from "vitest";\nimport { g
 export const testProviders: ProviderContribution[] = [
   {
     id: "tests-vitest",
-    selected: (profile) => profile.tests === "vitest",
+    selected: (profile) => profile.tests === "vitest" && profile.framework === "none",
     devDependencies: { vitest: "^4.1.11", "@vitest/coverage-v8": "^4.1.11" },
     scripts: {
       test: "vitest run",
@@ -15,6 +15,27 @@ export const testProviders: ProviderContribution[] = [
     files: ({ profile }) => ({
       "vitest.config.ts": "import { defineConfig } from \"vitest/config\";\n\nexport default defineConfig({\n  test: { coverage: { provider: \"v8\", reporter: [\"text\", \"json-summary\"] } },\n});\n",
       ...(profile.preset === "library" ? { "test/index.test.ts": sampleTest } : {}),
+    }),
+  },
+  {
+    id: "tests-vitest-vite",
+    selected: (profile) => profile.tests === "vitest" && profile.framework === "vite-react",
+    devDependencies: {
+      vitest: "^4.1.11",
+      "@vitest/coverage-v8": "^4.1.11",
+      "@testing-library/react": "^16.3.2",
+      "@testing-library/jest-dom": "^7.0.1",
+      jsdom: "^30.0.1",
+    },
+    scripts: {
+      test: "vitest run",
+      "test:watch": "vitest",
+      coverage: "vitest run --coverage",
+    },
+    files: () => ({
+      "vitest.config.ts": "import react from \"@vitejs/plugin-react\";\nimport { defineConfig } from \"vitest/config\";\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment: \"jsdom\",\n    setupFiles: [\"./src/test-setup.ts\"],\n    coverage: { provider: \"v8\", reporter: [\"text\", \"json-summary\"] },\n  },\n});\n",
+      "src/test-setup.ts": "import \"@testing-library/jest-dom/vitest\";\n",
+      "src/App.test.tsx": "import { render } from \"@testing-library/react\";\nimport { describe, expect, test } from \"vitest\";\nimport App from \"./App\";\n\ndescribe(\"App\", () => {\n  test(\"renders the application\", () => {\n    const { container } = render(<App />);\n    expect(container.firstChild).not.toBeNull();\n  });\n});\n",
     }),
   },
   {

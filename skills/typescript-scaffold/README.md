@@ -30,11 +30,11 @@ Use my service profile to create ./billing-api, but use Hono with runtime valida
 - `library`: pnpm, tsup, Biome, Vitest, Lefthook, GitHub Actions, and npm publishing
 - `service`: npm, Fastify, Zod, Pino, ESLint, Prettier, Vitest, Husky, and GitHub Actions
 - `cli`: Yarn, tsup, Biome, the Node.js test runner, and GitHub Actions
-- `workspace`: Bun, Turbo, and GitHub Actions, with an empty `packages/` directory ready for independently configured packages
+- `workspace`: Bun, Turbo, TypeScript base configuration, and GitHub Actions, with an empty `packages/` directory ready for independently configured packages
 
 Every selection can be changed in a profile. Supported providers are listed in [references/profiles.md](references/profiles.md).
 
-Vite React uses the `library` preset with `framework: vite-react`, `build: framework-owned`, `publishing: none`, and `module: esm`. The skill runs the official Vite generator, then applies the selected agent-kit files and checks.
+Vite React uses the `library` preset with `framework: vite-react`, `build: framework-owned`, `quality: none`, `publishing: none`, and `module: esm`. Vite owns linting for this profile. Select Vitest or no test provider. The skill runs the official Vite generator, then applies the selected agent-kit files and checks.
 
 ## Profiles
 
@@ -65,7 +65,7 @@ The scaffold creates new repositories only. It rejects existing targets, runs co
 The skill calls the bundled generator internally:
 
 ```sh
-node dist/generate.mjs --profile config/presets/service.yaml --target /tmp/example-service
+node dist/generate.mjs --profile config/presets/service.yaml --target /path/to/example-service
 ```
 
-Run `npm test`, `npm run typecheck`, and `npm run build` after changing the generator. The built file and JSON Schema are committed so users do not install dependencies inside the skill.
+Run `npm test`, `npm run typecheck`, and `npm run check:dist` after changing the generator. The built file and JSON Schema are committed so users do not install dependencies inside the skill.

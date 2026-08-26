@@ -25,7 +25,7 @@ Profiles are fully resolved YAML files with `schema_version: 1`. Change a persis
 | `framework` | `none`, `vite-react` |
 | `license` | `apache-2.0`, `mit`, `none` |
 
-The Vite React adapter requires the library preset, `framework-owned` build, ESM, and publishing set to `none`. HTTP providers require the service preset. Runtime validation and logging integrations currently require Fastify. NestJS tests require Vitest or Jest. The CLI, Fastify, and NestJS templates require ESM. Workspace providers require the workspace preset. npm publishing requires the library preset. Husky with lint-staged requires ESLint and Prettier. Lefthook requires at least one lint or test command.
+The Vite React adapter requires the library preset, `framework-owned` build, ESM, quality set to `none`, publishing set to `none`, and either Vitest or no test provider. Vite owns linting for this profile. HTTP providers require the service preset. Runtime validation and logging integrations currently require Fastify. NestJS tests require Vitest or Jest. The CLI, Fastify, and NestJS templates require ESM. Workspace providers require the workspace preset. npm publishing requires the library preset. Husky with lint-staged requires ESLint and Prettier. Lefthook requires at least one lint or test command.
 
 Use this combination for a Vite React application:
 
@@ -33,6 +33,8 @@ Use this combination for a Vite React application:
 preset: library
 module: esm
 build: framework-owned
+quality: none
+tests: vitest
 framework: vite-react
 publishing: none
 ```
@@ -53,7 +55,7 @@ Leave a field empty in a persistent profile when it changes between repositories
 
 ## Package versions and additions
 
-`package_versions` pins or ranges the packages owned by selected providers. A provider default is used when its package is absent. Add ordinary packages through:
+`package_versions` pins or ranges the packages owned by selected providers. A provider default is used when its package is absent. Use the `create-vite` key to select the official Vite generator version. Add ordinary packages through:
 
 ```yaml
 extra_dependencies:

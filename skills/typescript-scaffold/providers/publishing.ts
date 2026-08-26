@@ -10,6 +10,6 @@ export const publishingProviders: ProviderContribution[] = [
       }
     },
     packageJson: { private: false, publishConfig: { access: "public" } },
-    scripts: { prepublishOnly: "npm run build" },
+    scripts: (context) => ({ prepublishOnly: `${context.packageRun} build` }),
   },
 ];

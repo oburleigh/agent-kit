@@ -57,7 +57,12 @@ export function createGenerationPlan(
 
   for (const provider of selected) {
     mergePackageJson(packageJson, provider.packageJson, provider.id);
-    mergeStringRecord(packageJson.scripts, provider.scripts, "script", provider.id);
+    mergeStringRecord(
+      packageJson.scripts,
+      typeof provider.scripts === "function" ? provider.scripts(context) : provider.scripts,
+      "script",
+      provider.id,
+    );
     mergeDependencies(packageJson.dependencies, provider.dependencies, context, provider.id);
     mergeDependencies(packageJson.devDependencies, provider.devDependencies, context, provider.id);
   }
@@ -176,6 +181,12 @@ function validateGlobalCompatibility(profile: ScaffoldProfile): void {
   }
   if (profile.framework === "vite-react" && profile.module !== "esm") {
     throw new Error("The Vite React adapter requires ESM");
+  }
+  if (profile.framework === "vite-react" && profile.quality !== "none") {
+    throw new Error("The Vite React adapter requires quality set to none because Vite owns linting");
+  }
+  if (profile.framework === "vite-react" && !["none", "vitest"].includes(profile.tests)) {
+    throw new Error("The Vite React adapter supports Vitest or no test provider");
   }
   if (profile.http !== "fastify" && profile.runtime_validation !== "none") {
     throw new Error("Runtime validation integrations currently require Fastify");

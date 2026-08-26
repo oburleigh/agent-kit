@@ -72,6 +72,12 @@ describe("provider planning", () => {
     });
     expect(JSON.parse(plan.files.get("tsconfig.json")!)).toMatchObject({
       compilerOptions: { types: ["node"] },
+      include: ["src", "test", "*.config.*"],
+    });
+    expect(JSON.parse(plan.files.get("tsconfig.build.json")!)).toMatchObject({
+      extends: "./tsconfig.json",
+      compilerOptions: { rootDir: "src", outDir: "dist" },
+      include: ["src"],
     });
     expect(plan.files.get("README.md")).not.toContain("HTTP");
     expect(plan.packageJson.scripts).toMatchObject({
@@ -264,5 +270,6 @@ describe("provider planning", () => {
     expect(plan.files.has("LICENSE")).toBe(false);
     expect(plan.files.get("README.md")).not.toContain("[LICENSE](LICENSE)");
     expect(plan.files.get("CONTRIBUTING.md")).not.toContain("repository licence");
+    expect(plan.packageJson.files).not.toContain("LICENSE");
   });
 });

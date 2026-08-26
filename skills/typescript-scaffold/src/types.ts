@@ -46,7 +46,7 @@ export interface ProviderContribution {
   validate?(context: ProviderContext): void;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
-  scripts?: Record<string, string>;
+  scripts?: Record<string, string> | ((context: ProviderContext) => Record<string, string>);
   packageJson?: Record<string, unknown>;
   ignore?: string[];
   files?(context: ProviderContext): Record<string, string>;

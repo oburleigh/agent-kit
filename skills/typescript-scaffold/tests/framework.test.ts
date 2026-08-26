@@ -48,6 +48,39 @@ function viteProfile(): ScaffoldProfile {
 }
 
 describe("official framework delegation", () => {
+  test("rejects a Vite quality overlay before invoking the official generator", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-vite-quality-"));
+    const target = join(root, "web-app");
+    const profile = viteProfile();
+    profile.quality = "biome";
+    const commands: string[] = [];
+
+    await expect(generateRepository(profile, target, {
+      runCommand: async (command, args) => {
+        commands.push([command, ...args].join(" "));
+      },
+    })).rejects.toThrow(/Vite React.*quality.*none/i);
+    expect(commands).toEqual([]);
+  });
+
+  test("generates React-aware Vitest files instead of the library sample", () => {
+    const profile = viteProfile();
+    profile.tests = "vitest";
+    const plan = createGenerationPlan(profile, {
+      name: "web-app",
+      description: "Example web app.",
+      author: "",
+    });
+
+    expect(plan.files.has("test/index.test.ts")).toBe(false);
+    expect(plan.files.get("src/App.test.tsx")).toContain("render(<App />)");
+    expect(plan.files.get("vitest.config.ts")).toContain("@vitejs/plugin-react");
+    expect(plan.packageJson.devDependencies).toMatchObject({
+      "@testing-library/react": expect.any(String),
+      jsdom: expect.any(String),
+    });
+  });
+
   test("preserves Vite source and commands while applying the agent-kit overlay", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-kit-vite-"));
     const target = join(root, "web-app");
@@ -78,6 +111,7 @@ describe("official framework delegation", () => {
     expect(packageJson.scripts.dev).toBe("vite");
     expect(packageJson.dependencies.react).toBe("^19.0.0");
     expect(packageJson).not.toHaveProperty("exports");
+    expect(await readFile(join(target, ".gitignore"), "utf8")).toContain("dist-ssr/");
     expect(await readFile(join(target, "README.md"), "utf8")).toContain("# web-app");
   });
 

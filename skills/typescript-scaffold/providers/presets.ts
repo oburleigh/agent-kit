@@ -7,7 +7,7 @@ export const presetProviders: ProviderContribution[] = [
     packageJson: {
       exports: "./dist/index.js",
       types: "./dist/index.d.ts",
-      files: ["dist", "README.md", "LICENSE"],
+      files: ["dist", "README.md"],
     },
     files: () => ({
       "src/index.ts": "export function greet(name: string): string {\n  return `Hello, ${name}!`;\n}\n",

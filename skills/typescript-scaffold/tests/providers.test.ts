@@ -163,6 +163,12 @@ describe("first-class provider catalog", () => {
     expect(result.packageJson.devDependencies).toHaveProperty(workspace);
     expect(result.files.has(`${workspace}.json`)).toBe(true);
     expect(result.files.get(".gitignore")).toContain(`.${workspace}/`);
+    expect(result.packageJson.devDependencies).toHaveProperty("typescript");
+    expect(result.packageJson.scripts).toHaveProperty(
+      "typecheck",
+      workspace === "turbo" ? "turbo typecheck" : "nx run-many -t typecheck",
+    );
+    expect(result.files.has("tsconfig.base.json")).toBe(true);
   });
 
   test("writes pnpm workspace metadata for a pnpm monorepo", () => {
@@ -312,6 +318,21 @@ describe("first-class provider catalog", () => {
       { uses: "gitleaks/gitleaks-action@v2" },
     ]));
     expect(gitlab.secrets.image).toMatch(/^zricethezav\/gitleaks:v\d/);
+  });
+
+  test("documents the external Gitleaks prerequisite in generated repositories", () => {
+    const readme = plan({ secret_scan: "gitleaks" }).files.get("README.md");
+
+    expect(readme).toContain("Install Gitleaks");
+  });
+
+  test("uses the selected package manager for the publish lifecycle", () => {
+    expect(plan({
+      preset: "library",
+      http: "none",
+      publishing: "npm",
+      package_manager: "pnpm",
+    }).packageJson.scripts.prepublishOnly).toBe("pnpm build");
   });
 
   test("Lefthook includes only configured checks", () => {

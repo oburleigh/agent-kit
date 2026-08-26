@@ -10,10 +10,11 @@ function readme(
   scripts: string[],
   hasLicense: boolean,
   presetGuide: string,
+  externalRequirements: string,
 ): string {
   const commands = scripts.map((script) => `${packageRun} ${script}`).join("\n");
   const license = hasLicense ? "\n\n## License\n\nSee [LICENSE](LICENSE)." : "";
-  return `# ${name}\n\n${description}\n\n## Requirements\n\nUse the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.\n\n## Setup\n\n\`\`\`sh\n${packageRun === "npm run" ? "npm install" : `${packageRun.split(" ")[0]} install`}\n\`\`\`\n\n## Development\n\n\`\`\`sh\n${commands}\n\`\`\`${presetGuide}\n\n## Stack\n\n${stack.map((item) => `- ${item}`).join("\n")}\n\n## Contributing\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md).${license}\n`;
+  return `# ${name}\n\n${description}\n\n## Requirements\n\nUse the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.${externalRequirements}\n\n## Setup\n\n\`\`\`sh\n${packageRun === "npm run" ? "npm install" : `${packageRun.split(" ")[0]} install`}\n\`\`\`\n\n## Development\n\n\`\`\`sh\n${commands}\n\`\`\`${presetGuide}\n\n## Stack\n\n${stack.map((item) => `- ${item}`).join("\n")}\n\n## Contributing\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md).${license}\n`;
 }
 
 function contributing(packageRun: string, scripts: string[], ciCommands: string[], hasLicense: boolean): string {
@@ -71,6 +72,8 @@ export const commonProvider: ProviderContribution = {
     "!.env.example",
     ".DS_Store",
     "*.log",
+    "*.local",
+    "dist-ssr/",
   ],
   files(context) {
     const scripts = documentedScripts(context.scripts);
@@ -90,6 +93,8 @@ export const commonProvider: ProviderContribution = {
       `Publishing: ${context.profile.publishing}`,
       `Workspace: ${context.profile.workspace}`,
       `Framework: ${context.profile.framework}`,
+      `Secret scanning: ${context.profile.secret_scan === "gitleaks" ? "Gitleaks" : "none"}`,
+      `Duplication: ${context.profile.duplication}`,
     ].filter((item) => !item.endsWith(": none"));
     const files: Record<string, string> = {
       ".node-version": "24\n",
@@ -103,6 +108,9 @@ export const commonProvider: ProviderContribution = {
         scripts,
         hasLicense,
         presetGuide(context.profile.preset, context.profile.framework, context.packageRun),
+        context.profile.secret_scan === "gitleaks"
+          ? " Install Gitleaks before running the `secrets` check."
+          : "",
       ),
       "CONTRIBUTING.md": contributing(
         context.packageRun,

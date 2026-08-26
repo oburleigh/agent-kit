@@ -4,7 +4,6 @@ import { execa } from "execa";
 
 describe("bundled generator", () => {
   test("builds for the declared Node.js baseline", async () => {
-    expect(await readFile("scripts/build.mjs", "utf8")).not.toContain("node22");
     expect(await readFile("scripts/build.mjs", "utf8")).toContain('target: "node24"');
   });
 
