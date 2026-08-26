@@ -1,97 +1,74 @@
 # agent-kit
 
-Skills, commands, and resources that make AI coding agents better at their job. Works with Claude Code, Cursor, Copilot, Codex, and anything else that accepts structured instructions.
-
-This is a living collection. Each skill is tested in real workflows before it lands here.
-
----
-
-## Quick nav
-
-**[Skills](#skills)** | **[Commands](#commands)** | **[Installation](#installation)** | **[Learn more](#learn-more)** | **[Contributing](#contributing)**
-
----
+Reusable skills and agent instructions for software work. Each skill is self-contained under `skills/` and follows the Agent Skills format.
 
 ## Skills
 
-Skills are packaged instructions that teach an agent how to handle a specific task well. Not a one-line system prompt. Each one includes the reasoning behind its rules, reference material the agent can look up at runtime, and enough edge-case coverage that the agent doesn't fall apart when things get messy.
+| Skill | Use it for |
+| --- | --- |
+| [typescript-scaffold](skills/typescript-scaffold/) | Create a configurable TypeScript library, service, CLI, workspace, or Vite React repository. |
+| [create-skill](skills/create-skill/) | Create and check an Agent Skill. |
+| [git-commit](skills/git-commit/) | Review, stage, split, and commit Git changes with Conventional Commits. |
+| [humanize](skills/humanize/) | Remove common machine-written patterns from professional prose. |
 
-| Skill | Description |
-|-------|-------------|
-| [humanize](skills/humanize/) | Catches and rewrites AI writing patterns in docs, PRs, commit messages, and reports. Maintains a 60+ word blacklist, detects structural tics, and learns from corrections over time. |
-| [git-commit](skills/git-commit/) | Produces clean git commits following Conventional Commits v1.0.0. Checks branch protection, stages files selectively, splits unrelated changes into separate commits, and respects project-specific conventions. |
+## Install from one local checkout
 
-## Commands
+Clone the repository once:
 
-Slash commands and shorter task-specific instructions. This section is growing.
+```sh
+git clone https://github.com/orburleigh/agent-kit.git
+cd agent-kit
+```
 
-| Command | Description |
-|---------|-------------|
-| [nobs](commands/nobs.md) | Serious-mode prompt wrapper. Forces deep, critical thinking and cuts sycophancy, fabrication, and filler. Usage: `/nobs <your prompt>`. |
-| [interview](commands/interview.md) | Stress-tests thinking on a spec, proposal, or idea. Interviews to find gaps, ambiguities, contradictions, and unstated assumptions. Usage: `/interview <name> <topic or paste spec>`. |
-
----
-
-## Installation
+Symlink a skill into each agent that should use it. Replace `/path/to/agent-kit` with the absolute clone path.
 
 ### Claude Code
 
-**Option 1: Copy what you need**
-
-Skills (directory):
-
-```bash
-# Available in all your projects
-cp -r skills/humanize ~/.claude/skills/humanize
-
-# Or scoped to a single repo
-cp -r skills/humanize .claude/skills/humanize
+```sh
+mkdir -p ~/.claude/skills
+ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.claude/skills/typescript-scaffold
 ```
 
-Commands (single file):
+### Codex and other Agent Skills clients
 
-```bash
-# Available in all your projects
-cp commands/nobs.md ~/.claude/commands/nobs.md
-
-# Or scoped to a single repo
-cp commands/nobs.md .claude/commands/nobs.md
+```sh
+mkdir -p ~/.agents/skills
+ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.agents/skills/typescript-scaffold
 ```
 
-The agent picks skills up on the next conversation. Commands are invocable immediately as `/nobs <prompt>`. No config changes needed.
+The two links can point to the same checkout. Edit the repository copy and both agents see the change. Pull repository updates with:
 
-**Option 2: Clone the whole repo**
-
-```bash
-git clone https://github.com/orburleigh/agent-kit.git
+```sh
+git pull --ff-only
 ```
 
-Then copy what you need, or symlink individual skills into your `.claude/skills/` directory.
+The TypeScript scaffold stores user profiles outside the checkout, so updates do not replace them.
 
-### Other agents (Cursor, Copilot, Codex, etc.)
+To install a skill without a symlink, copy its complete directory into the matching skills directory.
 
-The `SKILL.md` file in each skill directory contains all the instructions. Adapt the content to whatever format your tool expects:
+## TypeScript scaffold example
 
-- **Cursor** - paste into a `.cursorrules` file or rule directory
-- **Copilot** - add to custom instructions
-- **Codex** - include in your agent's system context
+Ask your agent:
 
-The principles and reference files are agent-agnostic. Only the loading mechanism differs between tools.
+```text
+Use typescript-scaffold to create a Fastify service at ./catalog-api using the service profile. Keep Zod and Pino, but use GitLab CI for this repository.
+```
 
----
+See the [TypeScript scaffold guide](skills/typescript-scaffold/README.md) for presets, profiles, supported providers, and safety boundaries.
 
-## Learn more
+## Legacy commands
 
-New to skills? [agentskills.io](https://agentskills.io) covers the format, frontmatter, and authoring patterns in detail.
+The files under `commands/` remain available for Claude Code installations that use slash commands:
 
----
+- [nobs](commands/nobs.md)
+- [interview](commands/interview.md)
+
+Copy them into `~/.claude/commands/` when needed. New reusable workflows should be skills.
 
 ## Contributing
 
-If you've built a skill that solves a real problem, open a PR. Keep the directory structure consistent and include a README that explains what the skill does and why someone would want it.
+Keep each skill focused. Put agent instructions in `SKILL.md`, detailed reference material in `references/`, executable helpers in `scripts/`, and generated-output templates in `assets/`. Test behavior and scripts before opening a pull request.
 
----
+## Licence
 
-## License
-
-MIT
+[MIT](LICENSE)

@@ -1,0 +1,298 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "preset": {
+      "type": "string",
+      "enum": [
+        "library",
+        "service",
+        "cli",
+        "workspace"
+      ]
+    },
+    "package_manager": {
+      "type": "string",
+      "enum": [
+        "pnpm",
+        "npm",
+        "yarn",
+        "bun"
+      ]
+    },
+    "package_manager_version": {
+      "type": "string"
+    },
+    "module": {
+      "type": "string",
+      "enum": [
+        "esm",
+        "commonjs"
+      ]
+    },
+    "build": {
+      "type": "string",
+      "enum": [
+        "tsc",
+        "tsup",
+        "framework-owned"
+      ]
+    },
+    "quality": {
+      "type": "string",
+      "enum": [
+        "biome",
+        "eslint-prettier",
+        "none"
+      ]
+    },
+    "tests": {
+      "type": "string",
+      "enum": [
+        "vitest",
+        "node-test",
+        "jest",
+        "none"
+      ]
+    },
+    "runtime_validation": {
+      "type": "string",
+      "enum": [
+        "zod",
+        "valibot",
+        "none"
+      ]
+    },
+    "http": {
+      "type": "string",
+      "enum": [
+        "fastify",
+        "express",
+        "hono",
+        "nestjs",
+        "none"
+      ]
+    },
+    "logging": {
+      "type": "string",
+      "enum": [
+        "pino",
+        "winston",
+        "none"
+      ]
+    },
+    "hooks": {
+      "type": "string",
+      "enum": [
+        "lefthook",
+        "husky-lint-staged",
+        "none"
+      ]
+    },
+    "ci": {
+      "type": "string",
+      "enum": [
+        "github-actions",
+        "gitlab-ci",
+        "none"
+      ]
+    },
+    "publishing": {
+      "type": "string",
+      "enum": [
+        "npm",
+        "none"
+      ]
+    },
+    "workspace": {
+      "type": "string",
+      "enum": [
+        "none",
+        "turbo",
+        "nx"
+      ]
+    },
+    "secret_scan": {
+      "type": "string",
+      "enum": [
+        "gitleaks",
+        "none"
+      ]
+    },
+    "duplication": {
+      "type": "string",
+      "enum": [
+        "jscpd",
+        "none"
+      ]
+    },
+    "framework": {
+      "type": "string",
+      "enum": [
+        "none",
+        "vite-react"
+      ]
+    },
+    "license": {
+      "type": "string",
+      "enum": [
+        "apache-2.0",
+        "mit",
+        "none"
+      ]
+    },
+    "install_dependencies": {
+      "type": "boolean"
+    },
+    "run_quality_gates": {
+      "type": "boolean"
+    },
+    "initialize_git": {
+      "type": "boolean"
+    },
+    "default_author": {
+      "type": "string"
+    },
+    "project": {
+      "default": {
+        "name": "",
+        "description": "",
+        "author": "",
+        "repository_url": ""
+      },
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "repository_url": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "author",
+        "repository_url"
+      ],
+      "additionalProperties": false
+    },
+    "package_versions": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "extra_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "default": "latest",
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "extra_dev_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "default": "latest",
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "extra_scripts": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "ci_commands": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "name",
+    "preset",
+    "package_manager",
+    "package_manager_version",
+    "module",
+    "build",
+    "quality",
+    "tests",
+    "runtime_validation",
+    "http",
+    "logging",
+    "hooks",
+    "ci",
+    "publishing",
+    "workspace",
+    "secret_scan",
+    "duplication",
+    "framework",
+    "license",
+    "install_dependencies",
+    "run_quality_gates",
+    "initialize_git",
+    "default_author",
+    "project",
+    "package_versions",
+    "extra_dependencies",
+    "extra_dev_dependencies",
+    "extra_scripts",
+    "ci_commands"
+  ],
+  "additionalProperties": false
+}

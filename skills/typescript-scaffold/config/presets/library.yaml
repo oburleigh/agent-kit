@@ -1,0 +1,42 @@
+schema_version: 1
+name: library
+preset: library
+package_manager: pnpm
+package_manager_version: 11.24.0
+module: esm
+build: tsup
+quality: biome
+tests: vitest
+runtime_validation: none
+http: none
+logging: none
+hooks: lefthook
+ci: github-actions
+publishing: npm
+workspace: none
+secret_scan: gitleaks
+duplication: jscpd
+framework: none
+license: apache-2.0
+install_dependencies: true
+run_quality_gates: true
+initialize_git: true
+default_author: ""
+project:
+  name: ""
+  description: ""
+  author: ""
+  repository_url: ""
+package_versions:
+  typescript: ^5.9.3
+  "@types/node": ^24.13.3
+  tsup: ^8.5.1
+  "@biomejs/biome": ^2.5.10
+  vitest: ^4.1.11
+  "@vitest/coverage-v8": ^4.1.11
+  lefthook: ^2.1.10
+  jscpd: ^5.0.16
+extra_dependencies: []
+extra_dev_dependencies: []
+extra_scripts: {}
+ci_commands: []
