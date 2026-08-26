@@ -1,3 +1,4 @@
+import { defaultPackageVersions } from "../src/defaults.js";
 import type { ProviderContribution } from "../src/types.js";
 
 const sampleTest = `import { describe, expect, test } from "vitest";\nimport { greet } from "../src/index.js";\n\ndescribe("greet", () => {\n  test("greets a named user", () => {\n    expect(greet("Ada")).toBe("Hello, Ada!");\n  });\n});\n`;
@@ -6,7 +7,10 @@ export const testProviders: ProviderContribution[] = [
   {
     id: "tests-vitest",
     selected: (profile) => profile.tests === "vitest" && profile.framework === "none",
-    devDependencies: { vitest: "^4.1.11", "@vitest/coverage-v8": "^4.1.11" },
+    devDependencies: defaultPackageVersions(
+      ["vitest", "@vitest/coverage-v8"],
+      "tests-vitest",
+    ),
     scripts: {
       test: "vitest run",
       "test:watch": "vitest",
@@ -20,13 +24,13 @@ export const testProviders: ProviderContribution[] = [
   {
     id: "tests-vitest-vite",
     selected: (profile) => profile.tests === "vitest" && profile.framework === "vite-react",
-    devDependencies: {
-      vitest: "^4.1.11",
-      "@vitest/coverage-v8": "^4.1.11",
-      "@testing-library/react": "^16.3.2",
-      "@testing-library/jest-dom": "^7.0.1",
-      jsdom: "^30.0.1",
-    },
+    devDependencies: defaultPackageVersions([
+      "vitest",
+      "@vitest/coverage-v8",
+      "@testing-library/react",
+      "@testing-library/jest-dom",
+      "jsdom",
+    ], "tests-vitest-vite"),
     scripts: {
       test: "vitest run",
       "test:watch": "vitest",
@@ -59,12 +63,10 @@ export const testProviders: ProviderContribution[] = [
   {
     id: "tests-jest",
     selected: (profile) => profile.tests === "jest",
-    devDependencies: {
-      jest: "^30.2.0",
-      "@swc/core": "^1.16.1",
-      "@swc/jest": "^0.2.39",
-      "@types/jest": "^30.0.0",
-    },
+    devDependencies: defaultPackageVersions(
+      ["jest", "@swc/core", "@swc/jest", "@types/jest"],
+      "tests-jest",
+    ),
     scripts: { test: "jest", "test:watch": "jest --watch" },
     files: ({ profile }) => ({
       "jest.config.mjs": "export default {\n  testEnvironment: \"node\",\n  moduleNameMapper: { \"^(\\\\.{1,2}/.*)\\\\.js$\": \"$1\" },\n  transform: {\n    \"^.+\\\\.tsx?$\": [\"@swc/jest\", {\n      jsc: {\n        parser: { syntax: \"typescript\", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: \"commonjs\" },\n    }],\n  },\n};\n",

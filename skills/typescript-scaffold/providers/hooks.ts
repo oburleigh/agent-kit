@@ -1,4 +1,5 @@
 import type { ProviderContribution } from "../src/types.js";
+import { defaultPackageVersions } from "../src/defaults.js";
 import { stringify } from "yaml";
 import { json } from "./helpers.js";
 
@@ -11,7 +12,7 @@ export const hookProviders: ProviderContribution[] = [
         throw new Error("Lefthook requires a lint or test provider");
       }
     },
-    devDependencies: { lefthook: "^2.1.10" },
+    devDependencies: defaultPackageVersions(["lefthook"], "hooks-lefthook"),
     scripts: { prepare: "lefthook install" },
     files: (context) => {
       const commands = Object.fromEntries(
@@ -29,7 +30,10 @@ export const hookProviders: ProviderContribution[] = [
   {
     id: "hooks-husky-lint-staged",
     selected: (profile) => profile.hooks === "husky-lint-staged",
-    devDependencies: { husky: "^9.1.7", "lint-staged": "^17.3.0" },
+    devDependencies: defaultPackageVersions(
+      ["husky", "lint-staged"],
+      "hooks-husky-lint-staged",
+    ),
     scripts: { prepare: "husky" },
     files: (context) => ({
       ".husky/pre-commit": `${context.packageCommand} exec lint-staged\n`,

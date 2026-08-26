@@ -1,3 +1,4 @@
+import { defaultPackageVersions } from "../src/defaults.js";
 import type { ProviderContribution } from "../src/types.js";
 
 function requireService(preset: string): void {
@@ -11,15 +12,15 @@ export const httpProviders: ProviderContribution[] = [
     id: "http-fastify",
     selected: (profile) => profile.http === "fastify",
     validate: ({ profile }) => requireService(profile.preset),
-    dependencies: { fastify: "^5.12.1" },
+    dependencies: defaultPackageVersions(["fastify"], "http-fastify"),
     files: (context) => fastifyFiles(context),
   },
   {
     id: "http-express",
     selected: (profile) => profile.http === "express",
     validate: ({ profile }) => requireService(profile.preset),
-    dependencies: { express: "^5.2.1" },
-    devDependencies: { "@types/express": "^5.0.6" },
+    dependencies: defaultPackageVersions(["express"], "http-express"),
+    devDependencies: defaultPackageVersions(["@types/express"], "http-express"),
     files: (context) => withTest({
       "src/app.ts": "import express from \"express\";\n\nexport function buildApp() {\n  const app = express();\n  app.use(express.json());\n  app.get(\"/health\", (_request, response) => {\n    void _request;\n    return response.json({ status: \"ok\" });\n  });\n  return app;\n}\n",
       "src/server.ts": "import { buildApp } from \"./app.js\";\n\nconst port = Number(process.env.PORT ?? 3000);\nbuildApp().listen(port, () => console.log(`Listening on ${port}`));\n",
@@ -29,7 +30,7 @@ export const httpProviders: ProviderContribution[] = [
     id: "http-hono",
     selected: (profile) => profile.http === "hono",
     validate: ({ profile }) => requireService(profile.preset),
-    dependencies: { hono: "^4.12.8", "@hono/node-server": "^1.19.11" },
+    dependencies: defaultPackageVersions(["hono", "@hono/node-server"], "http-hono"),
     files: (context) => withTest({
       "src/app.ts": "import { Hono } from \"hono\";\n\nexport const app = new Hono();\napp.get(\"/health\", (context) => context.json({ status: \"ok\" }));\n",
       "src/server.ts": "import { serve } from \"@hono/node-server\";\nimport { app } from \"./app.js\";\n\nserve({ fetch: app.fetch, port: Number(process.env.PORT ?? 3000) });\n",
@@ -39,13 +40,13 @@ export const httpProviders: ProviderContribution[] = [
     id: "http-nestjs",
     selected: (profile) => profile.http === "nestjs",
     validate: ({ profile }) => requireService(profile.preset),
-    dependencies: {
-      "@nestjs/common": "^11.1.17",
-      "@nestjs/core": "^11.1.17",
-      "@nestjs/platform-express": "^11.1.17",
-      "reflect-metadata": "^0.2.2",
-      rxjs: "^7.8.2",
-    },
+    dependencies: defaultPackageVersions([
+      "@nestjs/common",
+      "@nestjs/core",
+      "@nestjs/platform-express",
+      "reflect-metadata",
+      "rxjs",
+    ], "http-nestjs"),
     files: (context) => withTest({
       "src/app.controller.ts": "import { Controller, Get } from \"@nestjs/common\";\n\n@Controller()\nexport class AppController {\n  @Get(\"health\")\n  health() {\n    return { status: \"ok\" };\n  }\n}\n",
       "src/app.module.ts": "import { Module } from \"@nestjs/common\";\nimport { AppController } from \"./app.controller.js\";\n\n@Module({ controllers: [AppController] })\nexport class AppModule {}\n",

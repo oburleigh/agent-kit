@@ -1,3 +1,5 @@
+import { minVersion } from "semver";
+import { defaultPackageVersion, defaultPackageVersions } from "../src/defaults.js";
 import type { ProviderContribution } from "../src/types.js";
 import { json } from "./helpers.js";
 
@@ -5,14 +7,17 @@ export const qualityProviders: ProviderContribution[] = [
   {
     id: "quality-biome",
     selected: (profile) => profile.quality === "biome",
-    devDependencies: { "@biomejs/biome": "^2.5.10" },
+    devDependencies: defaultPackageVersions(["@biomejs/biome"], "quality-biome"),
     scripts: {
       lint: "biome check .",
       format: "biome check --write .",
     },
-    files: () => ({
+    files: (context) => ({
       "biome.json": json({
-        $schema: "https://biomejs.dev/schemas/2.5.10/schema.json",
+        $schema: `https://biomejs.dev/schemas/${biomeVersion(context.versionFor(
+          "@biomejs/biome",
+          defaultPackageVersion("@biomejs/biome", "quality-biome"),
+        ))}/schema.json`,
         vcs: { enabled: true, clientKind: "git", useIgnoreFile: true },
         formatter: { enabled: true, indentStyle: "space" },
         linter: { enabled: true, rules: { preset: "recommended" } },
@@ -22,13 +27,13 @@ export const qualityProviders: ProviderContribution[] = [
   {
     id: "quality-eslint-prettier",
     selected: (profile) => profile.quality === "eslint-prettier",
-    devDependencies: {
-      eslint: "^10.9.1",
-      "@eslint/js": "^10.0.1",
-      "typescript-eslint": "^8.68.0",
-      prettier: "^3.9.6",
-      "eslint-config-prettier": "^10.1.8",
-    },
+    devDependencies: defaultPackageVersions([
+      "eslint",
+      "@eslint/js",
+      "typescript-eslint",
+      "prettier",
+      "eslint-config-prettier",
+    ], "quality-eslint-prettier"),
     scripts: {
       lint: "eslint .",
       format: "prettier --write .",
@@ -40,3 +45,9 @@ export const qualityProviders: ProviderContribution[] = [
     }),
   },
 ];
+
+function biomeVersion(range: string): string {
+  const version = minVersion(range);
+  if (version === null) throw new Error(`Invalid Biome version range: ${range}`);
+  return version.version;
+}

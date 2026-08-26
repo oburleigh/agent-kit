@@ -2,7 +2,6 @@ schema_version: 1
 name: service
 preset: service
 package_manager: npm
-package_manager_version: 11.17.0
 module: esm
 build: tsc
 quality: eslint-prettier
@@ -27,23 +26,6 @@ project:
   description: ""
   author: ""
   repository_url: ""
-package_versions:
-  typescript: ^6.0.3
-  "@types/node": ^24.13.3
-  tsx: ^4.21.0
-  fastify: ^5.12.1
-  pino: ^10.3.1
-  zod: ^4.4.3
-  eslint: ^10.9.1
-  "@eslint/js": ^10.0.1
-  typescript-eslint: ^8.68.0
-  prettier: ^3.9.6
-  eslint-config-prettier: ^10.1.8
-  vitest: ^4.1.11
-  "@vitest/coverage-v8": ^4.1.11
-  husky: ^9.1.7
-  lint-staged: ^17.3.0
-  jscpd: ^5.0.16
 extra_dependencies: []
 extra_dev_dependencies: []
 extra_scripts: {}

@@ -1,4 +1,5 @@
 import { stringify } from "yaml";
+import { scaffoldDefaults } from "../src/defaults.js";
 import type { ProviderContribution, ProviderContext } from "../src/types.js";
 
 export const ciProviders: ProviderContribution[] = [
@@ -20,7 +21,7 @@ export const ciProviders: ProviderContribution[] = [
 
 function githubWorkflow(context: ProviderContext): Record<string, unknown> {
   const testSteps = [
-    { uses: "actions/checkout@v4" },
+    { uses: scaffoldDefaults.ci.actions.checkout },
     ...githubPackageManagerSetup(
       context.profile.package_manager,
       context.profile.package_manager_version,
@@ -34,13 +35,13 @@ function githubWorkflow(context: ProviderContext): Record<string, unknown> {
     on: { pull_request: null, push: { branches: ["main"] } },
     permissions: { contents: "read" },
     jobs: {
-      test: { "runs-on": "ubuntu-latest", steps: testSteps },
+      test: { "runs-on": scaffoldDefaults.ci.runner, steps: testSteps },
       ...(context.profile.secret_scan === "gitleaks" ? {
         secrets: {
-          "runs-on": "ubuntu-latest",
+          "runs-on": scaffoldDefaults.ci.runner,
           steps: [
-            { uses: "actions/checkout@v4", with: { "fetch-depth": 0 } },
-            { uses: "gitleaks/gitleaks-action@v2" },
+            { uses: scaffoldDefaults.ci.actions.checkout, with: { "fetch-depth": 0 } },
+            { uses: scaffoldDefaults.ci.actions.gitleaks },
           ],
         },
       } : {}),
@@ -62,7 +63,7 @@ function gitlabWorkflow(context: ProviderContext): Record<string, unknown> {
     ...(context.profile.secret_scan === "gitleaks" ? {
       secrets: {
         stage: "test",
-        image: "zricethezav/gitleaks:v8.30.1",
+        image: scaffoldDefaults.ci.images.gitleaks,
         script: ["gitleaks dir . --no-banner"],
       },
     } : {}),
@@ -88,13 +89,13 @@ function githubPackageManagerSetup(
   hasLockfile: boolean,
 ): Array<Record<string, unknown>> {
   if (packageManager === "bun") {
-    return [{ uses: "oven-sh/setup-bun@v2", with: { "bun-version": version } }];
+    return [{ uses: scaffoldDefaults.ci.actions.setup_bun, with: { "bun-version": version } }];
   }
   if (packageManager === "pnpm") {
     return [
-      { uses: "pnpm/action-setup@v4", with: { version } },
+      { uses: scaffoldDefaults.ci.actions.setup_pnpm, with: { version } },
       {
-        uses: "actions/setup-node@v4",
+        uses: scaffoldDefaults.ci.actions.setup_node,
         with: {
           "node-version-file": ".node-version",
           ...(hasLockfile ? { cache: "pnpm" } : {}),
@@ -104,13 +105,16 @@ function githubPackageManagerSetup(
   }
   if (packageManager === "yarn") {
     return [
-      { uses: "actions/setup-node@v4", with: { "node-version-file": ".node-version" } },
+      {
+        uses: scaffoldDefaults.ci.actions.setup_node,
+        with: { "node-version-file": ".node-version" },
+      },
       { run: "corepack enable" },
       { run: `corepack install --global yarn@${version}` },
     ];
   }
   return [{
-    uses: "actions/setup-node@v4",
+    uses: scaffoldDefaults.ci.actions.setup_node,
     with: {
       "node-version-file": ".node-version",
       ...(hasLockfile ? { cache: "npm" } : {}),
@@ -119,7 +123,9 @@ function githubPackageManagerSetup(
 }
 
 function gitlabImage(packageManager: string, version: string): string {
-  return packageManager === "bun" ? `oven/bun:${version}` : "node:24";
+  return packageManager === "bun"
+    ? `${scaffoldDefaults.ci.images.bun}:${version}`
+    : `${scaffoldDefaults.ci.images.node}:${scaffoldDefaults.runtime.node_version}`;
 }
 
 function gitlabPackageManagerSetup(

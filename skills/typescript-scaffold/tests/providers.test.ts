@@ -145,6 +145,16 @@ describe("first-class provider catalog", () => {
     expect(result.files.get("src/logger.ts")).toContain("from \"winston\"");
   });
 
+  test("keeps the Biome schema aligned with a package version override", () => {
+    const result = plan({
+      quality: "biome",
+      package_versions: { "@biomejs/biome": "^3.1.2" },
+    });
+    const config = JSON.parse(result.files.get("biome.json")!);
+
+    expect(config.$schema).toBe("https://biomejs.dev/schemas/3.1.2/schema.json");
+  });
+
   test.each([
     ["node-test", "node --test --experimental-strip-types test/*.test.ts"],
     ["jest", "jest"],

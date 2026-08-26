@@ -1,4 +1,6 @@
-import { readFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { execa } from "execa";
 
@@ -8,7 +10,18 @@ describe("bundled generator", () => {
   });
 
   test("starts without requiring dependencies from the plugin cache", async () => {
-    const result = await execa(process.execPath, ["dist/generate.mjs"], { reject: false });
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-bundle-"));
+    const dist = join(root, "dist");
+    const config = join(root, "config");
+    await mkdir(dist);
+    await mkdir(config);
+    await copyFile("dist/generate.mjs", join(dist, "generate.mjs"));
+    await copyFile("config/defaults.yaml", join(config, "defaults.yaml"));
+
+    const result = await execa(process.execPath, [join(dist, "generate.mjs")], {
+      cwd: root,
+      reject: false,
+    });
 
     expect(result.exitCode).toBe(1);
     expect(result.stderr).toContain("--profile and --target are required");

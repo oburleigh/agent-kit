@@ -1,5 +1,6 @@
 import { readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { scaffoldDefaults } from "./defaults.js";
 import type { ScaffoldProfile } from "./schema.js";
 import type { CommandRunner } from "./generate.js";
 import type { GenerationPlan, PackageJsonPlan } from "./types.js";
@@ -17,7 +18,8 @@ export async function runOfficialFrameworkGenerator(
 ): Promise<void> {
   if (profile.framework === "none") return;
   if (profile.framework === "vite-react") {
-    const version = profile.package_versions["create-vite"] ?? "9.2.0";
+    const version = profile.package_versions["create-vite"]
+      ?? scaffoldDefaults.framework_generators["create-vite"];
     const [command, args] = viteGeneratorCommand(profile.package_manager, version);
     await runCommand(command, args, { cwd: target });
   }

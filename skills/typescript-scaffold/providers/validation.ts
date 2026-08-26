@@ -1,14 +1,15 @@
 import type { ProviderContribution } from "../src/types.js";
+import { defaultPackageVersions } from "../src/defaults.js";
 
 export const validationProviders: ProviderContribution[] = [
   {
     id: "validation-zod",
     selected: (profile) => profile.runtime_validation === "zod",
-    dependencies: { zod: "^4.4.3" },
+    dependencies: defaultPackageVersions(["zod"], "validation-zod"),
   },
   {
     id: "validation-valibot",
     selected: (profile) => profile.runtime_validation === "valibot",
-    dependencies: { valibot: "^1.2.0" },
+    dependencies: defaultPackageVersions(["valibot"], "validation-valibot"),
   },
 ];

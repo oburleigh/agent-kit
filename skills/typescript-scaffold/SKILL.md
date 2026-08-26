@@ -18,7 +18,7 @@ Require Node.js 24, Git when enabled, the selected package manager, and any exte
    - A path loads that YAML file.
    - `library`, `service`, `cli`, or `workspace` loads the matching persistent profile and creates it from the bundled preset when absent.
    - `<preset>:<profile-name>` creates or loads a named persistent profile.
-3. Read [references/profiles.md](references/profiles.md) when choosing providers or editing a profile.
+3. Read the provider fields, compatibility rules, and profile format in [README.md](README.md#provider-fields) when choosing providers or editing a profile.
 4. For per-run changes, copy the persistent profile to a temporary YAML file and change only the requested fields. Fill its `project` section. Never write per-run values back unless the user asks to save them.
 5. State the resolved stack in one short line. Do not narrate discarded options or scaffold history.
 6. Run:
@@ -33,6 +33,7 @@ Require Node.js 24, Git when enabled, the selected package manager, and any exte
 
 - Create only. Refuse any existing target and never regenerate or update an existing repository.
 - Never edit bundled presets. Persistent profiles live in the platform user-config directory and are created only when absent.
+- Treat `config/defaults.yaml` as release-owned fallback policy. Put user overrides in persistent profiles.
 - Keep profiles and temporary answers out of the generated repository.
 - Let first-class providers own their dependencies, files, scripts, hooks, documentation, and CI steps.
 - Extra dependencies and scripts are copied as configuration. Do not invent integration code for an unknown package.

@@ -1,5 +1,6 @@
 import { providerCatalog } from "../providers/catalog.js";
 import validatePackageName from "validate-npm-package-name";
+import { scaffoldDefaults } from "./defaults.js";
 import type { ScaffoldProfile } from "./schema.js";
 import type {
   GenerationPlan,
@@ -39,12 +40,12 @@ export function createGenerationPlan(
 
   const packageJson: PackageJsonPlan = {
     name: project.name,
-    version: "0.1.0",
+    version: scaffoldDefaults.generated_package_version,
     description: project.description,
     private: profile.publishing === "none",
     type: profile.module === "esm" ? "module" : "commonjs",
     packageManager: `${profile.package_manager}@${profile.package_manager_version}`,
-    engines: { node: ">=24" },
+    engines: { node: `>=${scaffoldDefaults.runtime.node_version}` },
     ...(profile.license === "none" ? {} : {
       license: profile.license === "apache-2.0" ? "Apache-2.0" : "MIT",
     }),

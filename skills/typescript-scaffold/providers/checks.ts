@@ -1,4 +1,5 @@
 import type { ProviderContribution } from "../src/types.js";
+import { defaultPackageVersions } from "../src/defaults.js";
 import { json } from "./helpers.js";
 
 export const checkProviders: ProviderContribution[] = [
@@ -13,7 +14,7 @@ export const checkProviders: ProviderContribution[] = [
   {
     id: "duplication-jscpd",
     selected: (profile) => profile.duplication === "jscpd",
-    devDependencies: { jscpd: "^5.0.16" },
+    devDependencies: defaultPackageVersions(["jscpd"], "duplication-jscpd"),
     scripts: { duplication: "jscpd src" },
     files: () => ({
       ".jscpd.json": json({ threshold: 0, reporters: ["console"], ignore: ["**/dist/**"] }),

@@ -1,4 +1,9 @@
 import type { ProviderContribution } from "../src/types.js";
+import {
+  defaultPackageVersion,
+  defaultPackageVersions,
+  scaffoldDefaults,
+} from "../src/defaults.js";
 import { intersects, validRange } from "semver";
 import { json } from "./helpers.js";
 
@@ -9,7 +14,7 @@ function tsconfig(
 ): string {
   return json({
     compilerOptions: {
-      target: "ES2023",
+      target: scaffoldDefaults.runtime.typescript_target,
       module: module === "esm" ? "NodeNext" : "CommonJS",
       moduleResolution: module === "esm" ? "NodeNext" : "Node",
       strict: true,
@@ -38,7 +43,7 @@ export const buildProviders: ProviderContribution[] = [
   {
     id: "build-tsc",
     selected: (profile) => profile.build === "tsc" && profile.workspace === "none",
-    devDependencies: { typescript: "^6.0.3", "@types/node": "^24.13.3" },
+    devDependencies: defaultPackageVersions(["typescript", "@types/node"], "build-tsc"),
     scripts: ({ profile }) => ({
       build: "tsc -p tsconfig.build.json",
       typecheck: profile.tests === "node-test"
@@ -58,18 +63,18 @@ export const buildProviders: ProviderContribution[] = [
     id: "build-tsup",
     selected: (profile) => profile.build === "tsup" && profile.workspace === "none",
     validate: ({ profile }) => {
-      const typescriptRange = profile.package_versions.typescript ?? "^5.9.3";
+      const typescriptDefault = defaultPackageVersion("typescript", "build-tsup");
+      const typescriptRange = profile.package_versions.typescript ?? typescriptDefault;
       if (!validRange(typescriptRange) || intersects(typescriptRange, ">=6.0.0")) {
         throw new Error(
-          "tsup declaration generation requires TypeScript 5.9. Use the tsc build provider for TypeScript 6 or set package_versions.typescript to ^5.9.3.",
+          `tsup declaration generation requires TypeScript 5.9. Use the tsc build provider for TypeScript 6 or set package_versions.typescript to ${typescriptDefault}.`,
         );
       }
     },
-    devDependencies: {
-      typescript: "^5.9.3",
-      "@types/node": "^24.13.3",
-      tsup: "^8.5.1",
-    },
+    devDependencies: defaultPackageVersions(
+      ["typescript", "@types/node", "tsup"],
+      "build-tsup",
+    ),
     scripts: ({ profile }) => ({
       build: "tsup",
       typecheck: profile.tests === "node-test"

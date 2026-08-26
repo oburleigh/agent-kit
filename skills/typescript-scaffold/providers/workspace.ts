@@ -1,14 +1,15 @@
+import { defaultPackageVersions, scaffoldDefaults } from "../src/defaults.js";
 import type { ProviderContribution } from "../src/types.js";
 import { json } from "./helpers.js";
 
-const workspaceDevDependencies = {
-  typescript: "^6.0.3",
-  "@types/node": "^24.13.3",
-};
+const workspaceDevDependencies = defaultPackageVersions(
+  ["typescript", "@types/node"],
+  "workspace",
+);
 
 const workspaceTsconfig = json({
   compilerOptions: {
-    target: "ES2023",
+    target: scaffoldDefaults.runtime.typescript_target,
     module: "NodeNext",
     moduleResolution: "NodeNext",
     strict: true,
@@ -28,7 +29,10 @@ export const workspaceProviders: ProviderContribution[] = [
     id: "workspace-turbo",
     selected: (profile) => profile.workspace === "turbo",
     validate: ({ profile }) => requireWorkspace(profile.preset),
-    devDependencies: { turbo: "^2.10.12", ...workspaceDevDependencies },
+    devDependencies: {
+      ...defaultPackageVersions(["turbo"], "workspace-turbo"),
+      ...workspaceDevDependencies,
+    },
     scripts: {
       build: "turbo build",
       typecheck: "turbo typecheck",
@@ -57,7 +61,10 @@ export const workspaceProviders: ProviderContribution[] = [
     id: "workspace-nx",
     selected: (profile) => profile.workspace === "nx",
     validate: ({ profile }) => requireWorkspace(profile.preset),
-    devDependencies: { nx: "^23.1.1", ...workspaceDevDependencies },
+    devDependencies: {
+      ...defaultPackageVersions(["nx"], "workspace-nx"),
+      ...workspaceDevDependencies,
+    },
     scripts: {
       build: "nx run-many -t build",
       typecheck: "nx run-many -t typecheck",

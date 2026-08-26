@@ -1,5 +1,6 @@
 import apacheLicense from "spdx-license-list/licenses/Apache-2.0.json" with { type: "json" };
 import mitLicense from "spdx-license-list/licenses/MIT.json" with { type: "json" };
+import { scaffoldDefaults } from "../src/defaults.js";
 import type { ProviderContribution } from "../src/types.js";
 
 function readme(
@@ -105,7 +106,7 @@ export const commonProvider: ProviderContribution = {
       `Duplication: ${context.profile.duplication}`,
     ].filter((item) => !item.endsWith(": none"));
     const files: Record<string, string> = {
-      ".node-version": "24\n",
+      ".node-version": `${scaffoldDefaults.runtime.node_version}\n`,
       "AGENTS.md": "# Repository instructions\n\n- Read the existing code, configuration, and tests before changing behavior.\n- Prefer a maintained package for solved, non-domain work. Check its licence, security record, types, runtime support, and scope before adding it.\n- Write custom infrastructure only when no suitable package meets the repository contract. Keep that code narrow and test it.\n- Keep environment-specific values in typed configuration rather than source code.\n- Add or update tests for changed behavior. Run the repository checks before reporting completion.\n- Keep comments short. Explain constraints or intent that the code cannot express.\n",
       "CLAUDE.md": "# Claude Code\n\nRead and follow [AGENTS.md](AGENTS.md) before making changes.\n",
       "README.md": readme(

@@ -2,7 +2,6 @@ schema_version: 1
 name: cli
 preset: cli
 package_manager: yarn
-package_manager_version: 4.18.0
 module: esm
 build: tsup
 quality: biome
@@ -27,12 +26,6 @@ project:
   description: ""
   author: ""
   repository_url: ""
-package_versions:
-  typescript: ^5.9.3
-  "@types/node": ^24.13.3
-  tsup: ^8.5.1
-  tsx: ^4.21.0
-  "@biomejs/biome": ^2.5.10
 extra_dependencies: []
 extra_dev_dependencies: []
 extra_scripts: {}

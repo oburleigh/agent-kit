@@ -1,7 +1,7 @@
 import { mkdtemp, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { stringify } from "yaml";
+import { parse, stringify } from "yaml";
 import { describe, expect, test } from "vitest";
 import { loadProfileText } from "../src/profile.js";
 
@@ -22,6 +22,18 @@ describe("bundled presets", () => {
       expect(profile.package_versions).toBeTypeOf("object");
     },
   );
+
+  test("materializes package-manager policy without version pins in a preset template", async () => {
+    const template = parse(await readFile("config/presets/service.yaml", "utf8"));
+    delete template.package_manager_version;
+    delete template.package_versions;
+    const { loadBundledPresetText } = await loadProfilesModule();
+
+    const profile = loadBundledPresetText(stringify(template));
+
+    expect(profile.package_manager_version).toBe("11.17.0");
+    expect(profile.package_versions).toEqual({});
+  });
 
   test("rejects a package manager major without an exact version", async () => {
     const { loadBundledPreset } = await loadProfilesModule();
