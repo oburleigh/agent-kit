@@ -38,23 +38,23 @@ Profiles expose every selection below, subject to the compatibility rules.
 
 | Field | Choices |
 | --- | --- |
-| `preset` | `library`, `service`, `cli`, `workspace` |
-| `package_manager` | `pnpm`, `npm`, `yarn`, `bun` |
+| `preset` | `cli`, `library`, `service`, `workspace` |
+| `package_manager` | `bun`, `npm`, `pnpm`, `yarn` |
 | `package_manager_version` | Exact semantic version of the selected package manager |
-| `module` | `esm`, `commonjs` |
-| `build` | `tsc`, `tsup`, `framework-owned` |
+| `module` | `commonjs`, `esm` |
+| `build` | `framework-owned`, `tsc`, `tsup` |
 | `quality` | `biome`, `eslint-prettier`, `none` |
-| `tests` | `vitest`, `node-test`, `jest`, `none` |
-| `runtime_validation` | `zod`, `valibot`, `none` |
-| `http` | `fastify`, `express`, `hono`, `nestjs`, `none` |
+| `tests` | `jest`, `node-test`, `vitest`, `none` |
+| `runtime_validation` | `valibot`, `zod`, `none` |
+| `http` | `express`, `fastify`, `hono`, `nestjs`, `none` |
 | `logging` | `pino`, `winston`, `none` |
-| `hooks` | `lefthook`, `husky-lint-staged`, `none` |
+| `hooks` | `husky-lint-staged`, `lefthook`, `none` |
 | `ci` | `github-actions`, `gitlab-ci`, `none` |
 | `publishing` | `npm`, `none` |
-| `workspace` | `none`, `turbo`, `nx` |
+| `workspace` | `nx`, `turbo`, `none` |
 | `secret_scan` | `gitleaks`, `none` |
 | `duplication` | `jscpd`, `none` |
-| `framework` | `none`, `vite-react` |
+| `framework` | `vite-react`, `none` |
 | `license` | `apache-2.0`, `mit`, `none` |
 
 ### Compatibility
