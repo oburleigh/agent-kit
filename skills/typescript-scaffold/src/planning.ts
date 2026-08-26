@@ -164,6 +164,9 @@ function validateGlobalCompatibility(profile: ScaffoldProfile): void {
   if (profile.http !== "none" && profile.preset !== "service") {
     throw new Error("HTTP providers require the service preset");
   }
+  if (profile.preset === "service" && profile.http === "none") {
+    throw new Error("The service preset requires an HTTP provider");
+  }
   if (profile.workspace !== "none" && profile.preset !== "workspace") {
     throw new Error("Workspace providers require the workspace preset");
   }

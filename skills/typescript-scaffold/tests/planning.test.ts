@@ -201,6 +201,21 @@ describe("provider planning", () => {
     })).toThrow(/HTTP providers require the service preset/);
   });
 
+  test("requires an HTTP provider for the service preset", async () => {
+    const { createGenerationPlan } = await loadPlanner();
+
+    expect(() => createGenerationPlan(profile({
+      preset: "service",
+      http: "none",
+      build: "tsc",
+      publishing: "none",
+    }), {
+      name: "empty-service",
+      description: "Invalid empty service.",
+      author: "",
+    })).toThrow(/service preset requires an HTTP provider/i);
+  });
+
   test("rejects quality gates when dependencies are not installed", async () => {
     const { createGenerationPlan } = await loadPlanner();
 

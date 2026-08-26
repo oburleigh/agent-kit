@@ -25,7 +25,7 @@ Profiles are fully resolved YAML files with `schema_version: 1`. Change a persis
 | `framework` | `none`, `vite-react` |
 | `license` | `apache-2.0`, `mit`, `none` |
 
-The Vite React adapter requires the library preset, `framework-owned` build, ESM, quality set to `none`, publishing set to `none`, and either Vitest or no test provider. Vite owns linting for this profile. HTTP providers require the service preset. Runtime validation and logging integrations currently require Fastify. NestJS requires the tsc build provider and either Vitest or Jest. The CLI, Fastify, and NestJS templates require ESM. Workspace providers require the workspace preset. npm publishing requires the library preset. Husky with lint-staged requires ESLint and Prettier. Lefthook requires at least one lint or test command.
+The Vite React adapter requires the library preset, `framework-owned` build, ESM, quality set to `none`, publishing set to `none`, and either Vitest or no test provider. Vite owns linting for this profile. HTTP providers require the service preset, and the service preset requires an HTTP provider. Runtime validation and logging integrations currently require Fastify. NestJS requires the tsc build provider and either Vitest or Jest. The CLI, Fastify, and NestJS templates require ESM. Workspace providers require the workspace preset. npm publishing requires the library preset. Husky with lint-staged requires ESLint and Prettier. Lefthook requires at least one lint or test command.
 
 Use this combination for a Vite React application:
 
