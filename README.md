@@ -16,7 +16,7 @@ Reusable skills and agent instructions for software work. Each skill is self-con
 Clone the repository once:
 
 ```sh
-git clone https://github.com/orburleigh/agent-kit.git
+git clone https://github.com/oburleigh/agent-kit.git
 cd agent-kit
 ```
 
