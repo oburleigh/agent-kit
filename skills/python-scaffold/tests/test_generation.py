@@ -434,3 +434,121 @@ def test_generated_standards_are_package_first_and_reject_commentary_history(
     assert "maintained package" in standards
     assert "why the code exists" in agents
     assert "change history" in agents
+
+
+@pytest.mark.parametrize("preset", ["cli", "library", "service", "workspace"])
+def test_default_preset_passes_selected_gates(tmp_path: Path, preset: str) -> None:
+    raw = load_bundled_preset(preset)
+    raw["providers"]["secret_scan"] = "none"
+    raw["execution"]["initialize_git"] = False
+
+    generate_repository(raw, tmp_path / preset)
+
+
+def test_click_setuptools_pyright_stack_passes_selected_gates(tmp_path: Path) -> None:
+    raw = load_bundled_preset("cli")
+    raw["providers"].update(
+        {
+            "build_backend": "setuptools",
+            "cli": "click",
+            "hooks": "lefthook",
+            "secret_scan": "none",
+            "type_checker": "pyright",
+        }
+    )
+    raw["execution"]["initialize_git"] = False
+
+    target = tmp_path / "click-cli"
+    generate_repository(raw, target)
+
+    assert (target / ".git").exists() is False
+    assert (target / "lefthook.yml").is_file()
+
+
+def test_flask_hatchling_mypy_unittest_stack_passes_selected_gates(
+    tmp_path: Path,
+) -> None:
+    raw = load_bundled_preset("service")
+    raw["providers"].update(
+        {
+            "build_backend": "hatchling",
+            "ci": "gitlab-ci",
+            "hooks": "lefthook",
+            "http": "flask",
+            "logging": "standard-library",
+            "runtime_validation": "none",
+            "secret_scan": "none",
+            "tests": "unittest",
+            "type_checker": "mypy",
+        }
+    )
+    raw["execution"]["initialize_git"] = False
+
+    target = tmp_path / "flask-service"
+    generate_repository(raw, target)
+
+    assert (target / ".gitlab-ci.yml").is_file()
+
+
+def test_generated_gates_reject_lint_type_coverage_commit_and_pre_push_mutations(
+    tmp_path: Path,
+) -> None:
+    raw = load_bundled_preset("library")
+    raw["providers"]["secret_scan"] = "none"
+    raw["execution"]["run_quality_gates"] = False
+    target = tmp_path / "mutation-probes"
+    generate_repository(raw, target)
+
+    module = target / "src/python_library"
+
+    lint_violation = module / "lint_violation.py"
+    lint_violation.write_text("import os\n")
+    _assert_command_fails(target, "uv", "run", "ruff", "check", ".")
+    lint_violation.unlink()
+
+    type_violation = module / "type_violation.py"
+    type_violation.write_text('value: int = "wrong"\n')
+    _assert_command_fails(target, "uv", "run", "ty", "check", "src", "tests")
+    type_violation.unlink()
+
+    uncovered = module / "uncovered.py"
+    uncovered.write_text(
+        "def branch(value: bool) -> int:\n    if value:\n        return 1\n    return 0\n"
+    )
+    _assert_command_fails(target, "uv", "run", "pytest")
+    uncovered.unlink()
+
+    message = target / "bad-message.txt"
+    message.write_text("not a conventional commit\n")
+    _assert_command_fails(
+        target,
+        "uv",
+        "run",
+        "pre-commit",
+        "run",
+        "commitizen",
+        "--hook-stage",
+        "commit-msg",
+        "--commit-msg-filename",
+        str(message),
+    )
+
+    test_file = target / "tests/unit/test_library.py"
+    original_test = test_file.read_text()
+    test_file.write_text(original_test.replace('"Hello, Ada!"', '"Wrong"'))
+    _assert_command_fails(
+        target,
+        "uv",
+        "run",
+        "pre-commit",
+        "run",
+        "tests",
+        "--hook-stage",
+        "pre-push",
+        "--all-files",
+    )
+
+
+def _assert_command_fails(target: Path, *command: str) -> None:
+    result = subprocess.run(command, cwd=target, check=False, capture_output=True, text=True)
+    assert result.returncode != 0, result.stdout + result.stderr

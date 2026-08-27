@@ -17,7 +17,15 @@ def read_json(path: Path) -> dict:
 
 
 def skill_files(root: Path) -> dict[str, bytes]:
-    ignored = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
+    ignored = {
+        ".coverage",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".venv",
+        "__pycache__",
+        "htmlcov",
+        "node_modules",
+    }
     return {
         path.relative_to(root).as_posix(): path.read_bytes()
         for path in root.rglob("*")
