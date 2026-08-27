@@ -2,7 +2,7 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/agent-kit-logo-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="assets/agent-kit-logo-light.png">
-    <img src="assets/agent-kit-logo-light.png" alt="Agent Kit logo" width="768" height="512">
+    <img src="assets/agent-kit-logo-light.png" alt="Agent Kit logo" width="384" height="256">
   </picture>
 </p>
 
