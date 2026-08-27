@@ -21,11 +21,7 @@ The skill also maintains a corrections log. When a user rewrites something the s
 
 ## Installation
 
-Copy the `humanize` directory into your agent's skills folder. For Claude Code:
-
-```
-~/.claude/skills/humanize/
-```
+Install the complete Agent Kit plugin or the standalone `humanize` plugin. See the [Agent Kit installation guide](../../../../README.md) for Codex and Claude Code commands.
 
 The skill expects this structure:
 

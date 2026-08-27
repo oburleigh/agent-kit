@@ -27,7 +27,7 @@ When no project conventions exist, it falls back to standard Conventional Commit
 ## What it does NOT do
 
 - Push to remote (the user must explicitly ask)
-- Run the project's full review chain (e.g. Codex reviews). Those are prerequisites, not part of this skill.
+- Run the project's full review chain. Code reviews and other release gates are prerequisites, not part of this skill.
 - Create branches or worktrees (use other tools for that)
 
 ## Trigger phrases
@@ -35,7 +35,6 @@ When no project conventions exist, it falls back to standard Conventional Commit
 - "commit this work"
 - "create a commit"
 - "split these changes into commits"
-- `/commit`
 
 ## References
 

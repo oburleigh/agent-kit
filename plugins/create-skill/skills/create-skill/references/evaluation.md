@@ -5,7 +5,7 @@ Distilled from https://agentskills.io/skill-creation/optimizing-descriptions.md 
 ## Quick verification (minimum bar for every new skill)
 
 1. **Structure**: frontmatter passes the constraints in references/spec.md (`skills-ref validate ./skill-name` if available).
-2. **Trigger sanity check**: try 3-5 realistic prompts manually, mixing should-trigger and should-not-trigger. In Claude Code, dispatch a fresh subagent per prompt so no conversation state leaks.
+2. **Trigger sanity check**: try 3-5 realistic prompts manually, mixing should-trigger and should-not-trigger. Use a fresh session or isolated agent context for each prompt so conversation state does not leak between cases.
 3. **Output sanity check**: run one real task with the skill in a clean context and read the execution trace, not just the output. Vague instructions show up as the agent trying several approaches; inapplicable instructions show up as the agent following them anyway.
 
 ## Trigger evals (when reliability matters)

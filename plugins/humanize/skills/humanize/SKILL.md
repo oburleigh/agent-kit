@@ -127,7 +127,7 @@ When the user corrects writing that this skill produced (rewrites a sentence, fl
 Format each entry as:
 ```
 ## YYYY-MM-DD: Short description
-**Before:** What Claude wrote
+**Before:** What the agent wrote
 **After:** What the user preferred
 **Pattern:** The general rule to extract
 ```

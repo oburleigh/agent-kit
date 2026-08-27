@@ -14,7 +14,7 @@ No skill files are written until the interview is done and the user has approved
 ## Workflow
 
 - [ ] 1. Restate the request in one line. Read references/spec.md.
-- [ ] 2. Collision check: list `~/.claude/skills/` and the project's `.claude/skills/`, and scan every loaded skill, plugins and built-ins included. Overlap means the same job, meaning the two skills would produce the same deliverable, not the same moment in a workflow. Clear overlap: propose extending the existing skill and stop. Unclear: raise it as the first interview question rather than deciding silently.
+- [ ] 2. Collision check: inspect the active skill catalog and the runtime's user, project, and plugin skill locations. Include built-ins and loaded plugins. Do not assume a particular host or filesystem path. Overlap means the same job, meaning the two skills would produce the same deliverable, not the same moment in a workflow. Clear overlap: propose extending the existing skill and stop. Unclear: raise it as the first interview question rather than deciding silently.
 - [ ] 3. Interview (below).
 - [ ] 4. Present the spec summary (template below). Wait for explicit approval.
 - [ ] 5. Build, following references/spec.md and references/best-practices.md.
@@ -42,7 +42,7 @@ Areas, in order:
 5. **Inputs and outputs.** Formats in, format out. Ask for one concrete example of good output to turn into a template.
 6. **Numbers and facts.** Thresholds, limits, versions, prices, paths. Each one comes from the user or a named source. None are invented.
 7. **Scripts.** Deterministic steps worth bundling as tested scripts. Dependencies and environment constraints.
-8. **Boundaries and placement.** What the skill does not do. Personal (`~/.claude/skills/`) or project (`<repo>/.claude/skills/`)?
+8. **Boundaries and placement.** What the skill does not do. Is it personal, project-level, or a distributable plugin? Which agent runtimes must support it?
 
 ## Spec summary template
 
@@ -62,7 +62,7 @@ Assumptions: <every decision made without an explicit answer>
 - Structure and hard constraints: references/spec.md. Non-negotiable: name matches directory and the naming rules; description under 1024 characters, triggering conditions only, never a workflow summary; SKILL.md under 500 lines; heavy material moved to references/ with an explicit load trigger ("read X when Y").
 - Content: references/best-practices.md. Only what the agent would get wrong without it, defaults not menus, procedures over declarations, gotchas inline, templates for output formats.
 - Write for a stranger: the skill must work for an agent with no access to this conversation.
-- Create the skill directory and its files only. Do not register, mention or trigger the skill from CLAUDE.md; the frontmatter description is the whole invocation mechanism.
+- Create only the requested skill files. Do not register or trigger the skill from repository instruction files. Frontmatter and package manifests own discovery.
 - Other hard-trigger skills still apply at build time: if a prose-hygiene skill such as humanize is loaded, invoke it before writing the new SKILL.md.
 
 ## Validation checklist

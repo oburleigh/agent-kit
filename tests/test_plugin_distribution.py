@@ -117,6 +117,39 @@ class PluginDistributionTest(unittest.TestCase):
             self.assertRegex(description, r'description:\s+["\']?Use when')
             self.assertNotIn("disable-model-invocation", description)
 
+    def test_published_skill_guidance_is_runtime_neutral(self) -> None:
+        forbidden_shared_phrases = (
+            "Claude Code",
+            "Codex",
+            "~/.claude/",
+            "<repo>/.claude/",
+            "~/.codex/",
+            "<repo>/.codex/",
+            "CLAUDE_SKILL_DIR",
+            "CODEX_HOME",
+            "What Claude wrote",
+        )
+
+        for plugin in self.codex["plugins"]:
+            if plugin["name"] == "agent-kit":
+                continue
+
+            name = plugin["name"]
+            skill_root = ROOT / "plugins" / name / "skills" / name
+            shared_guidance = [skill_root / "SKILL.md", *(skill_root / "references").glob("*.md")]
+
+            for path in shared_guidance:
+                content = path.read_text(encoding="utf-8")
+                for phrase in forbidden_shared_phrases:
+                    self.assertNotIn(phrase, content, f"{path} assumes one runtime")
+
+            readme = (skill_root / "README.md").read_text(encoding="utf-8")
+            self.assertEqual(
+                "Claude Code" in readme,
+                "Codex" in readme,
+                f"{skill_root / 'README.md'} documents only one runtime",
+            )
+
     def test_plugins_do_not_package_legacy_commands(self) -> None:
         for plugin_root in (ROOT / "plugins").iterdir():
             if plugin_root.is_dir():

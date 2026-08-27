@@ -1,6 +1,6 @@
 # create-skill
 
-Builds new Claude skills through an interview instead of guesswork. Invoke with `/create-skill` or by asking for a skill in plain language ("create me a skill that...", "turn this workflow into a command").
+Builds Agent Skills through an interview instead of guesswork. Invoke it explicitly through the installed runtime or ask for a skill in plain language ("create me a skill that...", "turn this workflow into a command").
 
 ## Why it exists
 

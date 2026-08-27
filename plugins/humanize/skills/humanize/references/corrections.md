@@ -8,7 +8,7 @@ When this file has more than 15 entries, it should be pruned: promote repeated p
 
 <!-- Append new corrections below this line. Format:
 ## YYYY-MM-DD: Short description
-**Before:** What Claude wrote
+**Before:** What the agent wrote
 **After:** What the user preferred
 **Pattern:** The general rule to extract
 -->
