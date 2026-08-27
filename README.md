@@ -1,4 +1,10 @@
-# agent-kit
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/agent-kit-logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/agent-kit-logo-light.png">
+    <img src="assets/agent-kit-logo-light.png" alt="Agent Kit logo" width="768" height="512">
+  </picture>
+</p>
 
 Reusable skills and agent instructions for software work. Each skill is self-contained under `skills/` and follows the Agent Skills format.
 
