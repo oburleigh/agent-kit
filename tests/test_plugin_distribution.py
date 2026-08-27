@@ -1,4 +1,5 @@
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -82,6 +83,19 @@ class PluginDistributionTest(unittest.TestCase):
 
         self.assertIn('- ".codex-plugin/**"', workflow)
         self.assertIn('- "README.md"', workflow)
+
+    def test_internal_planning_artifacts_are_not_published(self) -> None:
+        gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+        tracked = subprocess.run(
+            ["git", "ls-files", "docs/superpowers"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+
+        self.assertIn("docs/superpowers/", gitignore.splitlines())
+        self.assertEqual(tracked, "")
 
     def test_published_skills_have_codex_interface_metadata(self) -> None:
         skill_names = {
