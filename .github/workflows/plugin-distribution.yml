@@ -7,6 +7,8 @@ on:
       - ".claude-plugin/**"
       - ".codex-plugin/**"
       - "plugins/**"
+      - "skills/**"
+      - "scripts/sync_plugin_skills.py"
       - "README.md"
       - "tests/test_plugin_distribution.py"
       - ".github/workflows/plugin-distribution.yml"
@@ -17,6 +19,8 @@ on:
       - ".claude-plugin/**"
       - ".codex-plugin/**"
       - "plugins/**"
+      - "skills/**"
+      - "scripts/sync_plugin_skills.py"
       - "README.md"
       - "tests/test_plugin_distribution.py"
       - ".github/workflows/plugin-distribution.yml"
@@ -62,8 +66,8 @@ jobs:
           test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_full")" = "agent-kit@agent-kit"
           codex_plugin_path="$(jq -r '.installedPath' <<<"$codex_install")"
           codex_prompt="$(CODEX_HOME="$codex_full_root" codex debug prompt-input "Test Agent Kit discovery")"
-          for skill in create-skill git-commit humanize typescript-scaffold; do
-            test -f "$codex_plugin_path/plugins/$skill/skills/$skill/SKILL.md"
+          for skill in create-skill git-commit humanize python-scaffold typescript-scaffold; do
+            test -f "$codex_plugin_path/skills/$skill/SKILL.md"
             [[ "$codex_prompt" == *"agent-kit:$skill"* ]]
           done
 
@@ -77,8 +81,8 @@ jobs:
           claude_full="$(CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin list --json)"
           test "$(jq -r 'map(.id) | join(",")' <<<"$claude_full")" = "agent-kit@agent-kit"
           claude_plugin_path="$(jq -r '.[0].installPath' <<<"$claude_full")"
-          for skill in create-skill git-commit humanize typescript-scaffold; do
-            test -f "$claude_plugin_path/plugins/$skill/skills/$skill/SKILL.md"
+          for skill in create-skill git-commit humanize python-scaffold typescript-scaffold; do
+            test -f "$claude_plugin_path/skills/$skill/SKILL.md"
           done
 
           CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user

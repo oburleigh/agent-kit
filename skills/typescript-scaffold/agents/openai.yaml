@@ -1,0 +1,4 @@
+interface:
+  display_name: "TypeScript Scaffold"
+  short_description: "Create configurable TypeScript repositories"
+  default_prompt: "Use $typescript-scaffold to create a TypeScript repository for this project."

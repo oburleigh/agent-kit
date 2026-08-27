@@ -1,0 +1,34 @@
+schema_version: 1
+name: library
+preset: library
+package_manager: pnpm
+module: esm
+build: tsup
+quality: biome
+tests: vitest
+runtime_validation: none
+http: none
+logging: none
+hooks: lefthook
+commit_lint: commitlint
+ci: github-actions
+publishing: npm
+workspace: none
+secret_scan: gitleaks
+duplication: jscpd
+framework: none
+license: apache-2.0
+install_dependencies: true
+run_quality_gates: true
+initialize_git: true
+default_author: ""
+project:
+  name: ""
+  description: ""
+  author: ""
+  repository_url: ""
+extra_dependencies: []
+extra_dev_dependencies: []
+extra_scripts: {}
+ci_commands: []
+workspace_members: []

@@ -16,10 +16,11 @@ The skills are small enough to use independently and work together without impos
 
 | Skill | What it does |
 | --- | --- |
-| [create-skill](plugins/create-skill/skills/create-skill/) | Turns a repeatable workflow into a focused Agent Skill, with validation and supporting references where needed. |
-| [git-commit](plugins/git-commit/skills/git-commit/) | Reviews the working tree, stages only the intended changes, splits unrelated work, and writes Conventional Commits. |
-| [humanize](plugins/humanize/skills/humanize/) | Edits professional prose to remove common machine-written patterns while preserving the author's meaning and voice. |
-| [typescript-scaffold](plugins/typescript-scaffold/skills/typescript-scaffold/) | Creates configurable TypeScript libraries, services, CLIs, React applications, and monorepos with working project tooling. |
+| [create-skill](skills/create-skill/) | Turns a repeatable workflow into a focused Agent Skill, with validation and supporting references where needed. |
+| [git-commit](skills/git-commit/) | Reviews the working tree, stages only the intended changes, splits unrelated work, and writes Conventional Commits. |
+| [humanize](skills/humanize/) | Edits professional prose to remove common machine-written patterns while preserving the author's meaning and voice. |
+| [python-scaffold](skills/python-scaffold/) | Creates configurable Python libraries, services, CLIs, and uv workspaces with working project tooling. |
+| [typescript-scaffold](skills/typescript-scaffold/) | Creates configurable TypeScript libraries, services, CLIs, React applications, and monorepos with working project tooling. |
 
 Each skill has its own README with usage details and examples.
 
@@ -93,8 +94,9 @@ claude plugin update agent-kit@agent-kit
 ## Repository layout
 
 - The repository root is the complete `agent-kit` plugin.
-- The root plugin manifests point to each published skill without copying its files.
-- `plugins/<skill>/` contains the canonical skill and its optional standalone plugin.
+- `skills/<skill>/` is the canonical source for each skill.
+- The root plugin manifests point directly to the canonical skills.
+- `plugins/<skill>/` contains generated standalone packages for subset installation. Run `python3 scripts/sync_plugin_skills.py` after changing a canonical skill.
 - `.agents/plugins/marketplace.json` is the Codex marketplace catalogue.
 - `.claude-plugin/marketplace.json` is the Claude Code marketplace catalogue.
 - `tests/` checks that both catalogues publish the same plugins and that the complete plugin stays in sync.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Commit"
+  short_description: "Prepare safe, reviewable Git commits"
+  default_prompt: "Use $git-commit to review my changes and create the right Git commit."

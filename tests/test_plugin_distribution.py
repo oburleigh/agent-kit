@@ -8,11 +8,24 @@ ROOT = Path(__file__).resolve().parents[1]
 CODEX_MARKETPLACE = ROOT / ".agents/plugins/marketplace.json"
 CLAUDE_MARKETPLACE = ROOT / ".claude-plugin/marketplace.json"
 AGGREGATE_PLUGIN = ROOT
+SKILLS = ROOT / "skills"
 
 
 def read_json(path: Path) -> dict:
     with path.open(encoding="utf-8") as file:
         return json.load(file)
+
+
+def skill_files(root: Path) -> dict[str, bytes]:
+    ignored = {".venv", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache"}
+    return {
+        path.relative_to(root).as_posix(): path.read_bytes()
+        for path in root.rglob("*")
+        if path.is_file()
+        and not ignored.intersection(path.relative_to(root).parts)
+        and path.suffix != ".whl"
+        and not path.name.endswith(".tar.gz")
+    }
 
 
 class PluginDistributionTest(unittest.TestCase):
@@ -58,16 +71,30 @@ class PluginDistributionTest(unittest.TestCase):
             for plugin in self.codex["plugins"]
             if plugin["name"] != "agent-kit"
         )
-        expected_paths = [f"./plugins/{name}/skills/{name}" for name in individual_plugin_names]
         codex_manifest = read_json(AGGREGATE_PLUGIN / ".codex-plugin/plugin.json")
         claude_manifest = read_json(AGGREGATE_PLUGIN / ".claude-plugin/plugin.json")
 
-        self.assertEqual(codex_manifest["skills"], expected_paths)
-        self.assertEqual(claude_manifest["skills"], expected_paths)
-        self.assertFalse((AGGREGATE_PLUGIN / "skills").exists())
+        self.assertEqual(codex_manifest["skills"], "./skills/")
+        self.assertEqual(claude_manifest["skills"], "./skills/")
+        self.assertTrue(SKILLS.is_dir())
+        self.assertEqual(
+            sorted(path.name for path in SKILLS.iterdir() if (path / "SKILL.md").is_file()),
+            individual_plugin_names,
+        )
 
-        for relative_path in expected_paths:
-            self.assertTrue((AGGREGATE_PLUGIN / relative_path).is_dir())
+    def test_standalone_plugins_are_generated_from_canonical_skills(self) -> None:
+        for plugin in self.codex["plugins"]:
+            name = plugin["name"]
+            if name == "agent-kit":
+                continue
+
+            canonical = SKILLS / name
+            packaged = ROOT / "plugins" / name / "skills" / name
+            self.assertEqual(
+                skill_files(packaged),
+                skill_files(canonical),
+                f"{name} standalone package differs from its canonical skill",
+            )
 
     def test_readme_leads_with_one_command_full_install(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -105,7 +132,7 @@ class PluginDistributionTest(unittest.TestCase):
         }
 
         for name in skill_names:
-            skill_root = ROOT / "plugins" / name / "skills" / name
+            skill_root = SKILLS / name
             openai_yaml = skill_root / "agents/openai.yaml"
             description = (skill_root / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[1]
 
@@ -135,7 +162,7 @@ class PluginDistributionTest(unittest.TestCase):
                 continue
 
             name = plugin["name"]
-            skill_root = ROOT / "plugins" / name / "skills" / name
+            skill_root = SKILLS / name
             shared_guidance = [skill_root / "SKILL.md", *(skill_root / "references").glob("*.md")]
 
             for path in shared_guidance:
