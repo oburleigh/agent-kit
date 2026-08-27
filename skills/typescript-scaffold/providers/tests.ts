@@ -1,7 +1,32 @@
 import { defaultPackageVersions } from "../src/defaults.js";
+import type { ScaffoldProfile } from "../src/schema.js";
 import type { ProviderContribution } from "../src/types.js";
 
 const sampleTest = `import { describe, expect, test } from "vitest";\nimport { greet } from "../src/index.js";\n\ndescribe("greet", () => {\n  test("greets a named user", () => {\n    expect(greet("Ada")).toBe("Hello, Ada!");\n  });\n});\n`;
+
+function coverageConfig(profile: ScaffoldProfile): string {
+  const include = sourceIncludes(profile);
+  return `coverage: {
+      provider: "v8",
+      include: [${quotedList(include)}],
+      reporter: ["text", "json-summary", "html"],
+      exclude: ["**/*.d.ts", "**/*.test.ts", "**/*.test.tsx", "**/test/**"],
+      thresholds: { branches: 80, functions: 80, lines: 80, statements: 80 },
+    }`;
+}
+
+function sourceIncludes(profile: ScaffoldProfile): string[] {
+  if (profile.preset !== "workspace") return ["src/**/*.{ts,tsx}"];
+  const members = profile.workspace_members ?? [];
+  if (members.length === 0) {
+    return ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"];
+  }
+  return members.map(({ path }) => `${path}/src/**/*.{ts,tsx}`);
+}
+
+function quotedList(values: readonly string[]): string {
+  return values.map((value) => `"${value}"`).join(", ");
+}
 
 export const testProviders: ProviderContribution[] = [
   {
@@ -17,7 +42,14 @@ export const testProviders: ProviderContribution[] = [
       coverage: "vitest run --coverage",
     },
     files: ({ profile }) => ({
-      "vitest.config.ts": "import { defineConfig } from \"vitest/config\";\n\nexport default defineConfig({\n  test: { coverage: { provider: \"v8\", reporter: [\"text\", \"json-summary\"] } },\n});\n",
+      "vitest.config.mts": `import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    ${coverageConfig(profile)},
+  },
+});
+`,
       ...(profile.preset === "library" ? { "test/index.test.ts": sampleTest } : {}),
     }),
   },
@@ -36,8 +68,19 @@ export const testProviders: ProviderContribution[] = [
       "test:watch": "vitest",
       coverage: "vitest run --coverage",
     },
-    files: () => ({
-      "vitest.config.ts": "import react from \"@vitejs/plugin-react\";\nimport { defineConfig } from \"vitest/config\";\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment: \"jsdom\",\n    setupFiles: [\"./src/test-setup.ts\"],\n    coverage: { provider: \"v8\", reporter: [\"text\", \"json-summary\"] },\n  },\n});\n",
+    files: ({ profile }) => ({
+      "vitest.config.mts": `import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.ts"],
+    ${coverageConfig(profile)},
+  },
+});
+`,
       "src/test-setup.ts": "import \"@testing-library/jest-dom/vitest\";\n",
       "src/App.test.tsx": "import { render } from \"@testing-library/react\";\nimport { describe, expect, test } from \"vitest\";\nimport App from \"./App\";\n\ndescribe(\"App\", () => {\n  test(\"renders the application\", () => {\n    const { container } = render(<App />);\n    expect(container.firstChild).not.toBeNull();\n  });\n});\n",
     }),
@@ -71,9 +114,32 @@ export const testProviders: ProviderContribution[] = [
       ["jest", "@swc/core", "@swc/jest", "@types/jest"],
       "tests-jest",
     ),
-    scripts: { test: "jest", "test:watch": "jest --watch" },
+    scripts: { test: "jest", "test:watch": "jest --watch", coverage: "jest --coverage" },
     files: ({ profile }) => ({
-      "jest.config.mjs": "export default {\n  testEnvironment: \"node\",\n  moduleNameMapper: { \"^(\\\\.{1,2}/.*)\\\\.js$\": \"$1\" },\n  transform: {\n    \"^.+\\\\.tsx?$\": [\"@swc/jest\", {\n      jsc: {\n        parser: { syntax: \"typescript\", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: \"commonjs\" },\n    }],\n  },\n};\n",
+      "jest.config.mjs": `export default {
+  testEnvironment: "node",
+  moduleNameMapper: { "^(\\\\.{1,2}/.*)\\\\.js$": "$1" },
+  collectCoverageFrom: [${quotedList([
+    ...sourceIncludes(profile),
+    "!**/*.d.ts",
+    "!**/*.test.{ts,tsx}",
+  ])}],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "json-summary", "html"],
+  coverageThreshold: {
+    global: { branches: 80, functions: 80, lines: 80, statements: 80 },
+  },
+  transform: {
+    "^.+\\\\.tsx?$": ["@swc/jest", {
+      jsc: {
+        parser: { syntax: "typescript", decorators: true },
+        transform: { legacyDecorator: true, decoratorMetadata: true },
+      },
+      module: { type: "commonjs" },
+    }],
+  },
+};
+`,
       ...(profile.preset === "library" ? {
         "test/index.test.ts": "import { greet } from \"../src/index.js\";\n\ntest(\"greets a named user\", () => {\n  expect(greet(\"Ada\")).toBe(\"Hello, Ada!\");\n});\n",
       } : {}),

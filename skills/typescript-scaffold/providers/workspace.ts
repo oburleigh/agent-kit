@@ -3,6 +3,7 @@ import { defaultPackageVersions, scaffoldDefaults } from "../src/defaults.js";
 import type { ScaffoldProfile } from "../src/schema.js";
 import type { ProviderContribution, ProviderContext } from "../src/types.js";
 import { json } from "./helpers.js";
+import { strictTypeScriptOptions } from "./typescript.js";
 
 const workspaceDevDependencies = defaultPackageVersions(
   ["typescript", "@types/node"],
@@ -127,9 +128,7 @@ function workspaceTsconfig(profile: ScaffoldProfile): string {
       target: scaffoldDefaults.runtime.typescript_target,
       module: "NodeNext",
       moduleResolution: "NodeNext",
-      strict: true,
-      noUncheckedIndexedAccess: true,
-      exactOptionalPropertyTypes: true,
+      ...strictTypeScriptOptions(),
       skipLibCheck: true,
       types: profile.tests === "jest" ? ["node", "jest"] : ["node"],
     },

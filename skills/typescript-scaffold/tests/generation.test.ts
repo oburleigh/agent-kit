@@ -1,4 +1,4 @@
-import { access, mkdtemp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { access, mkdtemp, mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -123,6 +123,24 @@ describe("repository generation", () => {
       "npm install --ignore-scripts",
       "npm run format",
     ]);
+  });
+
+  test("makes every generated Husky hook executable", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-husky-mode-"));
+    const target = join(root, "husky-project");
+    const { generateRepository } = await loadGenerator();
+
+    await generateRepository(profile({
+      quality: "eslint-prettier",
+      hooks: "husky-lint-staged",
+      commit_lint: "commitlint",
+      ci: "none",
+    }), target);
+
+    for (const hook of ["pre-commit", "commit-msg", "pre-push"]) {
+      const metadata = await stat(join(target, ".husky", hook));
+      expect(metadata.mode & 0o111).toBe(0o111);
+    }
   });
 
   test("uses Yarn's lifecycle-safe install mode", async () => {

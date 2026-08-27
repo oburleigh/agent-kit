@@ -22,12 +22,13 @@ export const checkProviders: ProviderContribution[] = [
           .join(" ") || "apps packages"}`
         : "jscpd src",
     }),
-    files: ({ profile }) => ({
+    files: () => ({
       ".jscpd.json": json({
-        threshold: 0,
+        threshold: 3,
+        minLines: 1,
+        minTokens: 5,
         reporters: ["console"],
-        ignore: ["**/dist/**"],
-        ...(profile.preset === "workspace" ? { minLines: 1, minTokens: 5 } : {}),
+        ignore: ["**/coverage/**", "**/dist/**", "**/*.d.ts", "**/*.test.*"],
       }),
     }),
   },

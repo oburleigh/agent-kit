@@ -64,7 +64,7 @@ export async function generateRepository(
     await runOfficialFrameworkGenerator(profile, workTarget, runCommand);
     await mergeFrameworkOutput(plan, workTarget);
     await renderPlan(plan, workTarget);
-    await makeExecutables(workTarget, profile);
+    await makeExecutables(workTarget, profile, plan.files);
     if (needsPackageManager(profile) && !packageManagerVerified) {
       await assertPackageManagerVersion(
         profile.package_manager,
@@ -257,12 +257,19 @@ function packageRunCommand(packageManager: ScaffoldProfile["package_manager"]): 
   return packageManager;
 }
 
-async function makeExecutables(target: string, profile: ScaffoldProfile): Promise<void> {
+async function makeExecutables(
+  target: string,
+  profile: ScaffoldProfile,
+  files: ReadonlyMap<string, string>,
+): Promise<void> {
   if (profile.preset === "cli") await chmod(join(target, "src/cli.ts"), 0o755);
   if (profile.hooks === "husky-lint-staged") {
     await chmod(join(target, ".husky/pre-commit"), 0o755);
     if (profile.commit_lint === "commitlint") {
       await chmod(join(target, ".husky/commit-msg"), 0o755);
+    }
+    if (files.has(".husky/pre-push")) {
+      await chmod(join(target, ".husky/pre-push"), 0o755);
     }
   }
 }

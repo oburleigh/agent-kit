@@ -42,6 +42,21 @@ Use typescript-scaffold to create a Bun and Turbo monorepo at ./platform with Bi
 
 Profiles expose every selection below, subject to the compatibility rules.
 
+## Generated tool baseline
+
+Selected tools receive usable configuration, not empty placeholders.
+
+- TypeScript enables strict checking, unchecked-index protection, exact optional properties, override checks, switch fallthrough checks, side-effect import checks, isolated modules, JSON modules, and consistent filename casing.
+- Biome and ESLint reject explicit `any`, ignored TypeScript errors, enums, and non-null assertions. ESM profiles also reject CommonJS. Formatting and linting have separate commands.
+- Prettier uses 100-character lines, two-space indentation, double quotes, semicolons, and trailing commas.
+- Vitest and Jest include source files that tests never import and enforce an 80% coverage floor for statements, branches, functions, and lines.
+- Commitlint extends Conventional Commits, requires blank lines before bodies and footers, and requires lower-case scopes when a scope is present. Repositories choose their own scope vocabulary.
+- Git hooks check staged files before commit, run Commitlint for commit messages, and run type checking and tests before push.
+- jscpd checks source code with a 3% duplication threshold and ignores tests, declarations, coverage output, and build output.
+- Gitleaks extends its maintained default rules. The scaffold does not copy or weaken that rule set.
+
+These are release-owned starting rules. Edit the generated configuration when a repository needs a justified exception or a stricter policy.
+
 ## Provider fields
 
 | Field | Choices |

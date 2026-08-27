@@ -24,7 +24,13 @@ describe("bundled generator", () => {
     });
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("--profile and --target are required");
+    const diagnostic = JSON.stringify({
+      exitCode: result.exitCode,
+      signal: result.signal,
+      stderr: result.stderr,
+      stdout: result.stdout,
+    });
+    expect(result.stderr, diagnostic).toContain("--profile and --target are required");
     expect(result.stderr).not.toContain("Dynamic require");
   });
 

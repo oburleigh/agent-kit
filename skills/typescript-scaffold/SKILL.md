@@ -36,6 +36,8 @@ Require Node.js 24, Git when enabled, the selected package manager, and any exte
 - Treat `config/defaults.yaml` as release-owned fallback policy. Put user overrides in persistent profiles.
 - Keep profiles and temporary answers out of the generated repository.
 - Let first-class providers own their dependencies, files, scripts, hooks, documentation, and CI steps.
+- Give every selected tool a portable working configuration with real rules, exclusions, and thresholds. Do not generate empty config files or duplicate rules already supplied by an extended maintained preset.
+- Keep tool responsibilities separate. A formatter formats, a linter checks code, a hook runner invokes checks, and a workspace tool orchestrates package tasks.
 - Treat generated `AGENTS.md` and `docs/coding-standards.md` as the repository's complete engineering baseline. Do not assume the user has a companion TypeScript skill.
 - For workspaces, compose root quality and test tools with the workspace orchestrator. Never replace real checks with empty Turbo or Nx tasks.
 - Extra dependencies and scripts are copied as configuration. Do not invent integration code for an unknown package.

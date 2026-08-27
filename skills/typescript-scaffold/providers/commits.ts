@@ -11,7 +11,17 @@ export const commitProviders: ProviderContribution[] = [
     ),
     scripts: { commitlint: "commitlint" },
     files: () => ({
-      "commitlint.config.mjs": "export default { extends: [\"@commitlint/config-conventional\"] };\n",
+      "commitlint.config.mjs": `const commitlintConfig = {
+  extends: ["@commitlint/config-conventional"],
+  rules: {
+    "body-leading-blank": [2, "always"],
+    "footer-leading-blank": [2, "always"],
+    "scope-case": [2, "always", "lower-case"],
+  },
+};
+
+export default commitlintConfig;
+`,
     }),
   },
 ];

@@ -16,7 +16,7 @@ function agentsInstructions(context: ProviderContext): string {
     : "Keep domain and library code independent of process entry points, environment access, logging setup, and transport adapters. Pass typed dependencies across those boundaries.";
   const testing = context.profile.tests === "none"
     ? "This profile has no test runner. Add and configure one before introducing behavior that needs automated verification."
-    : `Use ${testRunnerName(context.profile.tests)} for behavior and public-contract tests. Add a failing test before fixing a defect or adding behavior.`;
+    : `Use ${testRunnerName(context.profile.tests)} for behavior and public-contract tests. Add a failing test before fixing a defect or adding behavior.${coverageGuidance(context.profile.tests)}`;
   const commits = context.profile.commit_lint === "commitlint"
     ? "Commit messages must follow Conventional Commits. Commitlint enforces the format through the configured Git hook."
     : "Use focused commit messages that explain the delivered change.";
@@ -129,6 +129,8 @@ Treat parsed JSON, environment values, request data, messages, and third-party r
 
 Test public behaviour rather than implementation lines. Unit tests may import source directly. Boundary tests import packages through their public entry points and exercise current build output. Mock external systems, not repository-owned code.
 
+${coverageStandards(context.profile.tests)}
+
 ## Repository checks
 
 \`\`\`sh
@@ -148,6 +150,18 @@ function testRunnerName(value: string): string {
   if (value === "jest") return "Jest";
   if (value === "node-test") return "the Node.js test runner";
   return "Review";
+}
+
+function coverageGuidance(value: string): string {
+  if (value !== "vitest" && value !== "jest") return "";
+  return " Coverage includes untested source files and enforces an 80% floor for statements, branches, functions, and lines.";
+}
+
+function coverageStandards(value: string): string {
+  if (value !== "vitest" && value !== "jest") {
+    return "Add coverage enforcement when the repository selects a runner that supports it.";
+  }
+  return "Coverage includes source files that tests do not import. Keep statements, branches, functions, and lines at or above 80%. Raise the floor when the repository can sustain it; do not lower it to pass a change.";
 }
 
 function runtimeValidatorName(value: string): string {

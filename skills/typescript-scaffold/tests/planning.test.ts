@@ -84,7 +84,7 @@ describe("provider planning", () => {
     expect(plan.files.get("README.md")).toContain("HTTP: none");
     expect(plan.packageJson.scripts).toMatchObject({
       build: "tsup",
-      lint: "biome check .",
+      lint: "biome check --error-on-warnings .",
       test: "vitest run",
       duplication: "jscpd src",
       secrets: "gitleaks dir . --no-banner",
@@ -109,7 +109,7 @@ describe("provider planning", () => {
       "test/index.test.ts",
       "tsconfig.json",
       "tsup.config.ts",
-      "vitest.config.ts",
+      "vitest.config.mts",
     ]));
   });
 
@@ -150,6 +150,7 @@ describe("provider planning", () => {
     expect([...plan.files.keys()]).toEqual(expect.arrayContaining([
       ".gitlab-ci.yml",
       ".husky/pre-commit",
+      ".husky/pre-push",
       "src/app.ts",
       "src/server.ts",
       "test/server.test.ts",
@@ -186,8 +187,8 @@ describe("provider planning", () => {
       ".github/workflows/ci.yml",
       ".gitlab-ci.yml",
       "biome.json",
-      "eslint.config.js",
-      "vitest.config.ts",
+      "eslint.config.mjs",
+      "vitest.config.mts",
     ]));
     expect(plan.files.get("README.md")).not.toContain("pnpm dev");
     expect(plan.files.get("README.md")).not.toContain("pnpm lint");

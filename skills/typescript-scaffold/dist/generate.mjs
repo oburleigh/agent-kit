@@ -72149,16 +72149,29 @@ function json2(value) {
 `;
 }
 
+// providers/typescript.ts
+function strictTypeScriptOptions() {
+  return {
+    strict: true,
+    noUncheckedIndexedAccess: true,
+    exactOptionalPropertyTypes: true,
+    noImplicitOverride: true,
+    noFallthroughCasesInSwitch: true,
+    noUncheckedSideEffectImports: true,
+    forceConsistentCasingInFileNames: true,
+    isolatedModules: true,
+    resolveJsonModule: true
+  };
+}
+
 // providers/build.ts
 function tsconfig(module, nestjs, tests) {
   return json2({
     compilerOptions: {
       target: scaffoldDefaults.runtime.typescript_target,
-      module: module === "esm" ? "NodeNext" : "CommonJS",
-      moduleResolution: module === "esm" ? "NodeNext" : "Node",
-      strict: true,
-      noUncheckedIndexedAccess: true,
-      exactOptionalPropertyTypes: true,
+      module: module === "esm" ? "NodeNext" : "Node16",
+      moduleResolution: module === "esm" ? "NodeNext" : "Node16",
+      ...strictTypeScriptOptions(),
       declaration: true,
       sourceMap: true,
       skipLibCheck: true,
@@ -72266,12 +72279,13 @@ var checkProviders = [
     scripts: ({ profile }) => ({
       duplication: profile.preset === "workspace" ? `jscpd ${(profile.workspace_members ?? []).map(({ path: path15 }) => `${path15}/src`).join(" ") || "apps packages"}` : "jscpd src"
     }),
-    files: ({ profile }) => ({
+    files: () => ({
       ".jscpd.json": json2({
-        threshold: 0,
+        threshold: 3,
+        minLines: 1,
+        minTokens: 5,
         reporters: ["console"],
-        ignore: ["**/dist/**"],
-        ...profile.preset === "workspace" ? { minLines: 1, minTokens: 5 } : {}
+        ignore: ["**/coverage/**", "**/dist/**", "**/*.d.ts", "**/*.test.*"]
       })
     })
   }
@@ -72685,7 +72699,17 @@ var commitProviders = [
     ),
     scripts: { commitlint: "commitlint" },
     files: () => ({
-      "commitlint.config.mjs": 'export default { extends: ["@commitlint/config-conventional"] };\n'
+      "commitlint.config.mjs": `const commitlintConfig = {
+  extends: ["@commitlint/config-conventional"],
+  rules: {
+    "body-leading-blank": [2, "always"],
+    "footer-leading-blank": [2, "always"],
+    "scope-case": [2, "always", "lower-case"],
+  },
+};
+
+export default commitlintConfig;
+`
     })
   }
 ];
@@ -72704,8 +72728,9 @@ var hookProviders = [
     devDependencies: defaultPackageVersions(["lefthook"], "hooks-lefthook"),
     scripts: { prepare: "lefthook install" },
     files: (context) => {
-      const commands = Object.fromEntries(
-        ["lint", "test"].filter((script) => context.scripts[script] !== void 0).map((script) => [script, { run: `${context.packageRun} ${script}` }])
+      const preCommitCommands = lefthookPreCommitCommands(context);
+      const prePushCommands = Object.fromEntries(
+        ["typecheck", "test"].filter((script) => context.scripts[script] !== void 0).map((script) => [script, { run: `${context.packageRun} ${script}` }])
       );
       const commitMessage = context.profile.commit_lint === "commitlint" ? {
         "commit-msg": {
@@ -72714,8 +72739,9 @@ var hookProviders = [
       } : {};
       return {
         "lefthook.yml": (0, import_yaml3.stringify)({
-          "pre-commit": { parallel: true, commands },
-          ...commitMessage
+          ...Object.keys(preCommitCommands).length > 0 ? { "pre-commit": { commands: preCommitCommands } } : {},
+          ...commitMessage,
+          ...Object.keys(prePushCommands).length > 0 ? { "pre-push": { parallel: true, commands: prePushCommands } } : {}
         })
       };
     }
@@ -72728,18 +72754,60 @@ var hookProviders = [
       "hooks-husky-lint-staged"
     ),
     scripts: { prepare: "husky" },
-    files: (context) => ({
-      ".husky/pre-commit": `${context.packageCommand} exec lint-staged
+    files: (context) => {
+      const prePush = ["typecheck", "test"].filter((script) => context.scripts[script] !== void 0).map((script) => `${context.packageRun} ${script}`).join("\n");
+      return {
+        ".husky/pre-commit": `${packageExecCommand(context.profile.package_manager, "lint-staged")}
 `,
-      ...context.profile.commit_lint === "commitlint" ? { ".husky/commit-msg": `${commitlintCommand(context.profile.package_manager, '"$1"')}
+        ...context.profile.commit_lint === "commitlint" ? { ".husky/commit-msg": `${commitlintCommand(context.profile.package_manager, '"$1"')}
 ` } : {},
-      ".lintstagedrc.json": json2({ "*.{js,mjs,cjs,ts,tsx,json,md,yml,yaml}": "prettier --write" })
-    })
+        ...prePush ? { ".husky/pre-push": `${prePush}
+` } : {},
+        ".lintstagedrc.json": json2({
+          "*.{js,mjs,cjs,ts,tsx}": [
+            "eslint --fix --max-warnings=0",
+            "prettier --write"
+          ],
+          "*.{json,jsonc,css,md,yml,yaml}": "prettier --write"
+        })
+      };
+    }
   }
 ];
 function commitlintCommand(packageManager, messageFile) {
-  if (packageManager === "bun") return `bunx commitlint --edit ${messageFile}`;
-  return `${packageManager} exec commitlint --edit ${messageFile}`;
+  return `${packageExecCommand(packageManager, "commitlint")} --edit ${messageFile}`;
+}
+function packageExecCommand(packageManager, binary) {
+  if (packageManager === "bun") return `bunx ${binary}`;
+  if (packageManager === "npm") return `npm exec -- ${binary}`;
+  return `${packageManager} exec ${binary}`;
+}
+function lefthookPreCommitCommands(context) {
+  if (context.profile.quality === "biome") {
+    return {
+      quality: {
+        glob: "*.{ts,tsx,js,mjs,cjs,json,jsonc,css,md,yml,yaml}",
+        run: `${packageExecCommand(context.profile.package_manager, "biome")} check --write --error-on-warnings --no-errors-on-unmatched {staged_files}`,
+        stage_fixed: true
+      }
+    };
+  }
+  if (context.profile.quality === "eslint-prettier") {
+    return {
+      lint: {
+        glob: "*.{js,mjs,cjs,ts,tsx}",
+        run: `${packageExecCommand(context.profile.package_manager, "eslint")} --fix --max-warnings=0 {staged_files}`,
+        stage_fixed: true
+      },
+      format: {
+        glob: "*.{js,mjs,cjs,ts,tsx,json,jsonc,css,md,yml,yaml}",
+        run: `${packageExecCommand(context.profile.package_manager, "prettier")} --write {staged_files}`,
+        stage_fixed: true
+      }
+    };
+  }
+  if (context.scripts.lint === void 0) return {};
+  return { lint: { run: `${context.packageRun} lint` } };
 }
 
 // providers/http.ts
@@ -73043,7 +73111,7 @@ var standardsProvider = {
 function agentsInstructions(context) {
   const commands = completionCommands(context);
   const architecture = context.profile.preset === "workspace" ? "Applications belong under `apps/`; shared libraries belong under `packages/`. Keep package entry points small and make dependencies point from applications to libraries." : "Keep domain and library code independent of process entry points, environment access, logging setup, and transport adapters. Pass typed dependencies across those boundaries.";
-  const testing = context.profile.tests === "none" ? "This profile has no test runner. Add and configure one before introducing behavior that needs automated verification." : `Use ${testRunnerName(context.profile.tests)} for behavior and public-contract tests. Add a failing test before fixing a defect or adding behavior.`;
+  const testing = context.profile.tests === "none" ? "This profile has no test runner. Add and configure one before introducing behavior that needs automated verification." : `Use ${testRunnerName(context.profile.tests)} for behavior and public-contract tests. Add a failing test before fixing a defect or adding behavior.${coverageGuidance(context.profile.tests)}`;
   const commits = context.profile.commit_lint === "commitlint" ? "Commit messages must follow Conventional Commits. Commitlint enforces the format through the configured Git hook." : "Use focused commit messages that explain the delivered change.";
   return `# Working in this repository
 
@@ -73148,6 +73216,8 @@ Treat parsed JSON, environment values, request data, messages, and third-party r
 
 Test public behaviour rather than implementation lines. Unit tests may import source directly. Boundary tests import packages through their public entry points and exercise current build output. Mock external systems, not repository-owned code.
 
+${coverageStandards(context.profile.tests)}
+
 ## Repository checks
 
 \`\`\`sh
@@ -73163,6 +73233,16 @@ function testRunnerName(value) {
   if (value === "jest") return "Jest";
   if (value === "node-test") return "the Node.js test runner";
   return "Review";
+}
+function coverageGuidance(value) {
+  if (value !== "vitest" && value !== "jest") return "";
+  return " Coverage includes untested source files and enforces an 80% floor for statements, branches, functions, and lines.";
+}
+function coverageStandards(value) {
+  if (value !== "vitest" && value !== "jest") {
+    return "Add coverage enforcement when the repository selects a runner that supports it.";
+  }
+  return "Coverage includes source files that tests do not import. Keep statements, branches, functions, and lines at or above 80%. Raise the floor when the repository can sustain it; do not lower it to pass a change.";
 }
 function runtimeValidatorName(value) {
   if (value === "zod") return "Zod";
@@ -73183,8 +73263,10 @@ var qualityProviders = [
     selected: (profile) => profile.quality === "biome",
     devDependencies: defaultPackageVersions(["@biomejs/biome"], "quality-biome"),
     scripts: {
-      lint: "biome check .",
-      format: "biome check --write ."
+      lint: "biome check --error-on-warnings .",
+      "lint:fix": "biome check --write --error-on-warnings .",
+      format: "biome format --write .",
+      "format:check": "biome format ."
     },
     files: (context) => ({
       "biome.json": json2({
@@ -73193,8 +73275,48 @@ var qualityProviders = [
           defaultPackageVersion("@biomejs/biome", "quality-biome")
         ))}/schema.json`,
         vcs: { enabled: true, clientKind: "git", useIgnoreFile: true },
-        formatter: { enabled: true, indentStyle: "space" },
-        linter: { enabled: true, rules: { preset: "recommended" } }
+        files: {
+          includes: [
+            "**",
+            "!**/.nx",
+            "!**/.turbo",
+            "!**/build",
+            "!**/coverage",
+            "!**/dist",
+            "!**/node_modules",
+            "!**/reports",
+            "!**/test-results"
+          ]
+        },
+        formatter: { enabled: true, indentStyle: "space", indentWidth: 2, lineWidth: 100 },
+        linter: {
+          enabled: true,
+          domains: { project: "all", test: "all" },
+          rules: {
+            preset: "recommended",
+            correctness: {
+              useImportExtensions: context.profile.framework === "none" ? {
+                level: "error",
+                options: { extensionMappings: { ts: "js", tsx: "js" } }
+              } : "off"
+            },
+            suspicious: { noExplicitAny: "error", noTsIgnore: "error" },
+            style: {
+              ...context.profile.module === "esm" ? { noCommonJs: "error" } : {},
+              noEnum: "error",
+              noNonNullAssertion: "error"
+            }
+          }
+        },
+        javascript: { formatter: { quoteStyle: "double", trailingCommas: "all" } },
+        ...context.profile.preset === "workspace" ? {
+          overrides: [{
+            includes: ["**/*.test.ts", "**/*.test.tsx"],
+            linter: {
+              rules: { correctness: { noUndeclaredDependencies: "off" } }
+            }
+          }]
+        } : {}
       })
     })
   },
@@ -73209,13 +73331,40 @@ var qualityProviders = [
       "eslint-config-prettier"
     ], "quality-eslint-prettier"),
     scripts: {
-      lint: "eslint .",
+      lint: "eslint --max-warnings=0 .",
+      "lint:fix": "eslint --fix --max-warnings=0 .",
       format: "prettier --write .",
       "format:check": "prettier --check ."
     },
-    files: () => ({
-      "eslint.config.js": 'import eslint from "@eslint/js";\nimport prettier from "eslint-config-prettier";\nimport tseslint from "typescript-eslint";\n\nexport default tseslint.config(\n  eslint.configs.recommended,\n  ...tseslint.configs.recommended,\n  prettier,\n  { ignores: ["dist/**", "coverage/**"] },\n);\n',
-      ".prettierrc.json": json2({ semi: true, singleQuote: false })
+    files: ({ profile }) => ({
+      "eslint.config.mjs": `import eslint from "@eslint/js";
+import prettier from "eslint-config-prettier";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  { ignores: ["build/**", "coverage/**", "dist/**", "node_modules/**", "reports/**"] },
+  eslint.configs.recommended,
+  ...tseslint.configs.strict,
+  ...tseslint.configs.stylistic,
+  {
+    rules: {
+      ${profile.module === "commonjs" ? '"@typescript-eslint/no-require-imports": "off",\n      ' : ""}"no-restricted-syntax": [
+        "error",
+        { selector: "TSEnumDeclaration", message: "Use a union or object literal instead of an enum." },
+      ],
+    },
+  },
+  prettier,
+);
+`,
+      ".prettierrc.json": json2({
+        printWidth: 100,
+        semi: true,
+        singleQuote: false,
+        tabWidth: 2,
+        trailingComma: "all"
+      }),
+      ".prettierignore": "build\ncoverage\ndist\nnode_modules\nreports\n"
     })
   }
 ];
@@ -73235,6 +73384,27 @@ describe("greet", () => {
   });
 });
 `;
+function coverageConfig(profile) {
+  const include = sourceIncludes(profile);
+  return `coverage: {
+      provider: "v8",
+      include: [${quotedList(include)}],
+      reporter: ["text", "json-summary", "html"],
+      exclude: ["**/*.d.ts", "**/*.test.ts", "**/*.test.tsx", "**/test/**"],
+      thresholds: { branches: 80, functions: 80, lines: 80, statements: 80 },
+    }`;
+}
+function sourceIncludes(profile) {
+  if (profile.preset !== "workspace") return ["src/**/*.{ts,tsx}"];
+  const members = profile.workspace_members ?? [];
+  if (members.length === 0) {
+    return ["apps/*/src/**/*.{ts,tsx}", "packages/*/src/**/*.{ts,tsx}"];
+  }
+  return members.map(({ path: path15 }) => `${path15}/src/**/*.{ts,tsx}`);
+}
+function quotedList(values) {
+  return values.map((value) => `"${value}"`).join(", ");
+}
 var testProviders = [
   {
     id: "tests-vitest",
@@ -73249,7 +73419,14 @@ var testProviders = [
       coverage: "vitest run --coverage"
     },
     files: ({ profile }) => ({
-      "vitest.config.ts": 'import { defineConfig } from "vitest/config";\n\nexport default defineConfig({\n  test: { coverage: { provider: "v8", reporter: ["text", "json-summary"] } },\n});\n',
+      "vitest.config.mts": `import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    ${coverageConfig(profile)},
+  },
+});
+`,
       ...profile.preset === "library" ? { "test/index.test.ts": sampleTest } : {}
     })
   },
@@ -73268,8 +73445,19 @@ var testProviders = [
       "test:watch": "vitest",
       coverage: "vitest run --coverage"
     },
-    files: () => ({
-      "vitest.config.ts": 'import react from "@vitejs/plugin-react";\nimport { defineConfig } from "vitest/config";\n\nexport default defineConfig({\n  plugins: [react()],\n  test: {\n    environment: "jsdom",\n    setupFiles: ["./src/test-setup.ts"],\n    coverage: { provider: "v8", reporter: ["text", "json-summary"] },\n  },\n});\n',
+    files: ({ profile }) => ({
+      "vitest.config.mts": `import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test-setup.ts"],
+    ${coverageConfig(profile)},
+  },
+});
+`,
       "src/test-setup.ts": 'import "@testing-library/jest-dom/vitest";\n',
       "src/App.test.tsx": 'import { render } from "@testing-library/react";\nimport { describe, expect, test } from "vitest";\nimport App from "./App";\n\ndescribe("App", () => {\n  test("renders the application", () => {\n    const { container } = render(<App />);\n    expect(container.firstChild).not.toBeNull();\n  });\n});\n'
     })
@@ -73301,9 +73489,32 @@ var testProviders = [
       ["jest", "@swc/core", "@swc/jest", "@types/jest"],
       "tests-jest"
     ),
-    scripts: { test: "jest", "test:watch": "jest --watch" },
+    scripts: { test: "jest", "test:watch": "jest --watch", coverage: "jest --coverage" },
     files: ({ profile }) => ({
-      "jest.config.mjs": 'export default {\n  testEnvironment: "node",\n  moduleNameMapper: { "^(\\\\.{1,2}/.*)\\\\.js$": "$1" },\n  transform: {\n    "^.+\\\\.tsx?$": ["@swc/jest", {\n      jsc: {\n        parser: { syntax: "typescript", decorators: true },\n        transform: { legacyDecorator: true, decoratorMetadata: true },\n      },\n      module: { type: "commonjs" },\n    }],\n  },\n};\n',
+      "jest.config.mjs": `export default {
+  testEnvironment: "node",
+  moduleNameMapper: { "^(\\\\.{1,2}/.*)\\\\.js$": "$1" },
+  collectCoverageFrom: [${quotedList([
+        ...sourceIncludes(profile),
+        "!**/*.d.ts",
+        "!**/*.test.{ts,tsx}"
+      ])}],
+  coverageDirectory: "coverage",
+  coverageReporters: ["text", "json-summary", "html"],
+  coverageThreshold: {
+    global: { branches: 80, functions: 80, lines: 80, statements: 80 },
+  },
+  transform: {
+    "^.+\\\\.tsx?$": ["@swc/jest", {
+      jsc: {
+        parser: { syntax: "typescript", decorators: true },
+        transform: { legacyDecorator: true, decoratorMetadata: true },
+      },
+      module: { type: "commonjs" },
+    }],
+  },
+};
+`,
       ...profile.preset === "library" ? {
         "test/index.test.ts": 'import { greet } from "../src/index.js";\n\ntest("greets a named user", () => {\n  expect(greet("Ada")).toBe("Hello, Ada!");\n});\n'
       } : {}
@@ -73442,9 +73653,7 @@ function workspaceTsconfig(profile) {
       target: scaffoldDefaults.runtime.typescript_target,
       module: "NodeNext",
       moduleResolution: "NodeNext",
-      strict: true,
-      noUncheckedIndexedAccess: true,
-      exactOptionalPropertyTypes: true,
+      ...strictTypeScriptOptions(),
       skipLibCheck: true,
       types: profile.tests === "jest" ? ["node", "jest"] : ["node"]
     }
@@ -73864,7 +74073,7 @@ async function generateRepository(profile, target, options = {}) {
     await runOfficialFrameworkGenerator(profile, workTarget, runCommand);
     await mergeFrameworkOutput(plan, workTarget);
     await renderPlan(plan, workTarget);
-    await makeExecutables(workTarget, profile);
+    await makeExecutables(workTarget, profile, plan.files);
     if (needsPackageManager(profile) && !packageManagerVerified) {
       await assertPackageManagerVersion(
         profile.package_manager,
@@ -74015,12 +74224,15 @@ function packageRunCommand(packageManager) {
   if (packageManager === "bun") return "bun run";
   return packageManager;
 }
-async function makeExecutables(target, profile) {
+async function makeExecutables(target, profile, files) {
   if (profile.preset === "cli") await chmod2(join2(target, "src/cli.ts"), 493);
   if (profile.hooks === "husky-lint-staged") {
     await chmod2(join2(target, ".husky/pre-commit"), 493);
     if (profile.commit_lint === "commitlint") {
       await chmod2(join2(target, ".husky/commit-msg"), 493);
+    }
+    if (files.has(".husky/pre-push")) {
+      await chmod2(join2(target, ".husky/pre-push"), 493);
     }
   }
 }
