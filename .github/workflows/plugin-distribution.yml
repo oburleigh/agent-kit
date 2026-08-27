@@ -1,0 +1,66 @@
+name: Plugin distribution
+
+on:
+  pull_request:
+    paths:
+      - ".agents/**"
+      - ".claude-plugin/**"
+      - "plugins/**"
+      - "tests/test_plugin_distribution.py"
+      - ".github/workflows/plugin-distribution.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".agents/**"
+      - ".claude-plugin/**"
+      - "plugins/**"
+      - "tests/test_plugin_distribution.py"
+      - ".github/workflows/plugin-distribution.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - name: Install plugin clients
+        run: npm install --global @openai/codex@0.150.1 @anthropic-ai/claude-code@2.1.247
+      - name: Check distribution contracts
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate Claude marketplace
+        run: claude plugin validate . --strict
+      - name: Validate plugin manifests
+        run: |
+          for plugin in plugins/*; do
+            claude plugin validate "$plugin" --strict
+          done
+      - name: Prove subset installation
+        run: |
+          codex_test_root="$(mktemp -d)"
+          claude_test_root="$(mktemp -d)"
+          trap 'rm -rf "$codex_test_root" "$claude_test_root"' EXIT
+
+          CODEX_HOME="$codex_test_root" codex plugin marketplace add "$GITHUB_WORKSPACE" --json
+          codex_before="$(CODEX_HOME="$codex_test_root" codex plugin list --json)"
+          test "$(jq '.installed | length' <<<"$codex_before")" -eq 0
+          CODEX_HOME="$codex_test_root" codex plugin add create-skill@agent-kit --json
+          codex_after="$(CODEX_HOME="$codex_test_root" codex plugin list --json)"
+          test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_after")" = "create-skill@agent-kit"
+
+          for plugin in git-commit humanize typescript-scaffold; do
+            CODEX_HOME="$codex_test_root" codex plugin add "$plugin@agent-kit" --json
+          done
+          codex_all="$(CODEX_HOME="$codex_test_root" codex plugin list --json)"
+          test "$(jq '.installed | length' <<<"$codex_all")" -eq 4
+
+          CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user
+          claude_before="$(CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin list --json)"
+          test "$(jq 'length' <<<"$claude_before")" -eq 0
+          CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin install create-skill@agent-kit --scope user
+          claude_after="$(CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin list --json)"
+          test "$(jq -r 'map(.id) | join(",")' <<<"$claude_after")" = "create-skill@agent-kit"
