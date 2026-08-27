@@ -47,7 +47,7 @@ export interface ProviderContribution {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   scripts?: Record<string, string> | ((context: ProviderContext) => Record<string, string>);
-  packageJson?: Record<string, unknown>;
+  packageJson?: Record<string, unknown> | ((context: ProviderContext) => Record<string, unknown>);
   ignore?: string[];
   files?(context: ProviderContext): Record<string, string>;
 }

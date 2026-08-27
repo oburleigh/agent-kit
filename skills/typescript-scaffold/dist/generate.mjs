@@ -42613,11 +42613,11 @@ var require_path_parse = __commonJS({
       };
     };
     var splitPathRe = /^((\/?)(?:[^\/]*\/)*)((\.{1,2}|[^\/]+?|)(\.[^.\/]*|))[\/]*$/;
-    var posix2 = {};
+    var posix3 = {};
     function posixSplitPath(filename) {
       return splitPathRe.exec(filename).slice(1);
     }
-    posix2.parse = function(pathString) {
+    posix3.parse = function(pathString) {
       if (typeof pathString !== "string") {
         throw new TypeError(
           "Parameter 'pathString' must be a string, not " + typeof pathString
@@ -42638,8 +42638,8 @@ var require_path_parse = __commonJS({
     if (isWindows3)
       module.exports = win32.parse;
     else
-      module.exports = posix2.parse;
-    module.exports.posix = posix2.parse;
+      module.exports = posix3.parse;
+    module.exports.posix = posix3.parse;
     module.exports.win32 = win32.parse;
   }
 });
@@ -45082,9 +45082,9 @@ var require_parse2 = __commonJS({
                 const idx = prev.value.lastIndexOf("[");
                 const pre = prev.value.slice(0, idx);
                 const rest2 = prev.value.slice(idx + 2);
-                const posix2 = POSIX_REGEX_SOURCE[rest2];
-                if (posix2) {
-                  prev.value = pre + posix2;
+                const posix3 = POSIX_REGEX_SOURCE[rest2];
+                if (posix3) {
+                  prev.value = pre + posix3;
                   state.backtrack = true;
                   advance();
                   if (!bos.output && tokens.indexOf(prev) === 1) {
@@ -45601,7 +45601,7 @@ var require_picomatch = __commonJS({
         throw new TypeError("Expected pattern to be a non-empty string");
       }
       const opts = options || {};
-      const posix2 = opts.windows;
+      const posix3 = opts.windows;
       const regex = isState ? picomatch2.compileRe(glob, options) : picomatch2.makeRe(glob, options, false, true);
       const state = regex.state;
       delete regex.state;
@@ -45611,8 +45611,8 @@ var require_picomatch = __commonJS({
         isIgnored = picomatch2(opts.ignore, ignoreOpts, returnState);
       }
       const matcher = (input, returnObject = false) => {
-        const { isMatch, match, output } = picomatch2.test(input, regex, options, { glob, posix: posix2 });
-        const result = { glob, state, regex, posix: posix2, input, output, match, isMatch };
+        const { isMatch, match, output } = picomatch2.test(input, regex, options, { glob, posix: posix3 });
+        const result = { glob, state, regex, posix: posix3, input, output, match, isMatch };
         if (typeof opts.onResult === "function") {
           opts.onResult(result);
         }
@@ -45637,7 +45637,7 @@ var require_picomatch = __commonJS({
       }
       return matcher;
     };
-    picomatch2.test = (input, regex, options, { glob, posix: posix2 } = {}) => {
+    picomatch2.test = (input, regex, options, { glob, posix: posix3 } = {}) => {
       if (typeof input !== "string") {
         throw new TypeError("Expected input to be a string");
       }
@@ -45645,7 +45645,7 @@ var require_picomatch = __commonJS({
         return { isMatch: false, output: "" };
       }
       const opts = options || {};
-      const format2 = opts.format || (posix2 ? utils.toPosixSlashes : null);
+      const format2 = opts.format || (posix3 ? utils.toPosixSlashes : null);
       let match = input === glob;
       let output = match && format2 ? format2(input) : input;
       if (match === false) {
@@ -45654,16 +45654,16 @@ var require_picomatch = __commonJS({
       }
       if (match === false || opts.capture === true) {
         if (opts.matchBase === true || opts.basename === true) {
-          match = picomatch2.matchBase(input, regex, options, posix2);
+          match = picomatch2.matchBase(input, regex, options, posix3);
         } else {
           match = regex.exec(output);
         }
       }
       return { isMatch: Boolean(match), match, output };
     };
-    picomatch2.matchBase = (input, glob, options, posix2 = options && options.windows) => {
+    picomatch2.matchBase = (input, glob, options, posix3 = options && options.windows) => {
       const regex = glob instanceof RegExp ? glob : picomatch2.makeRe(glob, options);
-      return regex.test(utils.basename(input, { windows: posix2 }));
+      return regex.test(utils.basename(input, { windows: posix3 }));
     };
     picomatch2.isMatch = (str, patterns, options) => picomatch2(patterns, options)(str);
     picomatch2.parse = (pattern, options) => {
@@ -72263,9 +72263,16 @@ var checkProviders = [
     id: "duplication-jscpd",
     selected: (profile) => profile.duplication === "jscpd",
     devDependencies: defaultPackageVersions(["jscpd"], "duplication-jscpd"),
-    scripts: { duplication: "jscpd src" },
-    files: () => ({
-      ".jscpd.json": json2({ threshold: 0, reporters: ["console"], ignore: ["**/dist/**"] })
+    scripts: ({ profile }) => ({
+      duplication: profile.preset === "workspace" ? `jscpd ${(profile.workspace_members ?? []).map(({ path: path15 }) => `${path15}/src`).join(" ") || "apps packages"}` : "jscpd src"
+    }),
+    files: ({ profile }) => ({
+      ".jscpd.json": json2({
+        threshold: 0,
+        reporters: ["console"],
+        ignore: ["**/dist/**"],
+        ...profile.preset === "workspace" ? { minLines: 1, minTokens: 5 } : {}
+      })
     })
   }
 ];
@@ -72519,6 +72526,10 @@ ${commands}
 
 ${stack.map((item) => `- ${item}`).join("\n")}
 
+## Coding standards
+
+Repository coding and review rules are documented in [docs/coding-standards.md](docs/coding-standards.md). Coding-agent skills may add workflow guidance, but this repository does not depend on them for its engineering baseline.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).${license}
@@ -72552,7 +72563,7 @@ Use Conventional Commits for commit messages.${license}
 function documentedScripts(scripts) {
   return ["dev", "test", "lint", "typecheck", "build", "duplication", "secrets"].filter((script) => scripts[script] !== void 0);
 }
-function presetGuide(preset, framework, packageRun) {
+function presetGuide(preset, framework, packageRun, workspaceMembers) {
   if (framework === "vite-react") {
     return `
 
@@ -72571,7 +72582,16 @@ Run the CLI in development with \`${packageRun} dev -- Ada\`.`;
     return "\n\n## API\n\nThe starter service exposes `GET /health`.";
   }
   if (preset === "workspace") {
-    return "\n\n## Packages\n\nThis scaffold creates an empty monorepo root so it does not prescribe one package stack for the whole workspace. Add each TypeScript package under `packages/` with its own package manifest and checks.";
+    const members = workspaceMembers.length > 0 ? `
+
+Initial workspace members:
+
+${workspaceMembers.map((member) => `- \`${member}\``).join("\n")}` : "\n\nThis profile creates an empty workspace. Add members under a configured workspace path.";
+    return `
+
+## Workspace
+
+Root checks cover the full workspace. Build and typecheck commands run through the selected workspace tool.${members}`;
   }
   return "\n\n## Usage\n\nImport public functions from the package entry point.";
 }
@@ -72614,17 +72634,17 @@ var commonProvider = {
       `HTTP: ${context.profile.http}`,
       `Logging: ${context.profile.logging}`,
       `Hooks: ${context.profile.hooks}`,
+      `Commit lint: ${context.profile.commit_lint}`,
       `CI: ${context.profile.ci}`,
       `Publishing: ${context.profile.publishing}`,
       `Workspace: ${context.profile.workspace}`,
       `Framework: ${context.profile.framework}`,
       `Secret scanning: ${context.profile.secret_scan === "gitleaks" ? "Gitleaks" : "none"}`,
       `Duplication: ${context.profile.duplication}`
-    ].filter((item) => !item.endsWith(": none"));
+    ];
     const files = {
       ".node-version": `${scaffoldDefaults.runtime.node_version}
 `,
-      "AGENTS.md": "# Repository instructions\n\n- Read the existing code, configuration, and tests before changing behavior.\n- Prefer a maintained package for solved, non-domain work. Check its licence, security record, types, runtime support, and scope before adding it.\n- Write custom infrastructure only when no suitable package meets the repository contract. Keep that code narrow and test it.\n- Keep environment-specific values in typed configuration rather than source code.\n- Add or update tests for changed behavior. Run the repository checks before reporting completion.\n- Keep comments short. Explain constraints or intent that the code cannot express.\n",
       "CLAUDE.md": "# Claude Code\n\nRead and follow [AGENTS.md](AGENTS.md) before making changes.\n",
       "README.md": readme(
         context.project.name,
@@ -72633,7 +72653,12 @@ var commonProvider = {
         stack,
         scripts,
         hasLicense,
-        presetGuide(context.profile.preset, context.profile.framework, context.packageRun),
+        presetGuide(
+          context.profile.preset,
+          context.profile.framework,
+          context.packageRun,
+          (context.profile.workspace_members ?? []).map(({ path: path15 }) => path15)
+        ),
         context.profile.secret_scan === "gitleaks" ? " Install Gitleaks before running the `secrets` check." : ""
       ),
       "CONTRIBUTING.md": contributing(
@@ -72648,6 +72673,22 @@ var commonProvider = {
     return files;
   }
 };
+
+// providers/commits.ts
+var commitProviders = [
+  {
+    id: "commits-commitlint",
+    selected: (profile) => profile.commit_lint === "commitlint",
+    devDependencies: defaultPackageVersions(
+      ["@commitlint/cli", "@commitlint/config-conventional"],
+      "commits-commitlint"
+    ),
+    scripts: { commitlint: "commitlint" },
+    files: () => ({
+      "commitlint.config.mjs": 'export default { extends: ["@commitlint/config-conventional"] };\n'
+    })
+  }
+];
 
 // providers/hooks.ts
 var import_yaml3 = __toESM(require_dist(), 1);
@@ -72666,9 +72707,15 @@ var hookProviders = [
       const commands = Object.fromEntries(
         ["lint", "test"].filter((script) => context.scripts[script] !== void 0).map((script) => [script, { run: `${context.packageRun} ${script}` }])
       );
+      const commitMessage = context.profile.commit_lint === "commitlint" ? {
+        "commit-msg": {
+          commands: { commitlint: { run: commitlintCommand(context.profile.package_manager, "{1}") } }
+        }
+      } : {};
       return {
         "lefthook.yml": (0, import_yaml3.stringify)({
-          "pre-commit": { parallel: true, commands }
+          "pre-commit": { parallel: true, commands },
+          ...commitMessage
         })
       };
     }
@@ -72684,10 +72731,16 @@ var hookProviders = [
     files: (context) => ({
       ".husky/pre-commit": `${context.packageCommand} exec lint-staged
 `,
+      ...context.profile.commit_lint === "commitlint" ? { ".husky/commit-msg": `${commitlintCommand(context.profile.package_manager, '"$1"')}
+` } : {},
       ".lintstagedrc.json": json2({ "*.{js,mjs,cjs,ts,tsx,json,md,yml,yaml}": "prettier --write" })
     })
   }
 ];
+function commitlintCommand(packageManager, messageFile) {
+  if (packageManager === "bun") return `bunx commitlint --edit ${messageFile}`;
+  return `${packageManager} exec commitlint --edit ${messageFile}`;
+}
 
 // providers/http.ts
 function requireService(preset) {
@@ -72959,9 +73012,7 @@ var presetProviders = [
     id: "preset-workspace",
     selected: (profile) => profile.preset === "workspace",
     packageJson: { private: true },
-    files: () => ({
-      "packages/.gitkeep": ""
-    })
+    files: ({ profile }) => (profile.workspace_members ?? []).length === 0 ? { "packages/.gitkeep": "" } : {}
   }
 ];
 
@@ -72979,6 +73030,150 @@ var publishingProviders = [
     scripts: (context) => ({ prepublishOnly: `${context.packageRun} build` })
   }
 ];
+
+// providers/standards.ts
+var standardsProvider = {
+  id: "standards",
+  selected: () => true,
+  files: (context) => ({
+    "AGENTS.md": agentsInstructions(context),
+    "docs/coding-standards.md": codingStandards(context)
+  })
+};
+function agentsInstructions(context) {
+  const commands = completionCommands(context);
+  const architecture = context.profile.preset === "workspace" ? "Applications belong under `apps/`; shared libraries belong under `packages/`. Keep package entry points small and make dependencies point from applications to libraries." : "Keep domain and library code independent of process entry points, environment access, logging setup, and transport adapters. Pass typed dependencies across those boundaries.";
+  const testing = context.profile.tests === "none" ? "This profile has no test runner. Add and configure one before introducing behavior that needs automated verification." : `Use ${testRunnerName(context.profile.tests)} for behavior and public-contract tests. Add a failing test before fixing a defect or adding behavior.`;
+  const commits = context.profile.commit_lint === "commitlint" ? "Commit messages must follow Conventional Commits. Commitlint enforces the format through the configured Git hook." : "Use focused commit messages that explain the delivered change.";
+  return `# Working in this repository
+
+Read [docs/coding-standards.md](docs/coding-standards.md) before changing code. Automated rules belong in the compiler, formatter, linter, tests, hooks, or repository checks. Review covers judgment that those tools cannot express.
+
+## Reuse and dependencies
+
+Search the owning package, the full workspace, installed dependencies, and platform APIs before adding a helper or abstraction. Check the package registry before writing solved non-domain infrastructure.
+
+Prefer a maintained package when it meets the repository contract. Check maintenance, adoption, licence compatibility, TypeScript support, runtime compatibility, security advisories, and scope. Use one library per job.
+
+Write custom infrastructure only when existing code, platform APIs, and suitable packages cannot meet the contract. Keep it small, expose a clear boundary, and test its behaviour.
+
+Add dependencies with the configured package manager and commit its lockfile. Do not replace manifest ranges with exact versions to reproduce an install; the lockfile records the exact resolution.
+
+## Architecture
+
+${architecture}
+
+Library code returns values instead of writing process output. It does not read environment variables, configure logging, or depend on an application entry point.
+
+## TypeScript
+
+- Keep strict type checking enabled.
+- Use \`unknown\` at untrusted boundaries and narrow it before use.
+- Validate external input at runtime. Type assertions do not validate data.
+- Model closed variants with discriminated unions and exhaustive checks.
+- Keep exported interfaces small and named in the repository's domain language.
+- Avoid \`any\`, non-null assertions, ignored type errors, and broad type assertions.
+
+## Configuration
+
+- Keep stable domain and protocol constants in code.
+- Put maintainer-controlled values in typed configuration.
+- Read deployment values at an application boundary and pass typed values inward.
+- Load credentials from the runtime environment or a secret store.
+- Keep mutable business and runtime data in its system of record.
+
+Never commit credentials or use a real credential as a default.
+
+## Tests
+
+${testing}
+
+Test observable behaviour. Mock only systems this repository does not own. Use small fakes for local ports. Coverage is a floor; do not lower it to make a change pass.
+
+## Comments
+
+Use comments for constraints and invariants the code cannot express. Keep ticket commentary, change history, narration, and discarded alternatives out of source files.
+
+## Commits
+
+${commits}
+
+Do not bypass Git hooks with \`--no-verify\`.
+
+## Completion checks
+
+Run every applicable repository check before reporting completion:
+
+\`\`\`sh
+${commands.join("\n")}
+\`\`\`
+`;
+}
+function codingStandards(context) {
+  const quality = context.profile.quality === "biome" ? "Biome" : context.profile.quality === "eslint-prettier" ? "ESLint and Prettier" : "Review";
+  const tests = testRunnerName(context.profile.tests);
+  const rows = [
+    ["Strict type checking, indexed access, and optional property semantics", "TypeScript configuration"],
+    ["Formatting, linting, import hygiene, and unsafe language patterns", quality],
+    ["External input is narrowed or validated before use", context.profile.runtime_validation === "none" ? "Review" : runtimeValidatorName(context.profile.runtime_validation)],
+    ["Public behaviour and package boundaries are tested", tests],
+    ["Copied implementations stay below the configured threshold", context.profile.duplication === "jscpd" ? "jscpd" : "Review"],
+    ["Credentials stay out of the working tree", context.profile.secret_scan === "gitleaks" ? "Gitleaks" : "Review"],
+    ["Commit messages follow Conventional Commits", context.profile.commit_lint === "commitlint" ? "Commitlint" : "Review"],
+    ["Configured checks pass before merge", context.profile.ci === "none" ? "Local checks" : ciName(context.profile.ci)]
+  ];
+  return `# Coding standards
+
+Automate standards when the selected compiler or tooling can express them. Review the remaining design and dependency decisions.
+
+## Enforcement
+
+| Standard | Enforcement |
+| --- | --- |
+${rows.map(([standard, enforcement]) => `| ${standard} | ${enforcement} |`).join("\n")}
+
+## Dependency decisions
+
+Search existing code, installed dependencies, platform APIs, and the package registry before writing non-domain infrastructure. A new dependency must be maintained, typed, compatibly licensed, free of known unpatched advisories, compatible with the selected runtime, and proportionate to the job.
+
+## Module boundaries
+
+Library modules do not read environment variables, configure logging, write process output, or import application adapters. Applications own configuration loading, composition, transport adapters, and process lifecycle.
+
+## Runtime boundaries
+
+Treat parsed JSON, environment values, request data, messages, and third-party responses as untrusted. Narrow or validate them before they reach domain code.
+
+## Tests
+
+Test public behaviour rather than implementation lines. Unit tests may import source directly. Boundary tests import packages through their public entry points and exercise current build output. Mock external systems, not repository-owned code.
+
+## Repository checks
+
+\`\`\`sh
+${completionCommands(context).join("\n")}
+\`\`\`
+`;
+}
+function completionCommands(context) {
+  return ["lint", "typecheck", "test", "build", "duplication", "secrets"].filter((script) => context.scripts[script] !== void 0).map((script) => `${context.packageRun} ${script}`);
+}
+function testRunnerName(value) {
+  if (value === "vitest") return "Vitest";
+  if (value === "jest") return "Jest";
+  if (value === "node-test") return "the Node.js test runner";
+  return "Review";
+}
+function runtimeValidatorName(value) {
+  if (value === "zod") return "Zod";
+  if (value === "valibot") return "Valibot";
+  return "Review";
+}
+function ciName(value) {
+  if (value === "github-actions") return "GitHub Actions";
+  if (value === "gitlab-ci") return "GitLab CI";
+  return "Local checks";
+}
 
 // providers/quality.ts
 var import_semver3 = __toESM(require_semver2(), 1);
@@ -73082,7 +73277,9 @@ var testProviders = [
   {
     id: "tests-node",
     selected: (profile) => profile.tests === "node-test",
-    scripts: { test: "node --test --experimental-strip-types test/*.test.ts" },
+    scripts: ({ profile }) => ({
+      test: profile.preset === "workspace" ? 'node --test --experimental-strip-types "**/*.test.ts"' : "node --test --experimental-strip-types test/*.test.ts"
+    }),
     files: ({ profile }) => {
       if (profile.preset === "library") {
         return {
@@ -73129,22 +73326,11 @@ var validationProviders = [
 ];
 
 // providers/workspace.ts
+import { posix as posix2 } from "node:path";
 var workspaceDevDependencies = defaultPackageVersions(
   ["typescript", "@types/node"],
   "workspace"
 );
-var workspaceTsconfig = json2({
-  compilerOptions: {
-    target: scaffoldDefaults.runtime.typescript_target,
-    module: "NodeNext",
-    moduleResolution: "NodeNext",
-    strict: true,
-    noUncheckedIndexedAccess: true,
-    exactOptionalPropertyTypes: true,
-    skipLibCheck: true,
-    types: ["node"]
-  }
-});
 function requireWorkspace(preset) {
   if (preset !== "workspace") throw new Error("Workspace providers require the workspace preset");
 }
@@ -73157,26 +73343,18 @@ var workspaceProviders = [
       ...defaultPackageVersions(["turbo"], "workspace-turbo"),
       ...workspaceDevDependencies
     },
-    scripts: {
-      build: "turbo build",
-      typecheck: "turbo typecheck",
-      test: "turbo test",
-      lint: "turbo lint"
-    },
-    packageJson: { workspaces: ["packages/*"] },
+    scripts: { build: "turbo build", typecheck: "turbo typecheck" },
+    packageJson: workspacePackageJson,
     ignore: [".turbo/"],
     files: (context) => ({
       "turbo.json": json2({
         $schema: "https://turbo.build/schema.json",
         tasks: {
           build: { dependsOn: ["^build"], outputs: ["dist/**"] },
-          typecheck: { dependsOn: ["^typecheck"] },
-          test: { dependsOn: ["^build"], outputs: ["coverage/**"] },
-          lint: { dependsOn: ["^lint"] }
+          typecheck: { dependsOn: ["^typecheck"] }
         }
       }),
-      "tsconfig.base.json": workspaceTsconfig,
-      ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" } : {}
+      ...workspaceFiles(context)
     })
   },
   {
@@ -73187,25 +73365,116 @@ var workspaceProviders = [
       ...defaultPackageVersions(["nx"], "workspace-nx"),
       ...workspaceDevDependencies
     },
-    scripts: {
-      build: "nx run-many -t build",
-      typecheck: "nx run-many -t typecheck",
-      test: "nx run-many -t test",
-      lint: "nx run-many -t lint"
-    },
-    packageJson: { workspaces: ["packages/*"] },
+    scripts: { build: "nx run-many -t build", typecheck: "nx run-many -t typecheck" },
+    packageJson: workspacePackageJson,
     ignore: [".nx/"],
     files: (context) => ({
       "nx.json": json2({ namedInputs: { default: ["{projectRoot}/**/*"] } }),
-      "tsconfig.base.json": workspaceTsconfig,
-      ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": "packages:\n  - packages/*\n" } : {}
+      ...workspaceFiles(context)
     })
   }
 ];
+function workspacePackageJson(context) {
+  return { workspaces: workspacePaths(context.profile) };
+}
+function workspacePaths(profile) {
+  const members = profile.workspace_members ?? [];
+  return members.length > 0 ? members.map(({ path: path15 }) => path15) : ["apps/*", "packages/*"];
+}
+function workspaceFiles(context) {
+  const paths = workspacePaths(context.profile);
+  return {
+    "tsconfig.base.json": workspaceTsconfig(context.profile),
+    ...context.profile.package_manager === "pnpm" ? { "pnpm-workspace.yaml": `packages:
+${paths.map((path15) => `  - ${path15}`).join("\n")}
+` } : {},
+    ...memberFiles(context)
+  };
+}
+function memberFiles(context) {
+  return Object.fromEntries(
+    (context.profile.workspace_members ?? []).flatMap((member) => {
+      const packageName = member.package_name.replaceAll("{project}", context.project.name);
+      const root = posix2.relative(member.path, ".");
+      const sourceName = member.kind === "application" ? "applicationName" : "packageName";
+      const files = [
+        [`${member.path}/package.json`, json2({
+          name: packageName,
+          version: scaffoldDefaults.generated_package_version,
+          private: true,
+          type: context.profile.module === "esm" ? "module" : "commonjs",
+          main: "./dist/index.js",
+          types: "./dist/index.d.ts",
+          scripts: {
+            build: "tsc -p tsconfig.build.json",
+            typecheck: context.profile.tests === "node-test" ? "tsc --noEmit --allowImportingTsExtensions" : "tsc --noEmit"
+          }
+        })],
+        [`${member.path}/tsconfig.json`, json2({
+          extends: `${root}/tsconfig.base.json`,
+          compilerOptions: { noEmit: true },
+          include: ["src", "test"]
+        })],
+        [`${member.path}/tsconfig.build.json`, json2({
+          extends: "./tsconfig.json",
+          compilerOptions: {
+            noEmit: false,
+            rootDir: "src",
+            outDir: "dist",
+            declaration: true,
+            sourceMap: true
+          },
+          include: ["src"],
+          exclude: ["test", "**/*.test.ts"]
+        })],
+        [`${member.path}/src/index.ts`, `export const ${sourceName} = "${packageName}";
+`]
+      ];
+      const test = memberTest(context.profile.tests, sourceName, packageName);
+      if (test !== void 0) files.push([`${member.path}/test/index.test.ts`, test]);
+      return files;
+    })
+  );
+}
+function workspaceTsconfig(profile) {
+  return json2({
+    compilerOptions: {
+      target: scaffoldDefaults.runtime.typescript_target,
+      module: "NodeNext",
+      moduleResolution: "NodeNext",
+      strict: true,
+      noUncheckedIndexedAccess: true,
+      exactOptionalPropertyTypes: true,
+      skipLibCheck: true,
+      types: profile.tests === "jest" ? ["node", "jest"] : ["node"]
+    }
+  });
+}
+function memberTest(runner, sourceName, packageName) {
+  if (runner === "none") return void 0;
+  if (runner === "node-test") {
+    return `import assert from "node:assert/strict";
+import test from "node:test";
+import { ${sourceName} } from "../src/index.ts";
+
+test("exports its package name", () => {
+  assert.equal(${sourceName}, "${packageName}");
+});
+`;
+  }
+  const imports = runner === "vitest" ? 'import { expect, test } from "vitest";\n' : "";
+  return `${imports}import { ${sourceName} } from "../src/index.js";
+
+test("exports its package name", () => {
+  expect(${sourceName}).toBe("${packageName}");
+});
+`;
+}
 
 // providers/catalog.ts
 var providerCatalog = [
   commonProvider,
+  standardsProvider,
   ...presetProviders,
   ...moduleProviders,
   ...buildProviders,
@@ -73215,6 +73484,7 @@ var providerCatalog = [
   ...httpProviders,
   ...loggingProviders,
   ...hookProviders,
+  ...commitProviders,
   ...ciProviders,
   ...publishingProviders,
   ...workspaceProviders,
@@ -73242,7 +73512,7 @@ function createGenerationPlan(profile, project) {
     throw new Error("The MIT licence requires an author");
   }
   const context = createProviderContext(profile, project, {});
-  validateGlobalCompatibility(profile);
+  validateGlobalCompatibility(profile, project);
   const selected = providerCatalog.filter((provider) => provider.selected(profile));
   for (const provider of selected) provider.validate?.(context);
   const packageJson = {
@@ -73266,7 +73536,11 @@ function createGenerationPlan(profile, project) {
   };
   let files = /* @__PURE__ */ new Map();
   for (const provider of selected) {
-    mergePackageJson(packageJson, provider.packageJson, provider.id);
+    mergePackageJson(
+      packageJson,
+      typeof provider.packageJson === "function" ? provider.packageJson(context) : provider.packageJson,
+      provider.id
+    );
     mergeStringRecord(
       packageJson.scripts,
       typeof provider.scripts === "function" ? provider.scripts(context) : provider.scripts,
@@ -73317,11 +73591,16 @@ function createProviderContext(profile, project, scripts) {
 }
 function collectProviderFiles(selected, context) {
   const files = /* @__PURE__ */ new Map();
+  const reservedPaths = ["package.json", ".gitignore"];
   for (const provider of selected) {
     for (const [path15, content] of Object.entries(provider.files?.(context) ?? {})) {
-      const existing = files.get(path15);
-      if (existing !== void 0 && existing !== content) {
-        throw new Error(`Providers conflict on file ${path15}: ${provider.id}`);
+      const conflictingPath = [...reservedPaths, ...files.keys()].find(
+        (existingPath) => existingPath === path15 || path15.startsWith(`${existingPath}/`) || existingPath.startsWith(`${path15}/`)
+      );
+      if (conflictingPath !== void 0) {
+        const existing = files.get(path15);
+        if (conflictingPath === path15 && existing === content) continue;
+        throw new Error(`Provider file path conflict: ${conflictingPath} and ${path15}`);
       }
       files.set(path15, content);
     }
@@ -73344,7 +73623,7 @@ function rejectDependencyBucketConflicts(packageJson) {
     }
   }
 }
-function validateGlobalCompatibility(profile) {
+function validateGlobalCompatibility(profile, project) {
   if (profile.run_quality_gates && !profile.install_dependencies) {
     throw new Error("Quality gates require dependency installation");
   }
@@ -73360,8 +73639,38 @@ function validateGlobalCompatibility(profile) {
   if (profile.preset === "workspace" && profile.workspace === "none") {
     throw new Error("The workspace preset requires Turbo or Nx");
   }
+  if (profile.preset === "workspace" && profile.build !== "tsc") {
+    throw new Error("Workspace members currently require the tsc build provider");
+  }
+  const workspaceMembers = profile.workspace_members ?? [];
+  if (profile.preset !== "workspace" && workspaceMembers.length > 0) {
+    throw new Error("Workspace members require the workspace preset");
+  }
+  const memberPaths = /* @__PURE__ */ new Set();
+  const memberNames = /* @__PURE__ */ new Set();
+  for (const member of workspaceMembers) {
+    if (!/^(?:[a-z0-9][a-z0-9._-]*\/)+[a-z0-9][a-z0-9._-]*$/i.test(member.path)) {
+      throw new Error(`Invalid workspace member path: ${member.path}`);
+    }
+    if (memberPaths.has(member.path)) {
+      throw new Error(`Duplicate workspace member path: ${member.path}`);
+    }
+    memberPaths.add(member.path);
+    const packageName = member.package_name.replaceAll("{project}", project.name);
+    const packageNameResult = (0, import_validate_npm_package_name.default)(packageName);
+    if (!packageNameResult.validForNewPackages) {
+      throw new Error(`Invalid workspace member package name: ${packageName}`);
+    }
+    if (memberNames.has(packageName)) {
+      throw new Error(`Duplicate workspace member package name: ${packageName}`);
+    }
+    memberNames.add(packageName);
+  }
   if (profile.hooks === "husky-lint-staged" && profile.quality !== "eslint-prettier") {
     throw new Error("Husky with lint-staged requires the ESLint and Prettier provider");
+  }
+  if (profile.commit_lint === "commitlint" && profile.hooks === "none") {
+    throw new Error("Commitlint requires a Git hook provider");
   }
   if (profile.framework === "vite-react" && profile.preset !== "library") {
     throw new Error("The Vite React adapter requires the library preset");
@@ -73710,6 +74019,9 @@ async function makeExecutables(target, profile) {
   if (profile.preset === "cli") await chmod2(join2(target, "src/cli.ts"), 493);
   if (profile.hooks === "husky-lint-staged") {
     await chmod2(join2(target, ".husky/pre-commit"), 493);
+    if (profile.commit_lint === "commitlint") {
+      await chmod2(join2(target, ".husky/commit-msg"), 493);
+    }
   }
 }
 
@@ -73724,6 +74036,14 @@ var dependencyListSchema = external_exports.array(
     version: external_exports.string().min(1).default("latest")
   }).strict()
 );
+var workspaceMemberSchema = external_exports.object({
+  path: external_exports.string().regex(
+    /^(?:[a-z0-9][a-z0-9._-]*\/)+[a-z0-9][a-z0-9._-]*$/i,
+    "Use a relative workspace member path with at least two segments"
+  ),
+  package_name: external_exports.string().min(1),
+  kind: external_exports.enum(["application", "library"])
+}).strict();
 var profileSchema = external_exports.object({
   schema_version: external_exports.literal(1),
   name: external_exports.string().min(1),
@@ -73741,9 +74061,11 @@ var profileSchema = external_exports.object({
   http: external_exports.enum(["fastify", "express", "hono", "nestjs", "none"]),
   logging: external_exports.enum(["pino", "winston", "none"]),
   hooks: external_exports.enum(["lefthook", "husky-lint-staged", "none"]),
+  commit_lint: external_exports.enum(["commitlint", "none"]).optional(),
   ci: external_exports.enum(["github-actions", "gitlab-ci", "none"]),
   publishing: external_exports.enum(["npm", "none"]),
   workspace: external_exports.enum(["none", "turbo", "nx"]),
+  workspace_members: external_exports.array(workspaceMemberSchema).optional(),
   secret_scan: external_exports.enum(["gitleaks", "none"]),
   duplication: external_exports.enum(["jscpd", "none"]),
   framework: external_exports.enum(["none", "vite-react"]),
@@ -73784,7 +74106,11 @@ function loadProfileText(input) {
     const details = result.error.issues.map((issue2) => `${issue2.path.join(".") || "profile"}: ${issue2.message}`).join("; ");
     throw new Error(`Invalid TypeScript scaffold profile: ${details}`);
   }
-  return result.data;
+  return {
+    ...result.data,
+    commit_lint: result.data.commit_lint ?? "none",
+    workspace_members: result.data.workspace_members ?? []
+  };
 }
 
 // src/profiles.ts

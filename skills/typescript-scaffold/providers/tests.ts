@@ -45,7 +45,11 @@ export const testProviders: ProviderContribution[] = [
   {
     id: "tests-node",
     selected: (profile) => profile.tests === "node-test",
-    scripts: { test: "node --test --experimental-strip-types test/*.test.ts" },
+    scripts: ({ profile }) => ({
+      test: profile.preset === "workspace"
+        ? "node --test --experimental-strip-types \"**/*.test.ts\""
+        : "node --test --experimental-strip-types test/*.test.ts",
+    }),
     files: ({ profile }) => {
       if (profile.preset === "library") {
         return {

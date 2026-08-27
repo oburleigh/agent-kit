@@ -19,9 +19,11 @@ function baseProfile(overrides: Partial<ScaffoldProfile> = {}): ScaffoldProfile 
     http: "fastify",
     logging: "none",
     hooks: "none",
+    commit_lint: "none",
     ci: "none",
     publishing: "none",
     workspace: "none",
+    workspace_members: [],
     secret_scan: "none",
     duplication: "none",
     framework: "none",
@@ -69,6 +71,7 @@ describe("first-class provider catalog", () => {
       "logging-winston",
       "hooks-lefthook",
       "hooks-husky-lint-staged",
+      "commits-commitlint",
       "ci-github-actions",
       "ci-gitlab",
       "publishing-npm",
@@ -213,6 +216,165 @@ describe("first-class provider catalog", () => {
     expect(result.files.has("tsconfig.base.json")).toBe(true);
   });
 
+  test("composes a checked workspace without root script conflicts", () => {
+    const result = plan({
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsc",
+      quality: "biome",
+      tests: "vitest",
+      hooks: "lefthook",
+      commit_lint: "commitlint",
+      duplication: "jscpd",
+      workspace_members: [
+        { path: "apps/app", package_name: "@{project}/app", kind: "application" },
+        { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>);
+
+    expect(result.packageJson.scripts).toMatchObject({
+      build: "turbo build",
+      typecheck: "turbo typecheck",
+      lint: "biome check .",
+      test: "vitest run",
+      duplication: "jscpd apps/app/src packages/core/src",
+    });
+    expect(result.packageJson.devDependencies).toMatchObject({
+      "@biomejs/biome": expect.any(String),
+      "@commitlint/cli": expect.any(String),
+      "@commitlint/config-conventional": expect.any(String),
+      jscpd: expect.any(String),
+      lefthook: expect.any(String),
+      turbo: expect.any(String),
+      vitest: expect.any(String),
+    });
+    expect(result.packageJson.workspaces).toEqual(["apps/app", "packages/core"]);
+    expect(JSON.parse(result.files.get("apps/app/package.json")!)).toMatchObject({
+      name: "@provider-test/app",
+      private: true,
+      scripts: {
+        build: "tsc -p tsconfig.build.json",
+        typecheck: "tsc --noEmit",
+      },
+    });
+    expect(JSON.parse(result.files.get("packages/core/package.json")!)).toMatchObject({
+      name: "@provider-test/core",
+      private: true,
+    });
+    expect(result.files.get("apps/app/test/index.test.ts")).toContain("vitest");
+    expect(result.files.get("packages/core/test/index.test.ts")).toContain("vitest");
+    expect(result.files.get("commitlint.config.mjs")).toContain("config-conventional");
+    expect(result.files.get("lefthook.yml")).toContain("commitlint");
+    expect(JSON.parse(result.files.get(".jscpd.json")!)).toMatchObject({
+      minLines: 1,
+      minTokens: 5,
+    });
+  });
+
+  test("generates stack-aware coding instructions", () => {
+    const result = plan({
+      quality: "biome",
+      tests: "vitest",
+      hooks: "lefthook",
+      commit_lint: "commitlint",
+      duplication: "jscpd",
+    } as Partial<ScaffoldProfile>);
+
+    expect(result.files.get("AGENTS.md")).toContain("## Reuse and dependencies");
+    expect(result.files.get("AGENTS.md")).toContain("## TypeScript");
+    expect(result.files.get("AGENTS.md")).toContain("docs/coding-standards.md");
+    expect(result.files.get("docs/coding-standards.md")).toContain("Biome");
+    expect(result.files.get("docs/coding-standards.md")).toContain("Vitest");
+    expect(result.files.get("docs/coding-standards.md")).toContain("Commitlint");
+    expect(result.files.get("README.md")).toContain("docs/coding-standards.md");
+  });
+
+  test("rejects unsafe or duplicate workspace members", () => {
+    const workspace = {
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsc",
+    } as const;
+
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        { path: "../outside", package_name: "@{project}/bad", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/workspace member path/i);
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+        { path: "packages/core", package_name: "@{project}/other", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/duplicate workspace member path/i);
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        {
+          path: "docs/coding-standards.md/package",
+          package_name: "@{project}/docs-collision",
+          kind: "library",
+        },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/path.*conflict|workspace member path/i);
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        {
+          path: "package.json/member",
+          package_name: "@{project}/manifest-collision",
+          kind: "library",
+        },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/path.*conflict|workspace member path/i);
+  });
+
+  test("rejects workspace build providers that member packages cannot honor", () => {
+    expect(() => plan({
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsup",
+      package_versions: { typescript: "^5.9.3" },
+    })).toThrow(/workspace.*tsc/i);
+  });
+
+  test.each(["node-test", "jest"] as const)(
+    "makes %s workspace members typecheck-safe",
+    (tests) => {
+      const result = plan({
+        preset: "workspace",
+        workspace: "turbo",
+        http: "none",
+        build: "tsc",
+        tests,
+        workspace_members: [
+          { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+        ],
+      });
+      const memberPackage = JSON.parse(result.files.get("packages/core/package.json")!);
+      const baseConfig = JSON.parse(result.files.get("tsconfig.base.json")!);
+
+      expect(memberPackage.scripts.typecheck).toBe(
+        tests === "node-test"
+          ? "tsc --noEmit --allowImportingTsExtensions"
+          : "tsc --noEmit",
+      );
+      expect(baseConfig.compilerOptions.types).toEqual(
+        tests === "jest" ? ["node", "jest"] : ["node"],
+      );
+    },
+  );
+
+  test("requires a Git hook when Commitlint is selected", () => {
+    expect(() => plan({ commit_lint: "commitlint", hooks: "none" }))
+      .toThrow(/Commitlint requires.*hook/i);
+  });
+
   test("writes pnpm workspace metadata for a pnpm monorepo", () => {
     const result = plan({
       preset: "workspace",
@@ -223,7 +385,8 @@ describe("first-class provider catalog", () => {
       package_manager_version: "11.24.0",
     });
 
-    expect(result.files.get("pnpm-workspace.yaml")).toBe("packages:\n  - packages/*\n");
+    expect(result.files.get("pnpm-workspace.yaml"))
+      .toBe("packages:\n  - apps/*\n  - packages/*\n");
   });
 
   test("honors extra packages and scripts without inventing files", () => {

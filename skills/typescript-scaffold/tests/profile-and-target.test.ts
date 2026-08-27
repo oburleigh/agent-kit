@@ -48,6 +48,8 @@ ci_commands: []
 
     expect(profile.name).toBe("service");
     expect(profile.http).toBe("fastify");
+    expect(profile.commit_lint).toBe("none");
+    expect(profile.workspace_members).toEqual([]);
   });
 
   test("rejects unknown providers at the profile boundary", async () => {

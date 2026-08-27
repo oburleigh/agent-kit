@@ -3,12 +3,14 @@ import { buildProviders } from "./build.js";
 import { checkProviders } from "./checks.js";
 import { ciProviders } from "./ci.js";
 import { commonProvider } from "./common.js";
+import { commitProviders } from "./commits.js";
 import { hookProviders } from "./hooks.js";
 import { httpProviders } from "./http.js";
 import { loggingProviders } from "./logging.js";
 import { moduleProviders } from "./modules.js";
 import { presetProviders } from "./presets.js";
 import { publishingProviders } from "./publishing.js";
+import { standardsProvider } from "./standards.js";
 import { qualityProviders } from "./quality.js";
 import { testProviders } from "./tests.js";
 import { validationProviders } from "./validation.js";
@@ -16,6 +18,7 @@ import { workspaceProviders } from "./workspace.js";
 
 export const providerCatalog: readonly ProviderContribution[] = [
   commonProvider,
+  standardsProvider,
   ...presetProviders,
   ...moduleProviders,
   ...buildProviders,
@@ -25,6 +28,7 @@ export const providerCatalog: readonly ProviderContribution[] = [
   ...httpProviders,
   ...loggingProviders,
   ...hookProviders,
+  ...commitProviders,
   ...ciProviders,
   ...publishingProviders,
   ...workspaceProviders,

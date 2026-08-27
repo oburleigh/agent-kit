@@ -20,9 +20,11 @@ function profile(overrides: Partial<ScaffoldProfile> = {}): ScaffoldProfile {
     http: "none",
     logging: "none",
     hooks: "lefthook",
+    commit_lint: "commitlint",
     ci: "github-actions",
     publishing: "npm",
     workspace: "none",
+    workspace_members: [],
     secret_scan: "gitleaks",
     duplication: "jscpd",
     framework: "none",
@@ -79,7 +81,7 @@ describe("provider planning", () => {
       compilerOptions: { rootDir: "src", outDir: "dist" },
       include: ["src"],
     });
-    expect(plan.files.get("README.md")).not.toContain("HTTP");
+    expect(plan.files.get("README.md")).toContain("HTTP: none");
     expect(plan.packageJson.scripts).toMatchObject({
       build: "tsup",
       lint: "biome check .",
@@ -165,6 +167,7 @@ describe("provider planning", () => {
       quality: "none",
       tests: "none",
       hooks: "none",
+      commit_lint: "none",
       ci: "none",
       publishing: "none",
       secret_scan: "none",
@@ -243,12 +246,14 @@ describe("provider planning", () => {
       build: "framework-owned",
       publishing: "none",
       hooks: "none",
+      commit_lint: "none",
     }), project)).toThrow(/Vite React.*library preset/i);
     expect(() => createGenerationPlan(profile({
       framework: "vite-react",
       build: "framework-owned",
       publishing: "npm",
       hooks: "none",
+      commit_lint: "none",
     }), project)).toThrow(/Vite React.*publishing disabled/i);
   });
 

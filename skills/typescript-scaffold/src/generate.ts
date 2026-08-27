@@ -261,5 +261,8 @@ async function makeExecutables(target: string, profile: ScaffoldProfile): Promis
   if (profile.preset === "cli") await chmod(join(target, "src/cli.ts"), 0o755);
   if (profile.hooks === "husky-lint-staged") {
     await chmod(join(target, ".husky/pre-commit"), 0o755);
+    if (profile.commit_lint === "commitlint") {
+      await chmod(join(target, ".husky/commit-msg"), 0o755);
+    }
   }
 }
