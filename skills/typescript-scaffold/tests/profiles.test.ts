@@ -51,6 +51,33 @@ describe("bundled presets", () => {
       expect((await loadBundledPreset(preset)).ci).toBe("github-actions");
     },
   );
+
+  test("ships a workspace preset with a working engineering baseline", async () => {
+    const { loadBundledPreset } = await loadProfilesModule();
+
+    const profile = await loadBundledPreset("workspace");
+
+    expect(profile).toMatchObject({
+      quality: "biome",
+      tests: "vitest",
+      hooks: "lefthook",
+      commit_lint: "commitlint",
+      secret_scan: "gitleaks",
+      duplication: "jscpd",
+      run_quality_gates: true,
+    });
+    expect(profile.workspace_members).toEqual([
+      { path: "apps/app", package_name: "@{project}/app", kind: "application" },
+      { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+    ]);
+  });
+
+  test("keeps backward-compatible profile fields optional in the published schema", async () => {
+    const schema = JSON.parse(await readFile("config/schema.json", "utf8"));
+
+    expect(schema.required).not.toContain("commit_lint");
+    expect(schema.required).not.toContain("workspace_members");
+  });
 });
 
 describe("persistent profiles", () => {

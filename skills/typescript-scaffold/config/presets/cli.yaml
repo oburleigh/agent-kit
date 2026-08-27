@@ -10,6 +10,7 @@ runtime_validation: none
 http: none
 logging: none
 hooks: none
+commit_lint: none
 ci: github-actions
 publishing: none
 workspace: none
@@ -30,3 +31,4 @@ extra_dependencies: []
 extra_dev_dependencies: []
 extra_scripts: {}
 ci_commands: []
+workspace_members: []

@@ -6,6 +6,7 @@ import {
 } from "../src/defaults.js";
 import { intersects, validRange } from "semver";
 import { json } from "./helpers.js";
+import { strictTypeScriptOptions } from "./typescript.js";
 
 function tsconfig(
   module: "esm" | "commonjs",
@@ -15,11 +16,9 @@ function tsconfig(
   return json({
     compilerOptions: {
       target: scaffoldDefaults.runtime.typescript_target,
-      module: module === "esm" ? "NodeNext" : "CommonJS",
-      moduleResolution: module === "esm" ? "NodeNext" : "Node",
-      strict: true,
-      noUncheckedIndexedAccess: true,
-      exactOptionalPropertyTypes: true,
+      module: module === "esm" ? "NodeNext" : "Node16",
+      moduleResolution: module === "esm" ? "NodeNext" : "Node16",
+      ...strictTypeScriptOptions(),
       declaration: true,
       sourceMap: true,
       skipLibCheck: true,

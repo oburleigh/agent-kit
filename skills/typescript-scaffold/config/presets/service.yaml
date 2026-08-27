@@ -10,6 +10,7 @@ runtime_validation: zod
 http: fastify
 logging: pino
 hooks: husky-lint-staged
+commit_lint: commitlint
 ci: github-actions
 publishing: none
 workspace: none
@@ -30,3 +31,4 @@ extra_dependencies: []
 extra_dev_dependencies: []
 extra_scripts: {}
 ci_commands: []
+workspace_members: []

@@ -15,7 +15,7 @@ function readme(
 ): string {
   const commands = scripts.map((script) => `${packageRun} ${script}`).join("\n");
   const license = hasLicense ? "\n\n## License\n\nSee [LICENSE](LICENSE)." : "";
-  return `# ${name}\n\n${description}\n\n## Requirements\n\nUse the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.${externalRequirements}\n\n## Setup\n\n\`\`\`sh\n${packageRun === "npm run" ? "npm install" : `${packageRun.split(" ")[0]} install`}\n\`\`\`\n\n## Development\n\n\`\`\`sh\n${commands}\n\`\`\`${presetGuide}\n\n## Stack\n\n${stack.map((item) => `- ${item}`).join("\n")}\n\n## Contributing\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md).${license}\n`;
+  return `# ${name}\n\n${description}\n\n## Requirements\n\nUse the Node.js version declared in \`.node-version\` and the exact package-manager version declared in \`package.json\`.${externalRequirements}\n\n## Setup\n\n\`\`\`sh\n${packageRun === "npm run" ? "npm install" : `${packageRun.split(" ")[0]} install`}\n\`\`\`\n\n## Development\n\n\`\`\`sh\n${commands}\n\`\`\`${presetGuide}\n\n## Stack\n\n${stack.map((item) => `- ${item}`).join("\n")}\n\n## Coding standards\n\nRepository coding and review rules are documented in [docs/coding-standards.md](docs/coding-standards.md). Coding-agent skills may add workflow guidance, but this repository does not depend on them for its engineering baseline.\n\n## Contributing\n\nSee [CONTRIBUTING.md](CONTRIBUTING.md).${license}\n`;
 }
 
 function contributing(packageRun: string, scripts: string[], ciCommands: string[], hasLicense: boolean): string {
@@ -36,6 +36,7 @@ function presetGuide(
   preset: string,
   framework: string,
   packageRun: string,
+  workspaceMembers: string[],
 ): string {
   if (framework === "vite-react") {
     return `\n\n## Application\n\nThis repository uses Vite and React. Start the development server with \`${packageRun} dev\`.`;
@@ -47,7 +48,10 @@ function presetGuide(
     return "\n\n## API\n\nThe starter service exposes `GET /health`.";
   }
   if (preset === "workspace") {
-    return "\n\n## Packages\n\nThis scaffold creates an empty monorepo root so it does not prescribe one package stack for the whole workspace. Add each TypeScript package under `packages/` with its own package manifest and checks.";
+    const members = workspaceMembers.length > 0
+      ? `\n\nInitial workspace members:\n\n${workspaceMembers.map((member) => `- \`${member}\``).join("\n")}`
+      : "\n\nThis profile creates an empty workspace. Add members under a configured workspace path.";
+    return `\n\n## Workspace\n\nRoot checks cover the full workspace. Build and typecheck commands run through the selected workspace tool.${members}`;
   }
   return "\n\n## Usage\n\nImport public functions from the package entry point.";
 }
@@ -98,16 +102,16 @@ export const commonProvider: ProviderContribution = {
       `HTTP: ${context.profile.http}`,
       `Logging: ${context.profile.logging}`,
       `Hooks: ${context.profile.hooks}`,
+      `Commit lint: ${context.profile.commit_lint}`,
       `CI: ${context.profile.ci}`,
       `Publishing: ${context.profile.publishing}`,
       `Workspace: ${context.profile.workspace}`,
       `Framework: ${context.profile.framework}`,
       `Secret scanning: ${context.profile.secret_scan === "gitleaks" ? "Gitleaks" : "none"}`,
       `Duplication: ${context.profile.duplication}`,
-    ].filter((item) => !item.endsWith(": none"));
+    ];
     const files: Record<string, string> = {
       ".node-version": `${scaffoldDefaults.runtime.node_version}\n`,
-      "AGENTS.md": "# Repository instructions\n\n- Read the existing code, configuration, and tests before changing behavior.\n- Prefer a maintained package for solved, non-domain work. Check its licence, security record, types, runtime support, and scope before adding it.\n- Write custom infrastructure only when no suitable package meets the repository contract. Keep that code narrow and test it.\n- Keep environment-specific values in typed configuration rather than source code.\n- Add or update tests for changed behavior. Run the repository checks before reporting completion.\n- Keep comments short. Explain constraints or intent that the code cannot express.\n",
       "CLAUDE.md": "# Claude Code\n\nRead and follow [AGENTS.md](AGENTS.md) before making changes.\n",
       "README.md": readme(
         context.project.name,
@@ -116,7 +120,12 @@ export const commonProvider: ProviderContribution = {
         stack,
         scripts,
         hasLicense,
-        presetGuide(context.profile.preset, context.profile.framework, context.packageRun),
+        presetGuide(
+          context.profile.preset,
+          context.profile.framework,
+          context.packageRun,
+          (context.profile.workspace_members ?? []).map(({ path }) => path),
+        ),
         context.profile.secret_scan === "gitleaks"
           ? " Install Gitleaks before running the `secrets` check."
           : "",

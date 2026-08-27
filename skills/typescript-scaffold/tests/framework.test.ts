@@ -22,9 +22,11 @@ function viteProfile(): ScaffoldProfile {
     http: "none",
     logging: "none",
     hooks: "none",
+    commit_lint: "none",
     ci: "none",
     publishing: "none",
     workspace: "none",
+    workspace_members: [],
     secret_scan: "none",
     duplication: "none",
     framework: "vite-react",
@@ -74,7 +76,7 @@ describe("official framework delegation", () => {
 
     expect(plan.files.has("test/index.test.ts")).toBe(false);
     expect(plan.files.get("src/App.test.tsx")).toContain("render(<App />)");
-    expect(plan.files.get("vitest.config.ts")).toContain("@vitejs/plugin-react");
+    expect(plan.files.get("vitest.config.mts")).toContain("@vitejs/plugin-react");
     expect(plan.packageJson.devDependencies).toMatchObject({
       "@testing-library/react": expect.any(String),
       jsdom: expect.any(String),

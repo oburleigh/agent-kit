@@ -1,6 +1,8 @@
 # TypeScript Scaffold
 
-Create a new TypeScript repository through Claude Code, Codex, or another agent that supports skills. The generated repository has its own README, contribution guide, coding instructions, licence, package configuration, checks, CI, and Git repository.
+Create a new TypeScript repository through Claude Code, Codex, or another agent that supports skills. The generated repository has its own README, contribution guide, coding standards, licence, package configuration, checks, CI, and Git repository.
+
+Generated coding standards are self-contained. TypeScript or testing skills can add workflow guidance, but users do not need another skill to get the repository's engineering baseline.
 
 ## Requirements
 
@@ -25,14 +27,35 @@ The skill creates a reusable profile the first time you use a preset. Later requ
 Use my service profile to create ./billing-api, but use Hono with runtime validation and logging set to none for this repository.
 ```
 
+A profile is optional. State project-specific choices in the request and the skill applies them to a temporary profile for that run.
+
+```text
+Use typescript-scaffold to create a Bun and Turbo monorepo at ./platform with Biome, Vitest, Lefthook, Commitlint, jscpd, Gitleaks, an application under apps/app, and a library under packages/core.
+```
+
 ## Presets
 
-- `library`: pnpm 11.24.0, tsup, Biome, Vitest, Lefthook, GitHub Actions, and npm publishing
-- `service`: npm 11.17.0, Fastify, Zod, Pino, ESLint, Prettier, Vitest, Husky, and GitHub Actions
+- `library`: pnpm 11.24.0, tsup, Biome, Vitest, Lefthook, Commitlint, Gitleaks, jscpd, GitHub Actions, and npm publishing
+- `service`: npm 11.17.0, Fastify, Zod, Pino, ESLint, Prettier, Vitest, Husky, Commitlint, Gitleaks, jscpd, and GitHub Actions
 - `cli`: Yarn 4.18.0, tsup, Biome, the Node.js test runner, and GitHub Actions
-- `workspace`: Bun 1.3.14, Turbo, TypeScript base configuration, and GitHub Actions, with an empty `packages/` directory ready for independently configured packages
+- `workspace`: Bun 1.3.14, Turbo, Biome, Vitest, Lefthook, Commitlint, Gitleaks, jscpd, and GitHub Actions, with starter members under `apps/app` and `packages/core`
 
 Profiles expose every selection below, subject to the compatibility rules.
+
+## Generated tool baseline
+
+Selected tools receive usable configuration, not empty placeholders.
+
+- TypeScript enables strict checking, unchecked-index protection, exact optional properties, override checks, switch fallthrough checks, side-effect import checks, isolated modules, JSON modules, and consistent filename casing.
+- Biome and ESLint reject explicit `any`, ignored TypeScript errors, enums, and non-null assertions. ESM profiles also reject CommonJS. Formatting and linting have separate commands.
+- Prettier uses 100-character lines, two-space indentation, double quotes, semicolons, and trailing commas.
+- Vitest and Jest include source files that tests never import and enforce an 80% coverage floor for statements, branches, functions, and lines.
+- Commitlint extends Conventional Commits, requires blank lines before bodies and footers, and requires lower-case scopes when a scope is present. Repositories choose their own scope vocabulary.
+- Git hooks check staged files before commit, run Commitlint for commit messages, and run type checking and tests before push.
+- jscpd checks source code with a 3% duplication threshold and ignores tests, declarations, coverage output, and build output.
+- Gitleaks extends its maintained default rules. The scaffold does not copy or weaken that rule set.
+
+These are release-owned starting rules. Edit the generated configuration when a repository needs a justified exception or a stricter policy.
 
 ## Provider fields
 
@@ -49,6 +72,7 @@ Profiles expose every selection below, subject to the compatibility rules.
 | `http` | `express`, `fastify`, `hono`, `nestjs`, `none` |
 | `logging` | `pino`, `winston`, `none` |
 | `hooks` | `husky-lint-staged`, `lefthook`, `none` |
+| `commit_lint` | `commitlint`, `none` |
 | `ci` | `github-actions`, `gitlab-ci`, `none` |
 | `publishing` | `npm`, `none` |
 | `workspace` | `nx`, `turbo`, `none` |
@@ -67,6 +91,9 @@ Profiles expose every selection below, subject to the compatibility rules.
 - npm publishing requires the `library` preset.
 - Husky with lint-staged requires ESLint and Prettier.
 - Lefthook requires at least one lint or test command.
+- Commitlint requires a Git-hook provider and is connected to its commit-message hook.
+- Workspace quality and test providers run at the root across every member. Turbo or Nx owns build and type-check fan-out.
+- Workspace members currently use the `tsc` build provider.
 
 Vite React uses the `library` preset with `framework: vite-react`, `build: framework-owned`, `quality: none`, `publishing: none`, and `module: esm`. Vite owns linting for this profile. Select Vitest or no test provider. The skill runs the official Vite generator, then applies the selected agent-kit files and checks.
 
@@ -90,6 +117,8 @@ Profiles are complete YAML files with `schema_version: 1`. They are stored outsi
 
 Set `AGENT_KIT_CONFIG_DIR` to choose another root. Existing profiles are never overwritten by the skill or by an agent-kit update.
 
+This also means an existing profile keeps older explicit defaults. Use a new named profile to start from a newer bundled preset, or edit the existing profile when you want its future repositories to change.
+
 Use a preset name for its default persistent profile, or `<preset>:<name>` for a named profile:
 
 ```text
@@ -102,7 +131,7 @@ Per-run overrides use a temporary resolved profile and do not change the persist
 
 ### Complete profile
 
-`name` identifies the reusable profile. This example shows every required field:
+`name` identifies the reusable profile. This example shows every current field:
 
 ```yaml
 schema_version: 1
@@ -118,9 +147,11 @@ runtime_validation: zod
 http: fastify
 logging: pino
 hooks: husky-lint-staged
+commit_lint: commitlint
 ci: github-actions
 publishing: none
 workspace: none
+workspace_members: []
 secret_scan: gitleaks
 duplication: jscpd
 framework: none
@@ -155,6 +186,22 @@ project:
 
 Leave a field empty in a persistent profile when it changes between repositories. The skill fills it in for the current run. The MIT licence requires a resolved author because the generated copyright notice has no template placeholders.
 
+### Workspace members
+
+`workspace_members` creates initial packages for the workspace preset. Each member has a safe relative path, a reusable package-name template, and a kind.
+
+```yaml
+workspace_members:
+  - path: apps/app
+    package_name: "@{project}/app"
+    kind: application
+  - path: packages/core
+    package_name: "@{project}/core"
+    kind: library
+```
+
+`{project}` resolves to the generated repository name. Member paths and resolved package names must be unique. An empty list creates an empty workspace with `apps/*` and `packages/*` package globs.
+
 ### Package versions and additions
 
 `package_versions` overrides packages owned by selected providers. Version resolution follows this order: profile override, provider-specific default, then global shipped default. Use the `create-vite` key to select the official Vite generator version.
@@ -184,6 +231,8 @@ Extra packages do not receive generated integration code. Add a first-class prov
 | Package | Version |
 | --- | --- |
 | `@biomejs/biome` | `^2.5.10` |
+| `@commitlint/cli` | `^21.2.2` |
+| `@commitlint/config-conventional` | `^21.2.2` |
 | `@eslint/js` | `^10.0.1` |
 | `@hono/node-server` | `^1.19.11` |
 | `@nestjs/common` | `^11.1.17` |
@@ -251,6 +300,12 @@ The `tsup` provider defaults TypeScript to `^5.9.3` because its declaration buil
 - `default_author` supplies an author when `project.author` is empty.
 
 Schema mismatches fail with the field path and validation message.
+
+## Generated standards
+
+Every repository receives `AGENTS.md` and `docs/coding-standards.md`. They cover dependency selection, maintained-package checks, module boundaries, strict TypeScript, runtime validation, configuration, tests, comments, commits, and the checks selected by the profile. Tool names and commands are generated from the resolved stack.
+
+The generated README lists disabled providers as `none`, so a minimal or deliberately omitted capability remains visible.
 
 ## Safety
 

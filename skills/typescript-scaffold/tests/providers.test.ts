@@ -19,9 +19,11 @@ function baseProfile(overrides: Partial<ScaffoldProfile> = {}): ScaffoldProfile 
     http: "fastify",
     logging: "none",
     hooks: "none",
+    commit_lint: "none",
     ci: "none",
     publishing: "none",
     workspace: "none",
+    workspace_members: [],
     secret_scan: "none",
     duplication: "none",
     framework: "none",
@@ -69,6 +71,7 @@ describe("first-class provider catalog", () => {
       "logging-winston",
       "hooks-lefthook",
       "hooks-husky-lint-staged",
+      "commits-commitlint",
       "ci-github-actions",
       "ci-gitlab",
       "publishing-npm",
@@ -155,6 +158,155 @@ describe("first-class provider catalog", () => {
     expect(config.$schema).toBe("https://biomejs.dev/schemas/3.1.2/schema.json");
   });
 
+  test("generates a strict portable Biome policy with separate lint and format commands", () => {
+    const result = plan({ quality: "biome" });
+    const config = JSON.parse(result.files.get("biome.json")!);
+
+    expect(result.packageJson.scripts).toMatchObject({
+      lint: "biome check --error-on-warnings .",
+      "lint:fix": "biome check --write --error-on-warnings .",
+      format: "biome format --write .",
+      "format:check": "biome format .",
+    });
+    expect(config).toMatchObject({
+      files: {
+        includes: expect.arrayContaining([
+          "**",
+          "!**/coverage",
+          "!**/dist",
+          "!**/node_modules",
+        ]),
+      },
+      formatter: {
+        enabled: true,
+        indentStyle: "space",
+        indentWidth: 2,
+        lineWidth: 100,
+      },
+      linter: {
+        enabled: true,
+        domains: { project: "all", test: "all" },
+        rules: {
+          preset: "recommended",
+          correctness: {
+            useImportExtensions: {
+              level: "error",
+              options: { extensionMappings: { ts: "js", tsx: "js" } },
+            },
+          },
+          suspicious: { noExplicitAny: "error", noTsIgnore: "error" },
+          style: {
+            noCommonJs: "error",
+            noEnum: "error",
+            noNonNullAssertion: "error",
+          },
+        },
+      },
+      javascript: {
+        formatter: { quoteStyle: "double", trailingCommas: "all" },
+      },
+    });
+  });
+
+  test("keeps workspace-owned test dependencies compatible with Biome project rules", () => {
+    const config = JSON.parse(plan({
+      preset: "workspace",
+      workspace: "turbo",
+      build: "tsc",
+      http: "none",
+      quality: "biome",
+    }).files.get("biome.json")!);
+
+    expect(config.overrides).toContainEqual({
+      includes: ["**/*.test.ts", "**/*.test.tsx"],
+      linter: { rules: { correctness: { noUndeclaredDependencies: "off" } } },
+    });
+  });
+
+  test("does not ban CommonJS when the selected module system requires it", () => {
+    const config = JSON.parse(plan({
+      preset: "library",
+      http: "none",
+      quality: "biome",
+      module: "commonjs",
+    })
+      .files.get("biome.json")!);
+
+    expect(config.linter.rules.style).not.toHaveProperty("noCommonJs");
+  });
+
+  test("generates an equivalent strict ESLint policy with Prettier limited to formatting", () => {
+    const result = plan({ quality: "eslint-prettier" });
+    const eslint = result.files.get("eslint.config.mjs");
+
+    expect(result.packageJson.scripts).toMatchObject({
+      lint: "eslint --max-warnings=0 .",
+      "lint:fix": "eslint --fix --max-warnings=0 .",
+      format: "prettier --write .",
+      "format:check": "prettier --check .",
+    });
+    expect(eslint).toContain("tseslint.configs.strict");
+    expect(eslint).toContain("tseslint.configs.stylistic");
+    expect(eslint).toContain("TSEnumDeclaration");
+    expect(eslint).not.toContain('"@typescript-eslint/no-explicit-any"');
+    expect(eslint).not.toContain('"@typescript-eslint/no-non-null-assertion"');
+  });
+
+  test("allows require imports when ESLint is configured for CommonJS", () => {
+    const result = plan({
+      preset: "library",
+      http: "none",
+      quality: "eslint-prettier",
+      module: "commonjs",
+    });
+    const eslint = result.files.get("eslint.config.mjs");
+
+    expect(result.files.has("eslint.config.js")).toBe(false);
+    expect(eslint).toContain('"@typescript-eslint/no-require-imports": "off"');
+  });
+
+  test("runs ESLint and Prettier on staged source files without overlapping format rules", () => {
+    const result = plan({ quality: "eslint-prettier", hooks: "husky-lint-staged" });
+    const config = JSON.parse(result.files.get(".lintstagedrc.json")!);
+
+    expect(config).toEqual({
+      "*.{js,mjs,cjs,ts,tsx}": [
+        "eslint --fix --max-warnings=0",
+        "prettier --write",
+      ],
+      "*.{json,jsonc,css,md,yml,yaml}": "prettier --write",
+    });
+  });
+
+  test("runs ESLint and Prettier on staged files with Lefthook", () => {
+    const result = plan({ quality: "eslint-prettier", hooks: "lefthook" });
+    const hooks = parse(result.files.get("lefthook.yml")!);
+
+    expect(hooks["pre-commit"].commands).toEqual({
+      lint: {
+        glob: "*.{js,mjs,cjs,ts,tsx}",
+        run: "npm exec -- eslint --fix --max-warnings=0 {staged_files}",
+        stage_fixed: true,
+      },
+      format: {
+        glob: "*.{js,mjs,cjs,ts,tsx,json,jsonc,css,md,yml,yaml}",
+        run: "npm exec -- prettier --write {staged_files}",
+        stage_fixed: true,
+      },
+    });
+  });
+
+  test("runs typecheck and tests before Husky allows a push", () => {
+    const result = plan({
+      quality: "eslint-prettier",
+      hooks: "husky-lint-staged",
+      tests: "vitest",
+    });
+
+    expect(result.files.get(".husky/pre-commit")).toBe("npm exec -- lint-staged\n");
+    expect(result.files.get(".husky/pre-push")).toBe("npm run typecheck\nnpm run test\n");
+  });
+
   test.each([
     ["node-test", "node --test --experimental-strip-types test/*.test.ts"],
     ["jest", "jest"],
@@ -186,6 +338,62 @@ describe("first-class provider catalog", () => {
     expect(result.files.get("jest.config.mjs")).toContain("moduleNameMapper");
   });
 
+  test.each(["vitest", "jest"] as const)(
+    "sets a portable coverage floor for %s",
+    (tests) => {
+      const result = plan({ tests });
+      const config = result.files.get(
+        tests === "vitest" ? "vitest.config.mts" : "jest.config.mjs",
+      );
+
+      expect(result.packageJson.scripts.coverage).toBe(
+        tests === "vitest" ? "vitest run --coverage" : "jest --coverage",
+      );
+      expect(config).toContain("branches: 80");
+      expect(config).toContain("functions: 80");
+      expect(config).toContain("lines: 80");
+      expect(config).toContain("statements: 80");
+    },
+  );
+
+  test("includes untested source files in Vitest coverage", () => {
+    const single = plan({ tests: "vitest" }).files.get("vitest.config.mts");
+    const workspace = plan({
+      preset: "workspace",
+      workspace: "turbo",
+      build: "tsc",
+      http: "none",
+      tests: "vitest",
+      workspace_members: [
+        { path: "apps/app", package_name: "@{project}/app", kind: "application" },
+        { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>).files.get("vitest.config.mts");
+
+    expect(single).toContain('include: ["src/**/*.{ts,tsx}"]');
+    expect(workspace).toContain(
+      'include: ["apps/app/src/**/*.{ts,tsx}", "packages/core/src/**/*.{ts,tsx}"]',
+    );
+  });
+
+  test("includes workspace source files in Jest coverage", () => {
+    const config = plan({
+      preset: "workspace",
+      workspace: "turbo",
+      build: "tsc",
+      http: "none",
+      tests: "jest",
+      workspace_members: [
+        { path: "apps/app", package_name: "@{project}/app", kind: "application" },
+        { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>).files.get("jest.config.mjs");
+
+    expect(config).toContain(
+      'collectCoverageFrom: ["apps/app/src/**/*.{ts,tsx}", "packages/core/src/**/*.{ts,tsx}", "!**/*.d.ts", "!**/*.test.{ts,tsx}"]',
+    );
+  });
+
   test("uses SWC rather than a TypeScript-version-bound Jest transformer", () => {
     const result = plan({ tests: "jest" });
 
@@ -213,6 +421,249 @@ describe("first-class provider catalog", () => {
     expect(result.files.has("tsconfig.base.json")).toBe(true);
   });
 
+  test("composes a checked workspace without root script conflicts", () => {
+    const result = plan({
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsc",
+      quality: "biome",
+      tests: "vitest",
+      hooks: "lefthook",
+      commit_lint: "commitlint",
+      duplication: "jscpd",
+      workspace_members: [
+        { path: "apps/app", package_name: "@{project}/app", kind: "application" },
+        { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>);
+
+    expect(result.packageJson.scripts).toMatchObject({
+      build: "turbo build",
+      typecheck: "turbo typecheck",
+      lint: "biome check --error-on-warnings .",
+      test: "vitest run",
+      duplication: "jscpd apps/app/src packages/core/src",
+    });
+    expect(result.packageJson.devDependencies).toMatchObject({
+      "@biomejs/biome": expect.any(String),
+      "@commitlint/cli": expect.any(String),
+      "@commitlint/config-conventional": expect.any(String),
+      jscpd: expect.any(String),
+      lefthook: expect.any(String),
+      turbo: expect.any(String),
+      vitest: expect.any(String),
+    });
+    expect(result.packageJson.workspaces).toEqual(["apps/app", "packages/core"]);
+    expect(JSON.parse(result.files.get("apps/app/package.json")!)).toMatchObject({
+      name: "@provider-test/app",
+      private: true,
+      scripts: {
+        build: "tsc -p tsconfig.build.json",
+        typecheck: "tsc --noEmit",
+      },
+    });
+    expect(JSON.parse(result.files.get("packages/core/package.json")!)).toMatchObject({
+      name: "@provider-test/core",
+      private: true,
+    });
+    expect(result.files.get("apps/app/test/index.test.ts")).toContain("vitest");
+    expect(result.files.get("packages/core/test/index.test.ts")).toContain("vitest");
+    expect(result.files.get("commitlint.config.mjs")).toContain("config-conventional");
+    const hooks = parse(result.files.get("lefthook.yml")!);
+    expect(hooks).toMatchObject({
+      "pre-commit": {
+        commands: {
+          quality: {
+            glob: expect.any(String),
+            stage_fixed: true,
+          },
+        },
+      },
+      "commit-msg": { commands: { commitlint: { run: expect.any(String) } } },
+      "pre-push": {
+        parallel: true,
+        commands: {
+          typecheck: { run: "npm run typecheck" },
+          test: { run: "npm run test" },
+        },
+      },
+    });
+    expect(JSON.parse(result.files.get(".jscpd.json")!)).toMatchObject({
+      threshold: 3,
+      minLines: 1,
+      minTokens: 5,
+      ignore: expect.arrayContaining(["**/coverage/**", "**/dist/**", "**/*.test.*"]),
+    });
+  });
+
+  test("adds only portable Commitlint overrides and leaves scopes open", async () => {
+    const source = plan({
+      quality: "biome",
+      commit_lint: "commitlint",
+      hooks: "lefthook",
+    })
+      .files.get("commitlint.config.mjs")!;
+    const moduleUrl = `data:text/javascript;base64,${Buffer.from(source).toString("base64")}`;
+    const config = (await import(moduleUrl)).default;
+
+    expect(config).toEqual({
+      extends: ["@commitlint/config-conventional"],
+      rules: {
+        "body-leading-blank": [2, "always"],
+        "footer-leading-blank": [2, "always"],
+        "scope-case": [2, "always", "lower-case"],
+      },
+    });
+    expect(config.rules).not.toHaveProperty("scope-enum");
+    expect(config.rules).not.toHaveProperty("scope-empty");
+  });
+
+  test("generates the same strict compiler baseline for single packages and workspaces", () => {
+    const single = JSON.parse(plan({ build: "tsc" }).files.get("tsconfig.json")!);
+    const workspace = JSON.parse(plan({
+      preset: "workspace",
+      workspace: "turbo",
+      build: "tsc",
+      http: "none",
+    }).files.get("tsconfig.base.json")!);
+
+    for (const config of [single, workspace]) {
+      expect(config.compilerOptions).toMatchObject({
+        strict: true,
+        noUncheckedIndexedAccess: true,
+        exactOptionalPropertyTypes: true,
+        noImplicitOverride: true,
+        noFallthroughCasesInSwitch: true,
+        noUncheckedSideEffectImports: true,
+        forceConsistentCasingInFileNames: true,
+        isolatedModules: true,
+        resolveJsonModule: true,
+      });
+    }
+  });
+
+  test("uses the supported Node16 compiler pair for CommonJS", () => {
+    const result = plan({
+      preset: "library",
+      http: "none",
+      module: "commonjs",
+      build: "tsc",
+      tests: "vitest",
+    });
+    const config = JSON.parse(result.files.get("tsconfig.json")!);
+
+    expect(config.compilerOptions).toMatchObject({
+      module: "Node16",
+      moduleResolution: "Node16",
+    });
+    expect(result.files.has("vitest.config.mts")).toBe(true);
+    expect(result.files.has("vitest.config.ts")).toBe(false);
+  });
+
+  test("generates stack-aware coding instructions", () => {
+    const result = plan({
+      quality: "biome",
+      tests: "vitest",
+      hooks: "lefthook",
+      commit_lint: "commitlint",
+      duplication: "jscpd",
+    } as Partial<ScaffoldProfile>);
+
+    expect(result.files.get("AGENTS.md")).toContain("## Reuse and dependencies");
+    expect(result.files.get("AGENTS.md")).toContain("## TypeScript");
+    expect(result.files.get("AGENTS.md")).toContain("docs/coding-standards.md");
+    expect(result.files.get("docs/coding-standards.md")).toContain("Biome");
+    expect(result.files.get("docs/coding-standards.md")).toContain("Vitest");
+    expect(result.files.get("docs/coding-standards.md")).toContain("Commitlint");
+    expect(result.files.get("README.md")).toContain("docs/coding-standards.md");
+  });
+
+  test("rejects unsafe or duplicate workspace members", () => {
+    const workspace = {
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsc",
+    } as const;
+
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        { path: "../outside", package_name: "@{project}/bad", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/workspace member path/i);
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+        { path: "packages/core", package_name: "@{project}/other", kind: "library" },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/duplicate workspace member path/i);
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        {
+          path: "docs/coding-standards.md/package",
+          package_name: "@{project}/docs-collision",
+          kind: "library",
+        },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/path.*conflict|workspace member path/i);
+    expect(() => plan({
+      ...workspace,
+      workspace_members: [
+        {
+          path: "package.json/member",
+          package_name: "@{project}/manifest-collision",
+          kind: "library",
+        },
+      ],
+    } as Partial<ScaffoldProfile>)).toThrow(/path.*conflict|workspace member path/i);
+  });
+
+  test("rejects workspace build providers that member packages cannot honor", () => {
+    expect(() => plan({
+      preset: "workspace",
+      workspace: "turbo",
+      http: "none",
+      build: "tsup",
+      package_versions: { typescript: "^5.9.3" },
+    })).toThrow(/workspace.*tsc/i);
+  });
+
+  test.each(["node-test", "jest"] as const)(
+    "makes %s workspace members typecheck-safe",
+    (tests) => {
+      const result = plan({
+        preset: "workspace",
+        workspace: "turbo",
+        http: "none",
+        build: "tsc",
+        tests,
+        workspace_members: [
+          { path: "packages/core", package_name: "@{project}/core", kind: "library" },
+        ],
+      });
+      const memberPackage = JSON.parse(result.files.get("packages/core/package.json")!);
+      const baseConfig = JSON.parse(result.files.get("tsconfig.base.json")!);
+
+      expect(memberPackage.scripts.typecheck).toBe(
+        tests === "node-test"
+          ? "tsc --noEmit --allowImportingTsExtensions"
+          : "tsc --noEmit",
+      );
+      expect(baseConfig.compilerOptions.types).toEqual(
+        tests === "jest" ? ["node", "jest"] : ["node"],
+      );
+    },
+  );
+
+  test("requires a Git hook when Commitlint is selected", () => {
+    expect(() => plan({ commit_lint: "commitlint", hooks: "none" }))
+      .toThrow(/Commitlint requires.*hook/i);
+  });
+
   test("writes pnpm workspace metadata for a pnpm monorepo", () => {
     const result = plan({
       preset: "workspace",
@@ -223,7 +674,8 @@ describe("first-class provider catalog", () => {
       package_manager_version: "11.24.0",
     });
 
-    expect(result.files.get("pnpm-workspace.yaml")).toBe("packages:\n  - packages/*\n");
+    expect(result.files.get("pnpm-workspace.yaml"))
+      .toBe("packages:\n  - apps/*\n  - packages/*\n");
   });
 
   test("honors extra packages and scripts without inventing files", () => {
@@ -379,8 +831,9 @@ describe("first-class provider catalog", () => {
 
   test("Lefthook includes only configured checks", () => {
     const lintOnly = plan({ hooks: "lefthook", quality: "biome", tests: "none" });
-    expect(lintOnly.files.get("lefthook.yml")).toContain("lint:");
-    expect(lintOnly.files.get("lefthook.yml")).not.toContain("test:");
+    const hooks = parse(lintOnly.files.get("lefthook.yml")!);
+    expect(hooks["pre-commit"].commands).toHaveProperty("quality");
+    expect(hooks["pre-push"].commands).not.toHaveProperty("test");
 
     expect(() => plan({ hooks: "lefthook", quality: "none", tests: "none" }))
       .toThrow(/Lefthook requires/);

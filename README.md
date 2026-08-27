@@ -1,4 +1,10 @@
-# agent-kit
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/agent-kit-logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/agent-kit-logo-light.png">
+    <img src="assets/agent-kit-logo-light.png" alt="Agent Kit logo" width="768" height="512">
+  </picture>
+</p>
 
 Reusable skills and agent instructions for software work. Each skill is self-contained under `skills/` and follows the Agent Skills format.
 
@@ -63,9 +69,15 @@ Ask your agent:
 Use typescript-scaffold to create a Fastify service at ./catalog-api using the service profile. Keep Zod and Pino, but use GitLab CI for this repository.
 ```
 
+For a monorepo:
+
+```text
+Use typescript-scaffold to create a Bun and Turbo monorepo at ./platform with Biome, Vitest, Lefthook, Commitlint, Gitleaks, jscpd, an application under apps/app, and a library under packages/core.
+```
+
 See the [TypeScript scaffold guide](skills/typescript-scaffold/README.md) for presets, profiles, supported providers, and safety boundaries.
 
-The TypeScript scaffold requires Node.js 24. Its profile selects an exact package-manager version and may require an external command such as Gitleaks. The skill reports missing prerequisites before changing the requested target.
+The TypeScript scaffold requires Node.js 24. Its profile selects an exact package-manager version and may require an external command such as Gitleaks. The skill reports missing prerequisites before changing the requested target. Generated repositories include their own stack-aware coding standards; companion skills are optional.
 
 ## Legacy commands
 

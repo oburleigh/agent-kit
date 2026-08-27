@@ -35,8 +35,8 @@ export const presetProviders: ProviderContribution[] = [
     id: "preset-workspace",
     selected: (profile) => profile.preset === "workspace",
     packageJson: { private: true },
-    files: () => ({
-      "packages/.gitkeep": "",
-    }),
+    files: ({ profile }) => (profile.workspace_members ?? []).length === 0
+      ? { "packages/.gitkeep": "" }
+      : {},
   },
 ];

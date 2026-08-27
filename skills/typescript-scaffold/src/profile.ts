@@ -18,5 +18,9 @@ export function loadProfileText(input: string): ScaffoldProfile {
     throw new Error(`Invalid TypeScript scaffold profile: ${details}`);
   }
 
-  return result.data;
+  return {
+    ...result.data,
+    commit_lint: result.data.commit_lint ?? "none",
+    workspace_members: result.data.workspace_members ?? [],
+  };
 }

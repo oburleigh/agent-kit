@@ -34,7 +34,7 @@ export function createGenerationPlan(
   }
   const context = createProviderContext(profile, project, {});
 
-  validateGlobalCompatibility(profile);
+  validateGlobalCompatibility(profile, project);
   const selected = providerCatalog.filter((provider) => provider.selected(profile));
   for (const provider of selected) provider.validate?.(context);
 
@@ -60,7 +60,13 @@ export function createGenerationPlan(
   let files = new Map<string, string>();
 
   for (const provider of selected) {
-    mergePackageJson(packageJson, provider.packageJson, provider.id);
+    mergePackageJson(
+      packageJson,
+      typeof provider.packageJson === "function"
+        ? provider.packageJson(context)
+        : provider.packageJson,
+      provider.id,
+    );
     mergeStringRecord(
       packageJson.scripts,
       typeof provider.scripts === "function" ? provider.scripts(context) : provider.scripts,
@@ -124,11 +130,16 @@ function collectProviderFiles(
   context: ProviderContext,
 ): Map<string, string> {
   const files = new Map<string, string>();
+  const reservedPaths = ["package.json", ".gitignore"];
   for (const provider of selected) {
     for (const [path, content] of Object.entries(provider.files?.(context) ?? {})) {
-      const existing = files.get(path);
-      if (existing !== undefined && existing !== content) {
-        throw new Error(`Providers conflict on file ${path}: ${provider.id}`);
+      const conflictingPath = [...reservedPaths, ...files.keys()].find((existingPath) =>
+        existingPath === path || path.startsWith(`${existingPath}/`) || existingPath.startsWith(`${path}/`)
+      );
+      if (conflictingPath !== undefined) {
+        const existing = files.get(path);
+        if (conflictingPath === path && existing === content) continue;
+        throw new Error(`Provider file path conflict: ${conflictingPath} and ${path}`);
       }
       files.set(path, content);
     }
@@ -158,7 +169,7 @@ export function rejectDependencyBucketConflicts(packageJson: PackageJsonPlan): v
   }
 }
 
-function validateGlobalCompatibility(profile: ScaffoldProfile): void {
+function validateGlobalCompatibility(profile: ScaffoldProfile, project: ProjectInput): void {
   if (profile.run_quality_gates && !profile.install_dependencies) {
     throw new Error("Quality gates require dependency installation");
   }
@@ -174,8 +185,38 @@ function validateGlobalCompatibility(profile: ScaffoldProfile): void {
   if (profile.preset === "workspace" && profile.workspace === "none") {
     throw new Error("The workspace preset requires Turbo or Nx");
   }
+  if (profile.preset === "workspace" && profile.build !== "tsc") {
+    throw new Error("Workspace members currently require the tsc build provider");
+  }
+  const workspaceMembers = profile.workspace_members ?? [];
+  if (profile.preset !== "workspace" && workspaceMembers.length > 0) {
+    throw new Error("Workspace members require the workspace preset");
+  }
+  const memberPaths = new Set<string>();
+  const memberNames = new Set<string>();
+  for (const member of workspaceMembers) {
+    if (!/^(?:[a-z0-9][a-z0-9._-]*\/)+[a-z0-9][a-z0-9._-]*$/i.test(member.path)) {
+      throw new Error(`Invalid workspace member path: ${member.path}`);
+    }
+    if (memberPaths.has(member.path)) {
+      throw new Error(`Duplicate workspace member path: ${member.path}`);
+    }
+    memberPaths.add(member.path);
+    const packageName = member.package_name.replaceAll("{project}", project.name);
+    const packageNameResult = validatePackageName(packageName);
+    if (!packageNameResult.validForNewPackages) {
+      throw new Error(`Invalid workspace member package name: ${packageName}`);
+    }
+    if (memberNames.has(packageName)) {
+      throw new Error(`Duplicate workspace member package name: ${packageName}`);
+    }
+    memberNames.add(packageName);
+  }
   if (profile.hooks === "husky-lint-staged" && profile.quality !== "eslint-prettier") {
     throw new Error("Husky with lint-staged requires the ESLint and Prettier provider");
+  }
+  if (profile.commit_lint === "commitlint" && profile.hooks === "none") {
+    throw new Error("Commitlint requires a Git hook provider");
   }
   if (profile.framework === "vite-react" && profile.preset !== "library") {
     throw new Error("The Vite React adapter requires the library preset");
