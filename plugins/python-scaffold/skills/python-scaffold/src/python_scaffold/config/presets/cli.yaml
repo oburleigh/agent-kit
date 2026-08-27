@@ -1,0 +1,9 @@
+profile_name: cli
+preset: cli
+providers:
+  cli: typer
+project:
+  name: python-cli
+  description: Python command-line application
+tools:
+  test_tiers: [unit, end-to-end]

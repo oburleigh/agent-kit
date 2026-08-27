@@ -1,0 +1,12 @@
+profile_name: service
+preset: service
+providers:
+  architecture: import-linter
+  http: fastapi
+  logging: structlog
+  runtime_validation: pydantic
+project:
+  name: python-service
+  description: Python service
+tools:
+  test_tiers: [unit, integration]

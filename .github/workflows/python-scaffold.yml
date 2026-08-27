@@ -1,0 +1,68 @@
+name: Python scaffold
+
+on:
+  pull_request:
+    paths:
+      - "plugins/python-scaffold/**"
+      - ".github/workflows/python-scaffold.yml"
+  push:
+    branches: [main]
+    paths:
+      - "plugins/python-scaffold/**"
+      - ".github/workflows/python-scaffold.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: plugins/python-scaffold/skills/python-scaffold
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.1"
+          python-version: "3.14"
+          enable-cache: true
+          working-directory: plugins/python-scaffold/skills/python-scaffold
+      - run: uv sync --frozen
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen ruff format --check .
+      - run: uv run --frozen ty check
+      - name: Check generated schema
+        run: |
+          uv run --frozen python scripts/export_schema.py
+          git diff --exit-code -- src/python_scaffold/config/schema.json
+      - run: uv run --frozen pytest --cov=python_scaffold --cov-branch --cov-fail-under=80
+      - name: Build and smoke-test the wheel
+        run: |
+          uv build --out-dir "${RUNNER_TEMP}/python-scaffold-dist"
+          uv run --isolated --no-project \
+            --with "${RUNNER_TEMP}"/python-scaffold-dist/*.whl \
+            python -c 'from python_scaffold.profiles import load_bundled_preset; assert load_bundled_preset("library")["preset"] == "library"'
+
+  create-only-portability:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: plugins/python-scaffold/skills/python-scaffold
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.1"
+          python-version: "3.14"
+          enable-cache: true
+          working-directory: plugins/python-scaffold/skills/python-scaffold
+      - run: uv sync --frozen
+      - name: Check create-only transaction behavior
+        run: >-
+          uv run --frozen pytest
+          tests/test_transaction.py::test_target_created_at_commit_is_not_replaced
+          tests/test_transaction.py::test_success_atomically_moves_the_complete_staging_directory

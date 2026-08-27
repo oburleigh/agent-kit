@@ -1,0 +1,7 @@
+profile_name: library
+preset: library
+providers:
+  publishing: pypi
+project:
+  name: python-library
+  description: Python library

@@ -56,6 +56,20 @@ class PluginDistributionTest(unittest.TestCase):
             if plugin_root.is_dir():
                 self.assertFalse((plugin_root / "commands").exists())
 
+    def test_plugin_directories_are_published_or_explicitly_unpublished(self) -> None:
+        published = {plugin["name"] for plugin in self.codex["plugins"]}
+
+        for plugin_root in (ROOT / "plugins").iterdir():
+            if not plugin_root.is_dir():
+                continue
+            has_codex_manifest = (plugin_root / ".codex-plugin/plugin.json").exists()
+            has_claude_manifest = (plugin_root / ".claude-plugin/plugin.json").exists()
+            is_unpublished = (plugin_root / ".unpublished-plugin").exists()
+
+            self.assertEqual(has_codex_manifest, has_claude_manifest)
+            self.assertNotEqual(has_codex_manifest, is_unpublished)
+            self.assertEqual(plugin_root.name in published, has_codex_manifest)
+
 
 if __name__ == "__main__":
     unittest.main()

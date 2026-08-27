@@ -1,0 +1,10 @@
+profile_name: workspace
+preset: workspace
+providers:
+  workspace: uv-workspace
+project:
+  name: python-workspace
+  description: Python workspace
+  workspace_members: [apps/app, packages/core]
+tools:
+  test_tiers: [unit, integration]

@@ -1,0 +1,373 @@
+{
+  "$defs": {
+    "Additions": {
+      "additionalProperties": false,
+      "properties": {
+        "ci_commands": {
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Ci Commands",
+          "type": "array"
+        },
+        "commands": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Commands",
+          "type": "object"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "dev_dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dev Dependencies",
+          "type": "array"
+        }
+      },
+      "title": "Additions",
+      "type": "object"
+    },
+    "Execution": {
+      "additionalProperties": false,
+      "properties": {
+        "initialize_git": {
+          "default": true,
+          "title": "Initialize Git",
+          "type": "boolean"
+        },
+        "install_dependencies": {
+          "default": true,
+          "title": "Install Dependencies",
+          "type": "boolean"
+        },
+        "run_quality_gates": {
+          "default": true,
+          "title": "Run Quality Gates",
+          "type": "boolean"
+        }
+      },
+      "title": "Execution",
+      "type": "object"
+    },
+    "Project": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "minLength": 1,
+          "title": "Author",
+          "type": "string"
+        },
+        "description": {
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "python_version": {
+          "pattern": "^3\\.\\d+$",
+          "title": "Python Version",
+          "type": "string"
+        },
+        "repository_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repository Url"
+        },
+        "workspace_members": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Workspace Members",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "author",
+        "python_version"
+      ],
+      "title": "Project",
+      "type": "object"
+    },
+    "Providers": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "enum": [
+            "import-linter",
+            "none"
+          ],
+          "title": "Architecture",
+          "type": "string"
+        },
+        "build_backend": {
+          "enum": [
+            "hatchling",
+            "setuptools",
+            "uv-build"
+          ],
+          "title": "Build Backend",
+          "type": "string"
+        },
+        "ci": {
+          "enum": [
+            "github-actions",
+            "gitlab-ci",
+            "none"
+          ],
+          "title": "Ci",
+          "type": "string"
+        },
+        "cli": {
+          "enum": [
+            "click",
+            "typer",
+            "none"
+          ],
+          "title": "Cli",
+          "type": "string"
+        },
+        "commit_lint": {
+          "enum": [
+            "commitizen",
+            "none"
+          ],
+          "title": "Commit Lint",
+          "type": "string"
+        },
+        "dependency_audit": {
+          "enum": [
+            "pip-audit",
+            "none"
+          ],
+          "title": "Dependency Audit",
+          "type": "string"
+        },
+        "duplication": {
+          "enum": [
+            "pylint",
+            "none"
+          ],
+          "title": "Duplication",
+          "type": "string"
+        },
+        "hooks": {
+          "enum": [
+            "lefthook",
+            "pre-commit",
+            "none"
+          ],
+          "title": "Hooks",
+          "type": "string"
+        },
+        "http": {
+          "enum": [
+            "fastapi",
+            "flask",
+            "none"
+          ],
+          "title": "Http",
+          "type": "string"
+        },
+        "license": {
+          "enum": [
+            "apache-2.0",
+            "mit",
+            "none"
+          ],
+          "title": "License",
+          "type": "string"
+        },
+        "logging": {
+          "enum": [
+            "standard-library",
+            "structlog",
+            "none"
+          ],
+          "title": "Logging",
+          "type": "string"
+        },
+        "publishing": {
+          "enum": [
+            "pypi",
+            "none"
+          ],
+          "title": "Publishing",
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "ruff",
+            "none"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "runtime_validation": {
+          "enum": [
+            "pydantic",
+            "none"
+          ],
+          "title": "Runtime Validation",
+          "type": "string"
+        },
+        "secret_scan": {
+          "enum": [
+            "gitleaks",
+            "none"
+          ],
+          "title": "Secret Scan",
+          "type": "string"
+        },
+        "tests": {
+          "enum": [
+            "pytest",
+            "unittest",
+            "none"
+          ],
+          "title": "Tests",
+          "type": "string"
+        },
+        "type_checker": {
+          "enum": [
+            "mypy",
+            "pyright",
+            "ty",
+            "none"
+          ],
+          "title": "Type Checker",
+          "type": "string"
+        },
+        "workspace": {
+          "enum": [
+            "uv-workspace",
+            "none"
+          ],
+          "title": "Workspace",
+          "type": "string"
+        }
+      },
+      "required": [
+        "architecture",
+        "build_backend",
+        "ci",
+        "cli",
+        "commit_lint",
+        "dependency_audit",
+        "duplication",
+        "hooks",
+        "http",
+        "license",
+        "logging",
+        "publishing",
+        "quality",
+        "runtime_validation",
+        "secret_scan",
+        "tests",
+        "type_checker",
+        "workspace"
+      ],
+      "title": "Providers",
+      "type": "object"
+    },
+    "Tools": {
+      "additionalProperties": false,
+      "properties": {
+        "coverage_floor": {
+          "default": 80,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Coverage Floor",
+          "type": "integer"
+        },
+        "test_tiers": {
+          "items": {
+            "enum": [
+              "end-to-end",
+              "integration",
+              "unit"
+            ],
+            "type": "string"
+          },
+          "title": "Test Tiers",
+          "type": "array"
+        }
+      },
+      "title": "Tools",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "additions": {
+      "$ref": "#/$defs/Additions"
+    },
+    "execution": {
+      "$ref": "#/$defs/Execution"
+    },
+    "preset": {
+      "enum": [
+        "cli",
+        "library",
+        "service",
+        "workspace"
+      ],
+      "title": "Preset",
+      "type": "string"
+    },
+    "profile_name": {
+      "minLength": 1,
+      "title": "Profile Name",
+      "type": "string"
+    },
+    "project": {
+      "$ref": "#/$defs/Project"
+    },
+    "providers": {
+      "$ref": "#/$defs/Providers"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "tools": {
+      "$ref": "#/$defs/Tools"
+    }
+  },
+  "required": [
+    "schema_version",
+    "profile_name",
+    "preset",
+    "providers",
+    "project"
+  ],
+  "title": "Profile",
+  "type": "object"
+}
