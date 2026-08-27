@@ -6,16 +6,16 @@
   </picture>
 </p>
 
-Reusable skills and agent instructions for software work. Each skill is self-contained under `skills/` and follows the Agent Skills format.
+Reusable skills and agent instructions for software work. Each plugin keeps its Agent Skill under `plugins/<name>/skills/`.
 
 ## Skills
 
 | Skill | Use it for |
 | --- | --- |
-| [typescript-scaffold](skills/typescript-scaffold/) | Create a configurable TypeScript library, service, CLI, workspace, or Vite React repository. |
-| [create-skill](skills/create-skill/) | Create and check an Agent Skill. |
-| [git-commit](skills/git-commit/) | Review, stage, split, and commit Git changes with Conventional Commits. |
-| [humanize](skills/humanize/) | Remove common machine-written patterns from professional prose. |
+| [typescript-scaffold](plugins/typescript-scaffold/skills/typescript-scaffold/) | Create a configurable TypeScript library, service, CLI, workspace, or Vite React repository. |
+| [create-skill](plugins/create-skill/skills/create-skill/) | Create and check an Agent Skill. |
+| [git-commit](plugins/git-commit/skills/git-commit/) | Review, stage, split, and commit Git changes with Conventional Commits. |
+| [humanize](plugins/humanize/skills/humanize/) | Remove common machine-written patterns from professional prose. |
 
 ## Install from one local checkout
 
@@ -32,7 +32,7 @@ Symlink a skill into each agent that should use it. Replace `/path/to/agent-kit`
 
 ```sh
 mkdir -p ~/.claude/skills
-ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.claude/skills/typescript-scaffold
+ln -s /path/to/agent-kit/plugins/typescript-scaffold/skills/typescript-scaffold ~/.claude/skills/typescript-scaffold
 ```
 
 ### Codex and other Agent Skills clients
@@ -41,14 +41,14 @@ Use the shared Agent Skills directory when the same checkout should serve more t
 
 ```sh
 mkdir -p ~/.agents/skills
-ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.agents/skills/typescript-scaffold
+ln -s /path/to/agent-kit/plugins/typescript-scaffold/skills/typescript-scaffold ~/.agents/skills/typescript-scaffold
 ```
 
 For a Codex-only installation, use the Codex skills directory instead:
 
 ```sh
 mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-ln -s /path/to/agent-kit/skills/typescript-scaffold "${CODEX_HOME:-$HOME/.codex}/skills/typescript-scaffold"
+ln -s /path/to/agent-kit/plugins/typescript-scaffold/skills/typescript-scaffold "${CODEX_HOME:-$HOME/.codex}/skills/typescript-scaffold"
 ```
 
 The two links can point to the same checkout. Edit the repository copy and both agents see the change. Pull repository updates with:
@@ -75,7 +75,7 @@ For a monorepo:
 Use typescript-scaffold to create a Bun and Turbo monorepo at ./platform with Biome, Vitest, Lefthook, Commitlint, Gitleaks, jscpd, an application under apps/app, and a library under packages/core.
 ```
 
-See the [TypeScript scaffold guide](skills/typescript-scaffold/README.md) for presets, profiles, supported providers, and safety boundaries.
+See the [TypeScript scaffold guide](plugins/typescript-scaffold/skills/typescript-scaffold/README.md) for presets, profiles, supported providers, and safety boundaries.
 
 The TypeScript scaffold requires Node.js 24. Its profile selects an exact package-manager version and may require an external command such as Gitleaks. The skill reports missing prerequisites before changing the requested target. Generated repositories include their own stack-aware coding standards; companion skills are optional.
 
