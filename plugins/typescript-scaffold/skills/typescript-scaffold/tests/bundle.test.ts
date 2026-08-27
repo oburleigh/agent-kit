@@ -1,8 +1,17 @@
-import { copyFile, mkdir, mkdtemp, readFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
-import { execa } from "execa";
+import { pathToFileURL } from "node:url";
+import { Worker } from "node:worker_threads";
+import { describe, expect, onTestFinished, test } from "vitest";
+
+const bundleLoader = `
+const { parentPort, workerData } = require("node:worker_threads");
+import(workerData)
+  .then(({ main }) => main([]))
+  .then(() => parentPort.postMessage(""))
+  .catch((error) => parentPort.postMessage(error instanceof Error ? error.message : String(error)));
+`;
 
 describe("bundled generator", () => {
   test("builds for the declared Node.js baseline", async () => {
@@ -11,27 +20,28 @@ describe("bundled generator", () => {
 
   test("starts without requiring dependencies from the plugin cache", async () => {
     const root = await mkdtemp(join(tmpdir(), "agent-kit-bundle-"));
+    onTestFinished(() => rm(root, { recursive: true, force: true }));
     const dist = join(root, "dist");
     const config = join(root, "config");
     await mkdir(dist);
     await mkdir(config);
-    await copyFile("dist/generate.mjs", join(dist, "generate.mjs"));
+    const bundledGenerator = join(dist, "generate.mjs");
+    await copyFile("dist/generate.mjs", bundledGenerator);
     await copyFile("config/defaults.yaml", join(config, "defaults.yaml"));
 
-    const result = await execa(process.execPath, [join(dist, "generate.mjs")], {
-      cwd: root,
-      reject: false,
+    const worker = new Worker(bundleLoader, {
+      eval: true,
+      workerData: pathToFileURL(bundledGenerator).href,
+    });
+    onTestFinished(async () => {
+      await worker.terminate();
+    });
+    const errorMessage = await new Promise<string>((resolve, reject) => {
+      worker.once("message", resolve);
+      worker.once("error", reject);
     });
 
-    expect(result.exitCode).toBe(1);
-    const diagnostic = JSON.stringify({
-      exitCode: result.exitCode,
-      signal: result.signal,
-      stderr: result.stderr,
-      stdout: result.stdout,
-    });
-    expect(result.stderr, diagnostic).toContain("--profile and --target are required");
-    expect(result.stderr).not.toContain("Dynamic require");
+    expect(errorMessage).toBe("--profile and --target are required");
   });
 
   test("does not contain generated trailing whitespace", async () => {
