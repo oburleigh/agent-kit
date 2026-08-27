@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 CODEX_MARKETPLACE = ROOT / ".agents/plugins/marketplace.json"
 CLAUDE_MARKETPLACE = ROOT / ".claude-plugin/marketplace.json"
+AGGREGATE_PLUGIN = ROOT
 
 
 def read_json(path: Path) -> dict:
@@ -21,11 +22,11 @@ class PluginDistributionTest(unittest.TestCase):
     def test_marketplaces_publish_the_same_plugins(self) -> None:
         codex_names = [plugin["name"] for plugin in self.codex["plugins"]]
         claude_names = [plugin["name"] for plugin in self.claude["plugins"]]
-        plugin_names = sorted(
+        plugin_names = ["agent-kit", *sorted(
             path.name
             for path in (ROOT / "plugins").iterdir()
             if (path / ".codex-plugin/plugin.json").exists()
-        )
+        )]
 
         self.assertEqual(codex_names, sorted(codex_names))
         self.assertEqual(codex_names, claude_names)
@@ -34,14 +35,12 @@ class PluginDistributionTest(unittest.TestCase):
     def test_every_plugin_is_opt_in_and_runtime_versions_match(self) -> None:
         for plugin in self.codex["plugins"]:
             name = plugin["name"]
-            plugin_root = ROOT / "plugins" / name
+            plugin_root = ROOT if name == "agent-kit" else ROOT / "plugins" / name
             codex_manifest = read_json(plugin_root / ".codex-plugin/plugin.json")
             claude_manifest = read_json(plugin_root / ".claude-plugin/plugin.json")
 
-            self.assertEqual(
-                plugin["source"],
-                {"source": "local", "path": f"./plugins/{name}"},
-            )
+            expected_path = "./" if name == "agent-kit" else f"./plugins/{name}"
+            self.assertEqual(plugin["source"], {"source": "local", "path": expected_path})
             self.assertEqual(plugin["policy"]["installation"], "AVAILABLE")
             self.assertEqual(codex_manifest["name"], name)
             self.assertEqual(claude_manifest["name"], name)
@@ -49,7 +48,60 @@ class PluginDistributionTest(unittest.TestCase):
 
     def test_claude_sources_are_local_plugin_directories(self) -> None:
         for plugin in self.claude["plugins"]:
-            self.assertEqual(plugin["source"], f"./plugins/{plugin['name']}")
+            expected_source = "./" if plugin["name"] == "agent-kit" else f"./plugins/{plugin['name']}"
+            self.assertEqual(plugin["source"], expected_source)
+
+    def test_agent_kit_plugin_bundles_every_individual_skill(self) -> None:
+        individual_plugin_names = sorted(
+            plugin["name"]
+            for plugin in self.codex["plugins"]
+            if plugin["name"] != "agent-kit"
+        )
+        expected_paths = [f"./plugins/{name}/skills/{name}" for name in individual_plugin_names]
+        codex_manifest = read_json(AGGREGATE_PLUGIN / ".codex-plugin/plugin.json")
+        claude_manifest = read_json(AGGREGATE_PLUGIN / ".claude-plugin/plugin.json")
+
+        self.assertEqual(codex_manifest["skills"], expected_paths)
+        self.assertEqual(claude_manifest["skills"], expected_paths)
+        self.assertFalse((AGGREGATE_PLUGIN / "skills").exists())
+
+        for relative_path in expected_paths:
+            self.assertTrue((AGGREGATE_PLUGIN / relative_path).is_dir())
+
+    def test_readme_leads_with_one_command_full_install(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("codex plugin add agent-kit@agent-kit", readme)
+        self.assertIn("claude plugin install agent-kit@agent-kit", readme)
+        self.assertNotIn("## TypeScript scaffold", readme)
+
+    def test_distribution_workflow_tracks_root_plugin_files(self) -> None:
+        workflow = (ROOT / ".github/workflows/plugin-distribution.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('- ".codex-plugin/**"', workflow)
+        self.assertIn('- "README.md"', workflow)
+
+    def test_published_skills_have_codex_interface_metadata(self) -> None:
+        skill_names = {
+            plugin["name"]
+            for plugin in self.codex["plugins"]
+            if plugin["name"] != "agent-kit"
+        }
+
+        for name in skill_names:
+            skill_root = ROOT / "plugins" / name / "skills" / name
+            openai_yaml = skill_root / "agents/openai.yaml"
+            description = (skill_root / "SKILL.md").read_text(encoding="utf-8").split("---", 2)[1]
+
+            self.assertTrue(openai_yaml.is_file(), f"{name} has no agents/openai.yaml")
+            openai_metadata = openai_yaml.read_text(encoding="utf-8")
+            self.assertIn("interface:", openai_metadata)
+            self.assertIn(f"${name}", openai_metadata)
+            self.assertNotIn("allow_implicit_invocation: false", openai_metadata)
+            self.assertRegex(description, r'description:\s+["\']?Use when')
+            self.assertNotIn("disable-model-invocation", description)
 
     def test_plugins_do_not_package_legacy_commands(self) -> None:
         for plugin_root in (ROOT / "plugins").iterdir():

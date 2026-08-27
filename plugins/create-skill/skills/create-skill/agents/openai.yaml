@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Skill"
+  short_description: "Create or restructure an Agent Skill"
+  default_prompt: "Use $create-skill to turn this workflow into a reusable Agent Skill."

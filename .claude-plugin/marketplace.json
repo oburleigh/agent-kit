@@ -8,6 +8,12 @@
   },
   "plugins": [
     {
+      "name": "agent-kit",
+      "description": "Install every published Agent Kit skill.",
+      "source": "./",
+      "category": "development"
+    },
+    {
       "name": "create-skill",
       "description": "Create and validate reusable Agent Skills.",
       "source": "./plugins/create-skill",

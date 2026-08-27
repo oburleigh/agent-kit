@@ -1,6 +1,6 @@
 ---
 name: create-skill
-description: Use when the user wants a new skill or slash command built or an existing one restructured - "create me a skill", "turn this into a skill", "make a command for", or converting a workflow, checklist, prompt or repeated process into something reusable, even if the word "skill" never appears. Covers scaffolding SKILL.md files, frontmatter, references, scripts and trigger descriptions to the agentskills.io format.
+description: Use when creating or restructuring an Agent Skill, converting a slash command into a skill, or making a reusable workflow, checklist, or prompt discoverable to an agent.
 ---
 
 # Create Skill

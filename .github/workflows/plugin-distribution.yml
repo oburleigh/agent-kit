@@ -5,7 +5,9 @@ on:
     paths:
       - ".agents/**"
       - ".claude-plugin/**"
+      - ".codex-plugin/**"
       - "plugins/**"
+      - "README.md"
       - "tests/test_plugin_distribution.py"
       - ".github/workflows/plugin-distribution.yml"
   push:
@@ -13,7 +15,9 @@ on:
     paths:
       - ".agents/**"
       - ".claude-plugin/**"
+      - ".codex-plugin/**"
       - "plugins/**"
+      - "README.md"
       - "tests/test_plugin_distribution.py"
       - ".github/workflows/plugin-distribution.yml"
 
@@ -34,6 +38,8 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Validate Claude marketplace
         run: claude plugin validate . --strict
+      - name: Validate complete Claude plugin
+        run: claude plugin validate .claude-plugin/plugin.json --strict
       - name: Validate plugin manifests
         run: |
           for plugin in plugins/*; do
@@ -42,28 +48,40 @@ jobs:
             fi
             claude plugin validate "$plugin" --strict
           done
-      - name: Prove subset installation
+      - name: Prove complete and subset installation
         run: |
-          codex_test_root="$(mktemp -d)"
-          claude_test_root="$(mktemp -d)"
-          trap 'rm -rf "$codex_test_root" "$claude_test_root"' EXIT
+          codex_full_root="$(mktemp -d)"
+          codex_subset_root="$(mktemp -d)"
+          claude_full_root="$(mktemp -d)"
+          claude_subset_root="$(mktemp -d)"
+          trap 'rm -rf "$codex_full_root" "$codex_subset_root" "$claude_full_root" "$claude_subset_root"' EXIT
 
-          CODEX_HOME="$codex_test_root" codex plugin marketplace add "$GITHUB_WORKSPACE" --json
-          codex_before="$(CODEX_HOME="$codex_test_root" codex plugin list --json)"
-          test "$(jq '.installed | length' <<<"$codex_before")" -eq 0
-          CODEX_HOME="$codex_test_root" codex plugin add create-skill@agent-kit --json
-          codex_after="$(CODEX_HOME="$codex_test_root" codex plugin list --json)"
-          test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_after")" = "create-skill@agent-kit"
-
-          for plugin in git-commit humanize typescript-scaffold; do
-            CODEX_HOME="$codex_test_root" codex plugin add "$plugin@agent-kit" --json
+          CODEX_HOME="$codex_full_root" codex plugin marketplace add "$GITHUB_WORKSPACE" --json
+          codex_install="$(CODEX_HOME="$codex_full_root" codex plugin add agent-kit@agent-kit --json)"
+          codex_full="$(CODEX_HOME="$codex_full_root" codex plugin list --json)"
+          test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_full")" = "agent-kit@agent-kit"
+          codex_plugin_path="$(jq -r '.installedPath' <<<"$codex_install")"
+          codex_prompt="$(CODEX_HOME="$codex_full_root" codex debug prompt-input "Test Agent Kit discovery")"
+          for skill in create-skill git-commit humanize typescript-scaffold; do
+            test -f "$codex_plugin_path/plugins/$skill/skills/$skill/SKILL.md"
+            [[ "$codex_prompt" == *"agent-kit:$skill"* ]]
           done
-          codex_all="$(CODEX_HOME="$codex_test_root" codex plugin list --json)"
-          test "$(jq '.installed | length' <<<"$codex_all")" -eq 4
 
-          CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user
-          claude_before="$(CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin list --json)"
-          test "$(jq 'length' <<<"$claude_before")" -eq 0
-          CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin install create-skill@agent-kit --scope user
-          claude_after="$(CLAUDE_CONFIG_DIR="$claude_test_root" claude plugin list --json)"
-          test "$(jq -r 'map(.id) | join(",")' <<<"$claude_after")" = "create-skill@agent-kit"
+          CODEX_HOME="$codex_subset_root" codex plugin marketplace add "$GITHUB_WORKSPACE" --json
+          CODEX_HOME="$codex_subset_root" codex plugin add create-skill@agent-kit --json
+          codex_subset="$(CODEX_HOME="$codex_subset_root" codex plugin list --json)"
+          test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_subset")" = "create-skill@agent-kit"
+
+          CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user
+          CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin install agent-kit@agent-kit --scope user
+          claude_full="$(CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin list --json)"
+          test "$(jq -r 'map(.id) | join(",")' <<<"$claude_full")" = "agent-kit@agent-kit"
+          claude_plugin_path="$(jq -r '.[0].installPath' <<<"$claude_full")"
+          for skill in create-skill git-commit humanize typescript-scaffold; do
+            test -f "$claude_plugin_path/plugins/$skill/skills/$skill/SKILL.md"
+          done
+
+          CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user
+          CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin install create-skill@agent-kit --scope user
+          claude_subset="$(CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin list --json)"
+          test "$(jq -r 'map(.id) | join(",")' <<<"$claude_subset")" = "create-skill@agent-kit"

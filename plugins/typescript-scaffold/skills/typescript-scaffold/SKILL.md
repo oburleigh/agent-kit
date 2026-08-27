@@ -1,6 +1,7 @@
 ---
 name: typescript-scaffold
 description: Use when creating a new TypeScript or Node.js repository, including libraries, services, CLIs, workspaces, and Vite React applications. Not for retrofitting or regenerating an existing repository.
+compatibility: Requires Node.js 24 and the package manager selected by the scaffold profile.
 ---
 
 # TypeScript Scaffold
