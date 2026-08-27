@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "agent-kit",
+  "displayName": "Agent Kit",
+  "version": "0.1.0",
+  "description": "Focused skills for software engineering work with Codex and Claude Code.",
+  "author": {
+    "name": "Oliver Burleigh"
+  },
+  "license": "MIT",
+  "keywords": ["agent-skills", "developer-tools", "workflows"],
+  "skills": [
+    "./plugins/create-skill/skills/create-skill",
+    "./plugins/git-commit/skills/git-commit",
+    "./plugins/humanize/skills/humanize",
+    "./plugins/typescript-scaffold/skills/typescript-scaffold"
+  ]
+}

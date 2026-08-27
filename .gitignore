@@ -1,4 +1,10 @@
 node_modules/
 coverage/
+__pycache__/
+.coverage
+.pytest_cache/
+.ruff_cache/
+.venv/
 .worktrees/
+docs/superpowers/
 .DS_Store

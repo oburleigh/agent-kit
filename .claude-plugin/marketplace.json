@@ -1,0 +1,41 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "agent-kit",
+  "description": "Focused skills for software engineering work with Codex and Claude Code.",
+  "owner": {
+    "name": "Oliver Burleigh",
+    "url": "https://github.com/oburleigh"
+  },
+  "plugins": [
+    {
+      "name": "agent-kit",
+      "description": "Install every published Agent Kit skill.",
+      "source": "./",
+      "category": "development"
+    },
+    {
+      "name": "create-skill",
+      "description": "Create and validate reusable Agent Skills.",
+      "source": "./plugins/create-skill",
+      "category": "development"
+    },
+    {
+      "name": "git-commit",
+      "description": "Create safe, reviewable Git commits.",
+      "source": "./plugins/git-commit",
+      "category": "development"
+    },
+    {
+      "name": "humanize",
+      "description": "Remove common machine-written patterns from professional prose.",
+      "source": "./plugins/humanize",
+      "category": "writing"
+    },
+    {
+      "name": "typescript-scaffold",
+      "description": "Create configurable TypeScript repositories.",
+      "source": "./plugins/typescript-scaffold",
+      "category": "development"
+    }
+  ]
+}

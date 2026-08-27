@@ -1,0 +1,25 @@
+{
+  "name": "agent-kit",
+  "version": "0.1.0",
+  "description": "Focused skills for software engineering work with Codex and Claude Code.",
+  "author": {
+    "name": "Oliver Burleigh"
+  },
+  "license": "MIT",
+  "keywords": ["agent-skills", "developer-tools", "workflows"],
+  "skills": [
+    "./plugins/create-skill/skills/create-skill",
+    "./plugins/git-commit/skills/git-commit",
+    "./plugins/humanize/skills/humanize",
+    "./plugins/typescript-scaffold/skills/typescript-scaffold"
+  ],
+  "interface": {
+    "displayName": "Agent Kit",
+    "shortDescription": "Reusable software engineering skills.",
+    "longDescription": "Create skills, prepare Git commits, edit prose, and scaffold TypeScript repositories with focused workflows.",
+    "developerName": "Oliver Burleigh",
+    "category": "Developer Tools",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Show me which Agent Kit skill fits this task."]
+  }
+}

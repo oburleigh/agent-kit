@@ -1,0 +1,41 @@
+schema_version: 1
+profile_name: default
+preset: library
+providers:
+  architecture: none
+  build_backend: uv-build
+  ci: github-actions
+  cli: none
+  commit_lint: commitizen
+  dependency_audit: pip-audit
+  duplication: pylint
+  hooks: pre-commit
+  http: none
+  license: apache-2.0
+  logging: standard-library
+  publishing: none
+  quality: ruff
+  runtime_validation: none
+  secret_scan: gitleaks
+  tests: pytest
+  type_checker: ty
+  workspace: none
+project:
+  name: python-project
+  description: Python project
+  author: Your Name
+  repository_url: null
+  python_version: "3.14"
+  workspace_members: []
+tools:
+  coverage_floor: 80
+  test_tiers: [unit]
+additions:
+  dependencies: []
+  dev_dependencies: []
+  commands: {}
+  ci_commands: []
+execution:
+  install_dependencies: true
+  run_quality_gates: true
+  initialize_git: true

@@ -1,0 +1,20 @@
+{
+  "name": "humanize",
+  "version": "0.1.0",
+  "description": "Remove common machine-written patterns from professional prose.",
+  "author": {
+    "name": "Oliver Burleigh"
+  },
+  "license": "MIT",
+  "keywords": ["editing", "prose", "writing"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Humanize",
+    "shortDescription": "Remove machine-written patterns from prose.",
+    "longDescription": "Edit professional prose for plain language, natural rhythm, direct claims, and restrained formatting.",
+    "developerName": "Oliver Burleigh",
+    "category": "Writing",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Edit this prose so it reads naturally."]
+  }
+}

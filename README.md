@@ -6,91 +6,119 @@
   </picture>
 </p>
 
-Reusable skills and agent instructions for software work. Each skill is self-contained under `skills/` and follows the Agent Skills format.
+# Agent Kit
+
+Reusable skills for software engineering work with Codex and Claude Code.
+
+The skills are small enough to use independently and work together without imposing a single development process. Install Agent Kit to get the complete set, or install individual skills when you only need part of it.
 
 ## Skills
 
-| Skill | Use it for |
+| Skill | What it does |
 | --- | --- |
-| [typescript-scaffold](skills/typescript-scaffold/) | Create a configurable TypeScript library, service, CLI, workspace, or Vite React repository. |
-| [create-skill](skills/create-skill/) | Create and check an Agent Skill. |
-| [git-commit](skills/git-commit/) | Review, stage, split, and commit Git changes with Conventional Commits. |
-| [humanize](skills/humanize/) | Remove common machine-written patterns from professional prose. |
+| [create-skill](plugins/create-skill/skills/create-skill/) | Turns a repeatable workflow into a focused Agent Skill, with validation and supporting references where needed. |
+| [git-commit](plugins/git-commit/skills/git-commit/) | Reviews the working tree, stages only the intended changes, splits unrelated work, and writes Conventional Commits. |
+| [humanize](plugins/humanize/skills/humanize/) | Edits professional prose to remove common machine-written patterns while preserving the author's meaning and voice. |
+| [typescript-scaffold](plugins/typescript-scaffold/skills/typescript-scaffold/) | Creates configurable TypeScript libraries, services, CLIs, React applications, and monorepos with working project tooling. |
 
-## Install from one local checkout
+Each skill has its own README with usage details and examples.
 
-Clone the repository once:
+## Invocation
 
-```sh
-git clone https://github.com/oburleigh/agent-kit.git
-cd agent-kit
+All current skills support automatic and explicit invocation. Codex or Claude Code can select a skill when a request matches its description, or you can name it directly:
+
+```text
+# Codex
+$agent-kit:typescript-scaffold create a TypeScript service
+
+# Claude Code with the complete plugin
+/agent-kit:typescript-scaffold create a TypeScript service
 ```
 
-Symlink a skill into each agent that should use it. Replace `/path/to/agent-kit` with the absolute clone path.
+Selecting a skill loads its instructions. It does not grant permission for unrelated changes or external actions.
+
+## Install the complete plugin
+
+### Codex
+
+```sh
+codex plugin marketplace add oburleigh/agent-kit
+codex plugin add agent-kit@agent-kit
+```
+
+Start a new Codex session after installation.
 
 ### Claude Code
 
 ```sh
-mkdir -p ~/.claude/skills
-ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.claude/skills/typescript-scaffold
+claude plugin marketplace add oburleigh/agent-kit
+claude plugin install agent-kit@agent-kit
 ```
 
-### Codex and other Agent Skills clients
+Run `/reload-plugins` or start a new Claude Code session after installation. Add `--scope project` to both Claude commands when a repository should declare the marketplace and plugin for its contributors.
 
-Use the shared Agent Skills directory when the same checkout should serve more than one client:
+## Install individual skills
+
+The marketplace also publishes each skill as a separate plugin. Add the marketplace using the command above, then install the skill you want:
 
 ```sh
-mkdir -p ~/.agents/skills
-ln -s /path/to/agent-kit/skills/typescript-scaffold ~/.agents/skills/typescript-scaffold
+# Codex
+codex plugin add git-commit@agent-kit
+
+# Claude Code
+claude plugin install git-commit@agent-kit
 ```
 
-For a Codex-only installation, use the Codex skills directory instead:
+Choose either the complete `agent-kit` plugin or individual skill plugins. Installing both loads duplicate copies of the same skills.
+
+## Updates
+
+Update the marketplace before updating an installed plugin.
+
+For Codex:
 
 ```sh
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-ln -s /path/to/agent-kit/skills/typescript-scaffold "${CODEX_HOME:-$HOME/.codex}/skills/typescript-scaffold"
+codex plugin marketplace upgrade agent-kit
+codex plugin remove agent-kit@agent-kit
+codex plugin add agent-kit@agent-kit
 ```
 
-The two links can point to the same checkout. Edit the repository copy and both agents see the change. Pull repository updates with:
+For Claude Code:
 
 ```sh
-git pull --ff-only
+claude plugin marketplace update agent-kit
+claude plugin update agent-kit@agent-kit
 ```
 
-The TypeScript scaffold stores user profiles outside the checkout, so updates do not replace them.
+## Repository layout
 
-To install a skill without a symlink, copy its complete directory into the matching skills directory.
+- The repository root is the complete `agent-kit` plugin.
+- The root plugin manifests point to each published skill without copying its files.
+- `plugins/<skill>/` contains the canonical skill and its optional standalone plugin.
+- `.agents/plugins/marketplace.json` is the Codex marketplace catalogue.
+- `.claude-plugin/marketplace.json` is the Claude Code marketplace catalogue.
+- `tests/` checks that both catalogues publish the same plugins and that the complete plugin stays in sync.
 
-## TypeScript scaffold example
+## Local development
 
-Ask your agent:
+Clone the repository and add the checkout as a marketplace source:
 
-```text
-Use typescript-scaffold to create a Fastify service at ./catalog-api using the service profile. Keep Zod and Pino, but use GitLab CI for this repository.
+```sh
+git clone https://github.com/oburleigh/agent-kit.git
+codex plugin marketplace add ./agent-kit
+claude plugin marketplace add ./agent-kit
 ```
 
-For a monorepo:
+Run the distribution checks before publishing changes:
 
-```text
-Use typescript-scaffold to create a Bun and Turbo monorepo at ./platform with Biome, Vitest, Lefthook, Commitlint, Gitleaks, jscpd, an application under apps/app, and a library under packages/core.
+```sh
+python3 -m unittest discover -s tests -v
+claude plugin validate .
 ```
-
-See the [TypeScript scaffold guide](skills/typescript-scaffold/README.md) for presets, profiles, supported providers, and safety boundaries.
-
-The TypeScript scaffold requires Node.js 24. Its profile selects an exact package-manager version and may require an external command such as Gitleaks. The skill reports missing prerequisites before changing the requested target. Generated repositories include their own stack-aware coding standards; companion skills are optional.
-
-## Legacy commands
-
-The files under `commands/` remain available for Claude Code installations that use slash commands:
-
-- [nobs](commands/nobs.md)
-- [interview](commands/interview.md)
-
-Copy them into `~/.claude/commands/` when needed. New reusable workflows should be skills.
 
 ## Contributing
 
-Keep each skill focused. Put agent instructions in `SKILL.md`, detailed reference material in `references/`, executable helpers in `scripts/`, and generated-output templates in `assets/`. Test behavior and scripts before opening a pull request.
+Keep skills focused and usable on their own. Put agent instructions in `SKILL.md`, detailed material in `references/`, executable helpers in `scripts/`, and generated-file templates in `assets/`. Run the skill tests and both runtime validators before opening a pull request.
 
 ## Licence
 

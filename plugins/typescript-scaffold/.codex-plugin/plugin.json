@@ -1,0 +1,20 @@
+{
+  "name": "typescript-scaffold",
+  "version": "0.1.0",
+  "description": "Create configurable TypeScript repositories with tested tooling, documentation, CI, and Git.",
+  "author": {
+    "name": "Oliver Burleigh"
+  },
+  "license": "MIT",
+  "keywords": ["scaffold", "typescript", "workspace"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TypeScript Scaffold",
+    "shortDescription": "Create configurable TypeScript repositories.",
+    "longDescription": "Create a TypeScript library, service, CLI, workspace, or Vite React repository from a reusable profile.",
+    "developerName": "Oliver Burleigh",
+    "category": "Developer Tools",
+    "capabilities": ["Write"],
+    "defaultPrompt": ["Create a TypeScript repository from a scaffold profile."]
+  }
+}
