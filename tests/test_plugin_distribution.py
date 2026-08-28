@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -111,13 +112,81 @@ class PluginDistributionTest(unittest.TestCase):
         self.assertIn("claude plugin install agent-kit@agent-kit", readme)
         self.assertNotIn("## TypeScript scaffold", readme)
 
-    def test_distribution_workflow_tracks_root_plugin_files(self) -> None:
-        workflow = (ROOT / ".github/workflows/plugin-distribution.yml").read_text(
+    def test_pull_requests_report_all_required_contexts_from_one_workflow(self) -> None:
+        workflow_root = ROOT / ".github/workflows"
+        workflow = (workflow_root / "validation.yml").read_text(encoding="utf-8")
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("pull_request:", workflow)
+        self.assertNotIn("\n  push:", workflow)
+        self.assertIn(
+            "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3",
+            workflow,
+        )
+        self.assertIn("predicate-quantifier: some-with-excludes", workflow)
+        self.assertIn("- '!**/*.md'", workflow)
+        self.assertIn("- 'skills/**'", workflow)
+        self.assertIn("- 'plugins/*/skills/**'", workflow)
+        self.assertIn("- 'skills/python-scaffold/**'", workflow)
+        self.assertIn("- 'skills/typescript-scaffold/**'", workflow)
+        self.assertIn("name: ${{ matrix.check }}", workflow)
+        for required_check in (
+            "Plugin distribution",
+            "Python scaffold",
+            "TypeScript scaffold",
+        ):
+            self.assertEqual(workflow.count(f"check: {required_check}\n"), 1)
+
+        for obsolete in (
+            "plugin-distribution.yml",
+            "python-scaffold.yml",
+            "typescript-scaffold.yml",
+        ):
+            self.assertFalse((workflow_root / obsolete).exists())
+
+    def test_release_workflow_reconciles_native_checks_with_scoped_permissions(self) -> None:
+        workflow = (ROOT / ".github/workflows/release-please.yml").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn('- ".codex-plugin/**"', workflow)
-        self.assertIn('- "README.md"', workflow)
+        release_job, approval_job = workflow.split("  approve-release-checks:\n", 1)
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertEqual(workflow.count("if: github.ref == 'refs/heads/main'"), 2)
+        self.assertIn("concurrency:", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertNotIn("actions: write", release_job)
+        self.assertIn("actions: write", approval_job)
+        self.assertIn("needs: release", approval_job)
+        self.assertIn("contents: read", approval_job)
+        self.assertIn("pull-requests: read", approval_job)
+        self.assertIn("persist-credentials: false", approval_job)
+        self.assertIn("needs.release.outputs.release_prs", approval_job)
+        self.assertIn("python3 scripts/approve_release_checks.py", approval_job)
+        self.assertNotIn("steps.release.outputs.prs_created", workflow)
+        self.assertNotIn("gh workflow run", workflow)
+
+    def test_release_configuration_passes_repository_validation(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "scripts/validate_releases.py"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_github_actions_use_immutable_versioned_pins(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "scripts/check_github_actions.py"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_internal_planning_artifacts_are_not_published(self) -> None:
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")

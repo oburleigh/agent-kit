@@ -112,9 +112,21 @@ claude plugin marketplace add ./agent-kit
 Run the distribution checks before publishing changes:
 
 ```sh
+python3 scripts/validate_releases.py
+python3 scripts/check_github_actions.py
 python3 -m unittest discover -s tests -v
 claude plugin validate .
 ```
+
+## Releases
+
+Each installable plugin has its own version and changelog. A change to one standalone plugin does not bump any other standalone plugin. The complete `agent-kit` plugin may also receive a release because it contains every published skill.
+
+Release Please derives versions from Conventional Commits. Before `1.0.0`, fixes and compatible features produce patch releases, while breaking changes produce minor releases. Starting at `1.0.0`, features produce minor releases and breaking changes produce major releases.
+
+Merges to `main` create or update one reviewable release pull request. They do not create tags or GitHub Releases. Merging the release pull request creates a tag and GitHub Release for each component included in that pull request, using names such as `typescript-scaffold-v0.2.0`.
+
+Repository settings allow GitHub Actions to create the release pull request while keeping the default token read-only. The `main` ruleset requires one approval and the `Plugin distribution`, `Python scaffold`, and `TypeScript scaffold` checks. The distribution check includes runtime manifest validation and clean aggregate and subset installation tests.
 
 ## Contributing
 

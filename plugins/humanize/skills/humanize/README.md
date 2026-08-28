@@ -17,7 +17,7 @@ When an AI agent writes any artifact, this skill catches the patterns that make 
 - **Structural defaults** - picks the right format for the content (numbered steps for procedures, prose for explanations, tables for reference material) instead of applying bullet lists to everything.
 - **Formulaic openings and closings** - kills "In today's fast-paced..." and "In conclusion..." dead.
 
-The skill also maintains a corrections log. When a user rewrites something the skill produced, that feedback gets recorded in `references/corrections.md` and folded back into the skill once enough patterns accumulate.
+The skill can maintain user-specific rules and corrections outside the installed plugin when the user explicitly asks it to remember feedback. Set `AGENT_KIT_CONFIG_HOME` to a safe absolute path to choose the shared config root. The defaults are `%APPDATA%\agent-kit` on Windows, `$XDG_CONFIG_HOME/agent-kit` on Unix when `XDG_CONFIG_HOME` is absolute, and `$HOME/.config/agent-kit` otherwise.
 
 ## Installation
 
@@ -31,7 +31,6 @@ humanize/
   README.md             # This file
   references/
     ai-patterns.md      # Vocabulary and structural patterns catalog
-    corrections.md      # User feedback log
   evals/
     evals.json          # Evaluation tests
 ```
@@ -40,7 +39,7 @@ humanize/
 
 The skill activates whenever the agent produces a written artifact. It runs through a checklist:
 
-1. Check `references/corrections.md` for recent feedback
+1. Read persistent rules and corrections from the user config root
 2. Draft the content following plain-language principles
 3. Cross-check against `references/ai-patterns.md` for patterns that slipped through
 4. Re-read for anything that sounds like it could appear in a generic AI blog post
@@ -55,4 +54,6 @@ This applies to produced artifacts only. Chat messages, conversational replies, 
 ## References
 
 - `references/ai-patterns.md` - full catalog of flagged vocabulary, phrases, and structural patterns
-- `references/corrections.md` - running log of user feedback, pruned after 15 entries
+- `<config-root>/humanize/rules.md` - durable rules learned from repeated feedback
+- `<config-root>/humanize/corrections.md` - recent user feedback saved with explicit consent
+- `<config-root>/humanize/archive/` - corrections archived during user-approved cleanup

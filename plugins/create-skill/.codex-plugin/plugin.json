@@ -1,12 +1,16 @@
 {
   "name": "create-skill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Create and validate reusable Agent Skills through an evidence-led specification workflow.",
   "author": {
     "name": "Oliver Burleigh"
   },
   "license": "MIT",
-  "keywords": ["agent-skills", "skills", "workflow"],
+  "keywords": [
+    "agent-skills",
+    "skills",
+    "workflow"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Create Skill",
@@ -14,7 +18,11 @@
     "longDescription": "Turn a reusable workflow into a scoped, validated Agent Skill without inventing missing requirements.",
     "developerName": "Oliver Burleigh",
     "category": "Developer Tools",
-    "capabilities": ["Write"],
-    "defaultPrompt": ["Create an Agent Skill from this workflow."]
+    "capabilities": [
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Create an Agent Skill from this workflow."
+    ]
   }
 }

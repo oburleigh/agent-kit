@@ -1,0 +1,235 @@
+name: Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  scope:
+    name: Classify changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      distribution: >-
+        ${{ github.event_name == 'workflow_dispatch' ||
+            steps.filter.outputs.non_markdown == 'true' ||
+            steps.filter.outputs.skill == 'true' }}
+      python: >-
+        ${{ github.event_name == 'workflow_dispatch' ||
+            steps.filter.outputs.python == 'true' }}
+      typescript: >-
+        ${{ github.event_name == 'workflow_dispatch' ||
+            steps.filter.outputs.typescript == 'true' }}
+    steps:
+      - name: Classify changed paths
+        id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          predicate-quantifier: some-with-excludes
+          filters: |
+            non_markdown:
+              - '**'
+              - '!**/*.md'
+              - '!**/*.markdown'
+              - '!**/*.mdx'
+            skill:
+              - 'skills/**'
+              - 'plugins/*/skills/**'
+            python:
+              - 'skills/python-scaffold/**'
+              - 'plugins/python-scaffold/skills/python-scaffold/**'
+            typescript:
+              - 'skills/typescript-scaffold/**'
+              - 'plugins/typescript-scaffold/skills/typescript-scaffold/**'
+
+  distribution-validation:
+    name: Plugin distribution validation
+    needs: scope
+    if: needs.scope.outputs.distribution == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+      - name: Install plugin clients
+        run: npm install --global @openai/codex@0.150.1 @anthropic-ai/claude-code@2.1.247
+      - name: Check release configuration
+        run: python3 scripts/validate_releases.py
+      - name: Check workflow action pins
+        run: python3 scripts/check_github_actions.py
+      - name: Check distribution contracts
+        run: python3 -m unittest discover -s tests -v
+      - name: Validate Claude marketplace
+        run: claude plugin validate . --strict
+      - name: Validate complete Claude plugin
+        run: claude plugin validate .claude-plugin/plugin.json --strict
+      - name: Validate plugin manifests
+        run: |
+          for plugin in plugins/*; do
+            if [[ -e "$plugin/.unpublished-plugin" ]]; then
+              continue
+            fi
+            claude plugin validate "$plugin" --strict
+          done
+      - name: Prove complete and subset installation
+        run: |
+          codex_full_root="$(mktemp -d)"
+          codex_subset_root="$(mktemp -d)"
+          claude_full_root="$(mktemp -d)"
+          claude_subset_root="$(mktemp -d)"
+          trap 'rm -rf "$codex_full_root" "$codex_subset_root" "$claude_full_root" "$claude_subset_root"' EXIT
+
+          CODEX_HOME="$codex_full_root" codex plugin marketplace add "$GITHUB_WORKSPACE" --json
+          codex_install="$(CODEX_HOME="$codex_full_root" codex plugin add agent-kit@agent-kit --json)"
+          codex_full="$(CODEX_HOME="$codex_full_root" codex plugin list --json)"
+          test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_full")" = "agent-kit@agent-kit"
+          codex_plugin_path="$(jq -r '.installedPath' <<<"$codex_install")"
+          codex_prompt="$(CODEX_HOME="$codex_full_root" codex debug prompt-input "Test Agent Kit discovery")"
+          for skill in create-skill git-commit humanize python-scaffold typescript-scaffold; do
+            test -f "$codex_plugin_path/skills/$skill/SKILL.md"
+            [[ "$codex_prompt" == *"agent-kit:$skill"* ]]
+          done
+
+          CODEX_HOME="$codex_subset_root" codex plugin marketplace add "$GITHUB_WORKSPACE" --json
+          CODEX_HOME="$codex_subset_root" codex plugin add create-skill@agent-kit --json
+          codex_subset="$(CODEX_HOME="$codex_subset_root" codex plugin list --json)"
+          test "$(jq -r '.installed | map(.pluginId) | join(",")' <<<"$codex_subset")" = "create-skill@agent-kit"
+
+          CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user
+          CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin install agent-kit@agent-kit --scope user
+          claude_full="$(CLAUDE_CONFIG_DIR="$claude_full_root" claude plugin list --json)"
+          test "$(jq -r 'map(.id) | join(",")' <<<"$claude_full")" = "agent-kit@agent-kit"
+          claude_plugin_path="$(jq -r '.[0].installPath' <<<"$claude_full")"
+          for skill in create-skill git-commit humanize python-scaffold typescript-scaffold; do
+            test -f "$claude_plugin_path/skills/$skill/SKILL.md"
+          done
+
+          CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin marketplace add "$GITHUB_WORKSPACE" --scope user
+          CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin install create-skill@agent-kit --scope user
+          claude_subset="$(CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin list --json)"
+          test "$(jq -r 'map(.id) | join(",")' <<<"$claude_subset")" = "create-skill@agent-kit"
+
+  python-validation:
+    name: Python validation
+    needs: scope
+    if: needs.scope.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: skills/python-scaffold
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.1"
+          python-version: "3.14"
+          enable-cache: true
+          working-directory: skills/python-scaffold
+      - run: uv sync --frozen
+      - run: uv run --frozen ruff check .
+      - run: uv run --frozen ruff format --check .
+      - run: uv run --frozen ty check
+      - name: Check generated schema
+        run: |
+          uv run --frozen python scripts/export_schema.py
+          git diff --exit-code -- src/python_scaffold/config/schema.json
+      - run: uv run --frozen pytest --cov=python_scaffold --cov-branch --cov-fail-under=80
+      - name: Build and smoke-test the wheel
+        run: |
+          uv build --out-dir "${RUNNER_TEMP}/python-scaffold-dist"
+          uv run --isolated --no-project \
+            --with "${RUNNER_TEMP}"/python-scaffold-dist/*.whl \
+            python -c 'from python_scaffold.profiles import load_bundled_preset; assert load_bundled_preset("library")["preset"] == "library"'
+
+  python-portability:
+    name: Python create-only portability (${{ matrix.os }})
+    needs: scope
+    if: needs.scope.outputs.python == 'true'
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: skills/python-scaffold
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.1"
+          python-version: "3.14"
+          enable-cache: true
+          working-directory: skills/python-scaffold
+      - run: uv sync --frozen
+      - name: Check create-only transaction behavior
+        run: >-
+          uv run --frozen pytest
+          tests/test_transaction.py::test_target_created_at_commit_is_not_replaced
+          tests/test_transaction.py::test_success_atomically_moves_the_complete_staging_directory
+
+  typescript-validation:
+    name: TypeScript validation
+    needs: scope
+    if: needs.scope.outputs.typescript == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: skills/typescript-scaffold
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: skills/typescript-scaffold/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run check:dist
+
+  required:
+    name: ${{ matrix.check }}
+    if: always()
+    needs:
+      - scope
+      - distribution-validation
+      - python-validation
+      - python-portability
+      - typescript-validation
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: Plugin distribution
+            relevance: ${{ needs.scope.outputs.distribution }}
+            results: ${{ needs.distribution-validation.result }}
+          - check: Python scaffold
+            relevance: ${{ needs.scope.outputs.python }}
+            results: >-
+              ${{ needs.python-validation.result }}
+              ${{ needs.python-portability.result }}
+          - check: TypeScript scaffold
+            relevance: ${{ needs.scope.outputs.typescript }}
+            results: ${{ needs.typescript-validation.result }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful validation jobs
+        env:
+          RELEVANT: ${{ matrix.relevance }}
+          RESULTS: ${{ matrix.results }}
+          SCOPE_RESULT: ${{ needs.scope.result }}
+        run: |
+          test "$SCOPE_RESULT" = "success"
+          if [[ "$RELEVANT" == "false" ]]; then
+            exit 0
+          fi
+          test "$RELEVANT" = "true"
+          test -n "$RESULTS"
+          for result in $RESULTS; do
+            test "$result" = "success"
+          done

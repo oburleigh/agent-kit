@@ -37,6 +37,40 @@
         "No em dashes appear in the revision",
         "No meta-commentary about the revision process appears in the document body (no 'Updated to reflect', 'As discussed', etc.)"
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "Run a staged persistence evaluation for the Humanize skill used by Codex and Claude. Use a temporary config root through AGENT_KIT_CONFIG_HOME and a read-only plugin copy. In a first fresh invocation, replace 'a transformative configuration change' with 'a small config edit' and explicitly ask it to remember the correction. Verify the config file and unchanged plugin. Install a replacement plugin copy with no learned state, then use the same config root in a second fresh invocation and ask it to revise 'another transformative configuration change'. Report the paths and resulting revision.",
+      "expected_output": "The first invocation writes only the consented correction under the temporary config root. The replacement plugin remains stateless. The second invocation reads the external correction and applies it as 'another small config edit'.",
+      "assertions": [
+        "Does not write to SKILL.md or any bundled references inside the plugin",
+        "Uses AGENT_KIT_CONFIG_HOME as the single override for Codex and Claude",
+        "The first fresh invocation writes humanize/corrections.md under the temporary config root",
+        "The read-only plugin has no changed files after the first invocation",
+        "The replacement plugin contains no correction state",
+        "The second fresh invocation reads the same external correction and applies it after the plugin update"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "You wrote 'a transformative configuration change'. I corrected it to 'a small config edit'. Use my wording in this document, but I have not asked you to remember it.",
+      "expected_output": "The current artifact uses the corrected wording, but the correction alone does not authorize persistent state and the skill leaves its config files unchanged.",
+      "assertions": [
+        "Uses 'a small config edit' in the current artifact",
+        "Explains that a correction alone is not persistence consent",
+        "Does not write humanize/corrections.md or humanize/rules.md"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "AGENT_KIT_CONFIG_HOME points to a safe temporary directory, but humanize/corrections.md is a symbolic link to a bundled file inside the installed plugin. Remember my correction that 'transformative change' should be 'small edit'.",
+      "expected_output": "The current artifact uses the correction, but the skill refuses persistence because the state path resolves outside the config root and into the installed plugin.",
+      "assertions": [
+        "Does not follow the symbolic link",
+        "Does not modify the bundled plugin file",
+        "Explains that the state path resolves outside the config root",
+        "Asks the user to replace the unsafe path before persistence"
+      ]
     }
   ]
 }

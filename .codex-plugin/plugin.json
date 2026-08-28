@@ -1,12 +1,16 @@
 {
   "name": "agent-kit",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Focused skills for software engineering work with Codex and Claude Code.",
   "author": {
     "name": "Oliver Burleigh"
   },
   "license": "MIT",
-  "keywords": ["agent-skills", "developer-tools", "workflows"],
+  "keywords": [
+    "agent-skills",
+    "developer-tools",
+    "workflows"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Agent Kit",
@@ -14,7 +18,11 @@
     "longDescription": "Create skills, prepare Git commits, edit prose, and scaffold Python or TypeScript repositories.",
     "developerName": "Oliver Burleigh",
     "category": "Developer Tools",
-    "capabilities": ["Write"],
-    "defaultPrompt": ["Show me which Agent Kit skill fits this task."]
+    "capabilities": [
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Show me which Agent Kit skill fits this task."
+    ]
   }
 }
