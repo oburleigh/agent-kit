@@ -112,17 +112,37 @@ A good PR description says what changed, why it changed, and anything a reviewer
 
 ## When writing an artifact
 
-1. Check `references/corrections.md` for recent feedback patterns before drafting
-2. Draft the content following the principles above
-3. Read `references/ai-patterns.md` to check for vocabulary and structural patterns that slipped through
-4. Read the draft with fresh eyes: does any sentence sound like it could appear in a generic AI-generated blog post? If so, rewrite it with specificity
-5. Check that the structure was chosen for this content, not applied from a template
+1. Resolve the persistent config root below. Read `humanize/rules.md` and `humanize/corrections.md` from it when they exist.
+2. Draft the content following the principles above.
+3. Read `references/ai-patterns.md` to check for vocabulary and structural patterns that slipped through.
+4. Read the draft with fresh eyes. Rewrite anything that sounds like a generic AI-generated blog post.
+5. Check that the structure fits the content instead of a template.
 
 The strongest test: could this have been written by a specific person with expertise in this area? Generic text that could apply to any topic is the core failure mode.
 
 ## Learning from corrections
 
-When the user corrects writing that this skill produced (rewrites a sentence, flags a pattern, says "don't write it like that"), log the correction to `references/corrections.md` with the before/after and the general pattern to extract.
+Never write to files inside the installed skill. Plugin files are bundled references and may be read-only or replaced during an update.
+
+Resolve one persistent config root for every supported agent runtime:
+
+1. Use `AGENT_KIT_CONFIG_HOME` when it contains a non-empty absolute path. If it is set but invalid, ask the user to correct it instead of silently choosing another root.
+2. On Windows, use `%APPDATA%\agent-kit` when `APPDATA` is an absolute path.
+3. On Unix, use `$XDG_CONFIG_HOME/agent-kit` when `XDG_CONFIG_HOME` is a non-empty absolute path. Ignore a relative `XDG_CONFIG_HOME` and fall back to `$HOME/.config/agent-kit` when `HOME` is absolute.
+4. Resolve existing symlinks, or the nearest existing parent, and confirm the root is outside the installed skill and plugin caches. Reject a root that points into either location.
+
+If no candidate passes these checks, ask the user to set `AGENT_KIT_CONFIG_HOME` to a valid root. Do not fall back to a plugin cache, installed skills directory, working directory, or runtime-specific memory directory.
+
+Keep learned state under that root:
+
+- `humanize/rules.md` contains durable rules promoted from repeated feedback.
+- `humanize/corrections.md` contains the recent correction log.
+
+Resolve the `humanize` directory and each state path, or its nearest existing parent, immediately before every read or write. Reject symbolic links, junctions, or other paths that resolve outside the resolved config root or into an installed skill or plugin cache.
+
+Apply user corrections to the current artifact. A correction alone is not permission to persist it. Write learned state only when the user asks you to remember the correction or confirms persistence after you ask. If they do neither, leave the config files unchanged.
+
+After explicit consent, create the `humanize` directory and corrections file if needed. Start a new corrections file with `# Humanize corrections`, then append the correction with the before, after, and general pattern. Preserve existing entries and do not write secrets or unrelated conversation content.
 
 Format each entry as:
 ```
@@ -134,11 +154,11 @@ Format each entry as:
 
 ### Pruning the corrections log
 
-When `references/corrections.md` has more than 15 entries, review it and fold the patterns back into the skill:
+Do not prune automatically. When the persistent `humanize/corrections.md` has more than 15 entries, propose a cleanup and ask for approval. After approval:
 
 1. Read through all corrections and identify repeated patterns
-2. Promote repeated patterns into the appropriate section of this SKILL.md or into `references/ai-patterns.md` as permanent rules
-3. Delete one-off corrections that don't generalise
-4. Clear the log back to its header
+2. Add repeated patterns to the persistent `humanize/rules.md`
+3. Move the processed entries to a dated file under `humanize/archive/`
+4. Remove only the archived entries from the active corrections log
 
-This keeps the corrections file small and the skill itself up to date with accumulated feedback rather than growing an unbounded reference file.
+Keep one-off corrections in the archive rather than deleting them. If the user declines cleanup, leave every file unchanged.
