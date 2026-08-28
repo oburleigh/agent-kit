@@ -1,9 +1,9 @@
 import argparse
+import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import PurePosixPath
-from typing import Iterable
-
+from pathlib import Path, PurePosixPath
 
 MARKDOWN_SUFFIXES = {".md", ".markdown", ".mdx"}
 VALIDATION_WORKFLOW = ".github/workflows/validation.yml"
@@ -52,21 +52,52 @@ def classify_paths(paths: Iterable[str]) -> Scope:
     return Scope(distribution, python, typescript)
 
 
+def classify_git_diff(
+    base: str, head: str, *, cwd: Path | str | None = None
+) -> Scope:
+    result = subprocess.run(
+        ["git", "diff", "--name-only", "-z", "--no-renames", f"{base}...{head}"],
+        cwd=cwd,
+        check=True,
+        capture_output=True,
+    )
+    paths = [
+        value.decode("utf-8", errors="surrogateescape")
+        for value in result.stdout.split(b"\0")
+    ]
+    return classify_paths(paths)
+
+
+def print_scope(scope: Scope) -> None:
+    print(f"distribution={str(scope.distribution).lower()}")
+    print(f"python={str(scope.python).lower()}")
+    print(f"typescript={str(scope.typescript).lower()}")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--base")
+    parser.add_argument("--head")
     parser.add_argument(
         "--null",
         action="store_true",
         help="read NUL-delimited paths, as emitted by git diff --name-only -z",
     )
     arguments = parser.parse_args(argv)
-    separator = b"\0" if arguments.null else b"\n"
-    paths = [value.decode("utf-8") for value in sys.stdin.buffer.read().split(separator)]
-    scope = classify_paths(paths)
+    if (arguments.base is None) != (arguments.head is None):
+        parser.error("--base and --head must be provided together")
 
-    print(f"distribution={str(scope.distribution).lower()}")
-    print(f"python={str(scope.python).lower()}")
-    print(f"typescript={str(scope.typescript).lower()}")
+    if arguments.base is not None:
+        scope = classify_git_diff(arguments.base, arguments.head)
+    else:
+        separator = b"\0" if arguments.null else b"\n"
+        paths = [
+            value.decode("utf-8", errors="surrogateescape")
+            for value in sys.stdin.buffer.read().split(separator)
+        ]
+        scope = classify_paths(paths)
+
+    print_scope(scope)
     return 0
 
 

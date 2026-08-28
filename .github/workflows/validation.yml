@@ -29,8 +29,7 @@ jobs:
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             printf 'distribution=true\npython=true\ntypescript=true\n'
           else
-            git diff --name-only -z "$BASE_SHA" "$HEAD_SHA" \
-              | python3 scripts/ci_scope.py --null
+            python3 scripts/ci_scope.py --base "$BASE_SHA" --head "$HEAD_SHA"
           fi >> "$GITHUB_OUTPUT"
 
   distribution-validation:
@@ -192,13 +191,7 @@ jobs:
           RELEVANT: ${{ needs.scope.outputs.distribution }}
           SCOPE_RESULT: ${{ needs.scope.result }}
           VERIFY_RESULT: ${{ needs.distribution-validation.result }}
-        run: |
-          test "$SCOPE_RESULT" = "success"
-          if [[ "$RELEVANT" == "false" ]]; then
-            exit 0
-          fi
-          test "$RELEVANT" = "true"
-          test "$VERIFY_RESULT" = "success"
+        run: python3 scripts/ci_gate.py "$SCOPE_RESULT" "$RELEVANT" "$VERIFY_RESULT"
 
   python-required:
     name: Python scaffold
@@ -215,14 +208,9 @@ jobs:
           RELEVANT: ${{ needs.scope.outputs.python }}
           SCOPE_RESULT: ${{ needs.scope.result }}
           VERIFY_RESULT: ${{ needs.python-validation.result }}
-        run: |
-          test "$SCOPE_RESULT" = "success"
-          if [[ "$RELEVANT" == "false" ]]; then
-            exit 0
-          fi
-          test "$RELEVANT" = "true"
-          test "$VERIFY_RESULT" = "success"
-          test "$PORTABILITY_RESULT" = "success"
+        run: >-
+          python3 scripts/ci_gate.py
+          "$SCOPE_RESULT" "$RELEVANT" "$VERIFY_RESULT" "$PORTABILITY_RESULT"
 
   typescript-required:
     name: TypeScript scaffold
@@ -237,10 +225,4 @@ jobs:
           RELEVANT: ${{ needs.scope.outputs.typescript }}
           SCOPE_RESULT: ${{ needs.scope.result }}
           VERIFY_RESULT: ${{ needs.typescript-validation.result }}
-        run: |
-          test "$SCOPE_RESULT" = "success"
-          if [[ "$RELEVANT" == "false" ]]; then
-            exit 0
-          fi
-          test "$RELEVANT" = "true"
-          test "$VERIFY_RESULT" = "success"
+        run: python3 scripts/ci_gate.py "$SCOPE_RESULT" "$RELEVANT" "$VERIFY_RESULT"

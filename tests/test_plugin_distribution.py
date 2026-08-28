@@ -119,7 +119,11 @@ class PluginDistributionTest(unittest.TestCase):
         self.assertIn("workflow_dispatch:", workflow)
         self.assertIn("pull_request:", workflow)
         self.assertNotIn("\n  push:", workflow)
-        self.assertIn("python3 scripts/ci_scope.py --null", workflow)
+        self.assertIn(
+            'python3 scripts/ci_scope.py --base "$BASE_SHA" --head "$HEAD_SHA"',
+            workflow,
+        )
+        self.assertEqual(workflow.count("python3 scripts/ci_gate.py"), 3)
         for required_check in (
             "Plugin distribution",
             "Python scaffold",
