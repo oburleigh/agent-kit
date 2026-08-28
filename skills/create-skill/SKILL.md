@@ -14,7 +14,7 @@ No skill files are written until the interview is done and the user has approved
 ## Workflow
 
 - [ ] 1. Restate the request in one line. Read references/spec.md.
-- [ ] 2. Collision check: inspect the active skill catalog and the runtime's user, project, and plugin skill locations. Include built-ins and loaded plugins. Do not assume a particular host or filesystem path. Overlap means the same job, meaning the two skills would produce the same deliverable, not the same moment in a workflow. Clear overlap: propose extending the existing skill and stop. Unclear: raise it as the first interview question rather than deciding silently.
+- [ ] 2. Collision check: inspect the active skill catalog, including built-ins and loaded plugins. If the target runtime and placement are already known, also inspect the matching Agent Skills directories in references/spec.md. Otherwise finish the placement interview before checking filesystem locations. Check the target runtime, not only the runtime executing this workflow. Overlap means the same job, meaning the two skills would produce the same deliverable, not the same moment in a workflow. Clear overlap: propose extending the existing skill and stop. Unclear: raise it as the first interview question rather than deciding silently.
 - [ ] 3. Interview (below).
 - [ ] 4. Present the spec summary (template below). Wait for explicit approval.
 - [ ] 5. Build, following references/spec.md and references/best-practices.md.
@@ -28,7 +28,7 @@ Rules:
 - One decision point per message; options with a recommended default inside that decision count as one question. Wait for the full answer before the next.
 - Reject vague answers. "It should check quality" gets: which checks, against what standard, what happens on failure.
 - Go deep before wide. Exhaust an area, then move on.
-- Options may be offered, but always with one recommended default.
+- Options may be offered. Recommend a default only when it follows from the user's answers or a verified source; otherwise say there is no grounded default.
 - An answer the user has not given is a decision the agent may not make silently. It either gets asked, or it goes in the Assumptions list.
 - Skip an area only when the user's own words state the answer explicitly; an answer that has to be inferred is not an answer. The interview ends when the spec summary can be filled without invention, not when every question has been recited.
 - If the user says "just build it" or "I'm sure", stop asking, build, and list every remaining gap under Assumptions.
@@ -42,7 +42,7 @@ Areas, in order:
 5. **Inputs and outputs.** Formats in, format out. Ask for one concrete example of good output to turn into a template.
 6. **Numbers and facts.** Thresholds, limits, versions, prices, paths. Each one comes from the user or a named source. None are invented.
 7. **Scripts.** Deterministic steps worth bundling as tested scripts. Dependencies and environment constraints.
-8. **Boundaries and placement.** What the skill does not do. Is it personal, project-level, or a distributable plugin? Which agent runtimes must support it?
+8. **Boundaries and placement.** What the skill does not do. First ask whether it is personal, project-level, or a distributable plugin. If scope is known but runtime is not, ask "Which agent runtimes must support it: Codex, Claude, or both?" and stop. The runtime executing this workflow is not a recommended default. If both runtimes are selected for a personal or project-level skill, ask whether to create separate runtime-specific copies or change the scope to a distributable plugin, then stop without naming either destination. Recommend the plugin when one installable package must serve both. Once these answers are known, name the exact directory or directories from references/spec.md.
 
 ## Spec summary template
 
@@ -53,6 +53,8 @@ Description draft: <the frontmatter text>
 Triggers: <3 should-trigger phrasings; 2 near-misses that must not>
 Workflow: <numbered outline>
 Gotchas: <list>
+Runtimes: <Codex, Claude, or both>
+Placement: <personal, project-level, or distributable plugin, followed by the resolved directory>
 Files: <SKILL.md only, or + references/scripts/assets, with reason>
 Assumptions: <every decision made without an explicit answer>
 ```
@@ -62,6 +64,8 @@ Assumptions: <every decision made without an explicit answer>
 - Structure and hard constraints: references/spec.md. Non-negotiable: name matches directory and the naming rules; description under 1024 characters, triggering conditions only, never a workflow summary; SKILL.md under 500 lines; heavy material moved to references/ with an explicit load trigger ("read X when Y").
 - Content: references/best-practices.md. Only what the agent would get wrong without it, defaults not menus, procedures over declarations, gotchas inline, templates for output formats.
 - Write for a stranger: the skill must work for an agent with no access to this conversation.
+- Use the selected runtime and placement row in references/spec.md. Do not place a skill for the runtime executing this workflow unless that is also the user's target.
+- Before any write, complete a collision result with two parts: `Active catalog` covers built-ins and loaded plugins; `Filesystem` covers the target runtimes' personal and current-project Agent Skills directories.
 - Create only the requested skill files. Do not register or trigger the skill from repository instruction files. Frontmatter and package manifests own discovery.
 - Other hard-trigger skills still apply at build time: if a prose-hygiene skill such as humanize is loaded, invoke it before writing the new SKILL.md.
 

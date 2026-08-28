@@ -223,14 +223,7 @@ class PluginDistributionTest(unittest.TestCase):
 
     def test_published_skill_guidance_is_runtime_neutral(self) -> None:
         forbidden_shared_phrases = (
-            "Claude Code",
-            "Codex",
-            "~/.claude/",
-            "<repo>/.claude/",
-            "~/.codex/",
-            "<repo>/.codex/",
             "CLAUDE_SKILL_DIR",
-            "CODEX_HOME",
             "What Claude wrote",
         )
 
@@ -246,6 +239,16 @@ class PluginDistributionTest(unittest.TestCase):
                 content = path.read_text(encoding="utf-8")
                 for phrase in forbidden_shared_phrases:
                     self.assertNotIn(phrase, content, f"{path} assumes one runtime")
+                self.assertEqual(
+                    "Codex" in content,
+                    "Claude" in content,
+                    f"{path} names only one runtime",
+                )
+                self.assertEqual(
+                    any(phrase in content for phrase in ("CODEX_HOME", "~/.codex/", ".agents/skills/")),
+                    any(phrase in content for phrase in ("~/.claude/", ".claude/skills/")),
+                    f"{path} documents paths for only one runtime",
+                )
 
             readme = (skill_root / "README.md").read_text(encoding="utf-8")
             self.assertEqual(
