@@ -29,6 +29,6 @@ jobs:
           RELEASE_PRS: ${{ steps.release.outputs.prs }}
         run: |
           release_branch="$(jq -er '.[0].headBranchName' <<<"$RELEASE_PRS")"
-          gh workflow run "plugin-distribution.yml" --ref "$release_branch"
-          gh workflow run "python-scaffold.yml" --ref "$release_branch"
-          gh workflow run "typescript-scaffold.yml" --ref "$release_branch"
+          gh workflow run "plugin-distribution.yml" --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
+          gh workflow run "python-scaffold.yml" --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
+          gh workflow run "typescript-scaffold.yml" --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
