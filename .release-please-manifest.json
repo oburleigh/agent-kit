@@ -1,0 +1,8 @@
+{
+  ".": "0.2.0",
+  "plugins/create-skill": "0.1.0",
+  "plugins/git-commit": "0.1.0",
+  "plugins/humanize": "0.1.0",
+  "plugins/python-scaffold": "0.1.0",
+  "plugins/typescript-scaffold": "0.1.0"
+}

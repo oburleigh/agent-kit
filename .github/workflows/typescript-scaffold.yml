@@ -1,13 +1,13 @@
 name: TypeScript scaffold
 
 on:
+  workflow_dispatch:
   pull_request:
-    paths:
-      - "skills/typescript-scaffold/**"
-      - ".github/workflows/typescript-scaffold.yml"
   push:
     branches: [main]
     paths:
+      - ".release-please-manifest.json"
+      - "plugins/*/version.txt"
       - "skills/typescript-scaffold/**"
       - ".github/workflows/typescript-scaffold.yml"
 
@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   verify:
+    name: TypeScript scaffold
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -118,6 +119,78 @@ class PluginDistributionTest(unittest.TestCase):
 
         self.assertIn('- ".codex-plugin/**"', workflow)
         self.assertIn('- "README.md"', workflow)
+
+    def test_release_pull_requests_run_both_scaffold_suites(self) -> None:
+        workflows = {
+            "plugin-distribution.yml": "Plugin distribution",
+            "python-scaffold.yml": "Python scaffold",
+            "typescript-scaffold.yml": "TypeScript scaffold",
+        }
+        for workflow_name, required_check in workflows.items():
+            workflow = (ROOT / ".github/workflows" / workflow_name).read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("workflow_dispatch:", workflow)
+            pull_request = workflow.split("pull_request:", 1)[1].split("push:", 1)[0]
+            self.assertNotIn("paths:", pull_request)
+            self.assertEqual(workflow.count(f"name: {required_check}\n"), 2)
+
+        for workflow_name in ("python-scaffold.yml", "typescript-scaffold.yml"):
+            workflow = (ROOT / ".github/workflows" / workflow_name).read_text(
+                encoding="utf-8"
+            )
+            self.assertEqual(workflow.count('- ".release-please-manifest.json"'), 1)
+            self.assertEqual(workflow.count('- "plugins/*/version.txt"'), 1)
+
+        python_workflow = (
+            ROOT / ".github/workflows/python-scaffold.yml"
+        ).read_text(encoding="utf-8")
+        required_job = python_workflow.split("  required:\n", 1)[1]
+        self.assertIn("name: Python scaffold", required_job)
+        self.assertIn("if: always()", required_job)
+        self.assertIn("- verify", required_job)
+        self.assertIn("- create-only-portability", required_job)
+        self.assertIn('test "$VERIFY_RESULT" = "success"', required_job)
+        self.assertIn('test "$PORTABILITY_RESULT" = "success"', required_job)
+
+    def test_release_workflow_dispatches_checks_for_generated_pull_requests(self) -> None:
+        workflow = (ROOT / ".github/workflows/release-please.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("actions: write", workflow)
+        self.assertIn("concurrency:", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+        self.assertIn("steps.release.outputs.prs_created == 'true'", workflow)
+        self.assertIn("steps.release.outputs.prs", workflow)
+        for workflow_name in (
+            "plugin-distribution.yml",
+            "python-scaffold.yml",
+            "typescript-scaffold.yml",
+        ):
+            self.assertIn(f'gh workflow run "{workflow_name}"', workflow)
+
+    def test_release_configuration_passes_repository_validation(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "scripts/validate_releases.py"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_github_actions_use_immutable_versioned_pins(self) -> None:
+        result = subprocess.run(
+            [sys.executable, "scripts/check_github_actions.py"],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_internal_planning_artifacts_are_not_published(self) -> None:
         gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")

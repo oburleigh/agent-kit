@@ -1,28 +1,28 @@
 name: Plugin distribution
 
 on:
+  workflow_dispatch:
   pull_request:
-    paths:
-      - ".agents/**"
-      - ".claude-plugin/**"
-      - ".codex-plugin/**"
-      - "plugins/**"
-      - "skills/**"
-      - "scripts/sync_plugin_skills.py"
-      - "README.md"
-      - "tests/test_plugin_distribution.py"
-      - ".github/workflows/plugin-distribution.yml"
   push:
     branches: [main]
     paths:
+      - ".release-please-manifest.json"
       - ".agents/**"
       - ".claude-plugin/**"
       - ".codex-plugin/**"
+      - ".github/workflows/release-please.yml"
+      - "CHANGELOG.md"
       - "plugins/**"
+      - "release-please-config.json"
+      - "scripts/check_github_actions.py"
       - "skills/**"
       - "scripts/sync_plugin_skills.py"
+      - "scripts/validate_releases.py"
       - "README.md"
+      - "tests/test_github_actions_policy.py"
       - "tests/test_plugin_distribution.py"
+      - "tests/test_release_configuration.py"
+      - "version.txt"
       - ".github/workflows/plugin-distribution.yml"
 
 permissions:
@@ -30,6 +30,7 @@ permissions:
 
 jobs:
   verify:
+    name: Plugin distribution
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -38,6 +39,10 @@ jobs:
           node-version: 24
       - name: Install plugin clients
         run: npm install --global @openai/codex@0.150.1 @anthropic-ai/claude-code@2.1.247
+      - name: Check release configuration
+        run: python3 scripts/validate_releases.py
+      - name: Check workflow action pins
+        run: python3 scripts/check_github_actions.py
       - name: Check distribution contracts
         run: python3 -m unittest discover -s tests -v
       - name: Validate Claude marketplace
