@@ -1,0 +1,4 @@
+interface:
+  display_name: "Python Scaffold"
+  short_description: "Create configurable Python repositories"
+  default_prompt: "Use $python-scaffold to create a Python repository for this project."

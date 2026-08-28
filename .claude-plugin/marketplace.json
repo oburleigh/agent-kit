@@ -32,6 +32,12 @@
       "category": "writing"
     },
     {
+      "name": "python-scaffold",
+      "description": "Create configurable Python repositories.",
+      "source": "./plugins/python-scaffold",
+      "category": "development"
+    },
+    {
       "name": "typescript-scaffold",
       "description": "Create configurable TypeScript repositories.",
       "source": "./plugins/typescript-scaffold",

@@ -1,0 +1,42 @@
+{
+  "skill_name": "humanize",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a guide explaining how our API rate limiting works. We use a token bucket algorithm with 100 requests/minute per API key, with burst capacity of 20. Include how clients should handle 429 responses and the retry-after header.",
+      "expected_output": "Technical documentation that explains rate limiting clearly without AI writing patterns — no inflated vocabulary, no rule-of-three structures, no em-dash overuse, no formulaic openings/closings",
+      "assertions": [
+        "No words from the Tier 1 avoid list appear (robust, seamless, crucial, leverage, utilize, etc.)",
+        "Does not open with 'In today's...', 'When it comes to...', or any formulaic opener",
+        "Does not close with 'In conclusion', 'In summary', or restating what was just said",
+        "No em dashes or double hyphens appear in the text",
+        "Sentence lengths vary — not all sentences are 25-30 words"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write a summary of what the team accomplished this sprint. We shipped the new search indexer (replaced Elasticsearch with Meilisearch, 3x faster indexing), fixed the memory leak in the worker pool that was causing OOM kills every ~48 hours, and started the auth migration from session cookies to JWTs. The auth work is about 40% done.",
+      "expected_output": "A sprint summary that reads like a person wrote it — direct, proportional emphasis, no significance inflation, no corporate-brochure tone",
+      "assertions": [
+        "Does not inflate the significance of any item (no 'groundbreaking', 'pivotal', 'transformative')",
+        "Does not use participial phrase padding ('...showcasing the team's commitment to...')",
+        "Treats the 40%-done auth work proportionally — does not present it as equally complete",
+        "No synonym cycling (the same thing is not called 'the platform', 'the solution', 'the system' in consecutive sentences)",
+        "No formulaic closing summarizing what was just stated"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Here's a draft of our onboarding doc. Please revise the 'Getting Started' section to mention that we now require 2FA setup before accessing production environments. Also fix the tone — it reads too much like a textbook.\n\n---\nGetting Started\n\nWelcome to the team! This comprehensive guide will walk you through the crucial steps needed to get up and running. In today's fast-paced development environment, it's important to note that having your tooling properly configured is paramount to your success.\n\nFirst, clone the monorepo. Then, run the setup script — this robust utility will seamlessly configure your local environment. Furthermore, you'll want to ensure that your IDE is properly configured with the recommended extensions.\n\nOverall, following these steps will empower you to hit the ground running and contribute meaningfully to the codebase.\n---",
+      "expected_output": "A revised document that adds the 2FA requirement naturally, fixes the AI-sounding tone, and does NOT include any meta-commentary about what was changed or why",
+      "assertions": [
+        "The 2FA requirement is included in the revised text",
+        "Words from the original that are AI tells are replaced: 'comprehensive', 'crucial', 'paramount', 'robust', 'seamlessly', 'Furthermore', 'empower'",
+        "The 'In today's fast-paced development environment' opener is removed",
+        "The 'Overall' closing paragraph is removed or rewritten without restating prior content",
+        "No em dashes appear in the revision",
+        "No meta-commentary about the revision process appears in the document body (no 'Updated to reflect', 'As discussed', etc.)"
+      ]
+    }
+  ]
+}

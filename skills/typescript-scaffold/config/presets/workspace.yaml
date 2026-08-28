@@ -1,0 +1,40 @@
+schema_version: 1
+name: workspace
+preset: workspace
+package_manager: bun
+module: esm
+build: tsc
+quality: biome
+tests: vitest
+runtime_validation: none
+http: none
+logging: none
+hooks: lefthook
+commit_lint: commitlint
+ci: github-actions
+publishing: none
+workspace: turbo
+secret_scan: gitleaks
+duplication: jscpd
+framework: none
+license: apache-2.0
+install_dependencies: true
+run_quality_gates: true
+initialize_git: true
+default_author: ""
+project:
+  name: ""
+  description: ""
+  author: ""
+  repository_url: ""
+extra_dependencies: []
+extra_dev_dependencies: []
+extra_scripts: {}
+ci_commands: []
+workspace_members:
+  - path: apps/app
+    package_name: "@{project}/app"
+    kind: application
+  - path: packages/core
+    package_name: "@{project}/core"
+    kind: library

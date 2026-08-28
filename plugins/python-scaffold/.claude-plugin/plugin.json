@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "python-scaffold",
+  "displayName": "Python Scaffold",
+  "version": "0.1.0",
+  "description": "Create configurable Python repositories with tested tooling, documentation, CI, and Git.",
+  "author": {
+    "name": "Oliver Burleigh"
+  },
+  "license": "MIT",
+  "keywords": ["python", "scaffold", "workspace"],
+  "skills": "./skills/"
+}

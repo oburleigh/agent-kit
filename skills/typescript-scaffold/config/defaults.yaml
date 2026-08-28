@@ -1,0 +1,69 @@
+schema_version: 1
+generated_package_version: 0.1.0
+runtime:
+  node_version: "24"
+  typescript_target: ES2023
+package_managers:
+  pnpm: 11.24.0
+  npm: 11.17.0
+  yarn: 4.18.0
+  bun: 1.3.14
+packages:
+  "@biomejs/biome": ^2.5.10
+  "@commitlint/cli": ^21.2.2
+  "@commitlint/config-conventional": ^21.2.2
+  "@eslint/js": ^10.0.1
+  "@hono/node-server": ^1.19.11
+  "@nestjs/common": ^11.1.17
+  "@nestjs/core": ^11.1.17
+  "@nestjs/platform-express": ^11.1.17
+  "@swc/core": ^1.16.1
+  "@swc/jest": ^0.2.39
+  "@testing-library/jest-dom": ^7.0.1
+  "@testing-library/react": ^16.3.2
+  "@types/express": ^5.0.6
+  "@types/jest": ^30.0.0
+  "@types/node": ^24.13.3
+  "@vitest/coverage-v8": ^4.1.11
+  eslint: ^10.9.1
+  eslint-config-prettier: ^10.1.8
+  express: ^5.2.1
+  fastify: ^5.12.1
+  hono: ^4.12.8
+  husky: ^9.1.7
+  jest: ^30.2.0
+  jscpd: ^5.0.16
+  jsdom: ^30.0.1
+  lefthook: ^2.1.10
+  lint-staged: ^17.3.0
+  nx: ^23.1.1
+  pino: ^10.3.1
+  prettier: ^3.9.6
+  reflect-metadata: ^0.2.2
+  rxjs: ^7.8.2
+  tsup: ^8.5.1
+  tsx: ^4.21.0
+  turbo: ^2.10.12
+  typescript: ^6.0.3
+  typescript-eslint: ^8.68.0
+  valibot: ^1.2.0
+  vitest: ^4.1.11
+  winston: ^3.19.0
+  zod: ^4.4.3
+provider_package_overrides:
+  build-tsup:
+    typescript: ^5.9.3
+framework_generators:
+  create-vite: 9.2.0
+ci:
+  runner: ubuntu-latest
+  actions:
+    checkout: actions/checkout@v4
+    setup_node: actions/setup-node@v4
+    setup_bun: oven-sh/setup-bun@v2
+    setup_pnpm: pnpm/action-setup@v4
+    gitleaks: gitleaks/gitleaks-action@v2
+  images:
+    node: node
+    bun: oven/bun
+    gitleaks: zricethezav/gitleaks:v8.30.1

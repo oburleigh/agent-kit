@@ -1,0 +1,34 @@
+schema_version: 1
+name: service
+preset: service
+package_manager: npm
+module: esm
+build: tsc
+quality: eslint-prettier
+tests: vitest
+runtime_validation: zod
+http: fastify
+logging: pino
+hooks: husky-lint-staged
+commit_lint: commitlint
+ci: github-actions
+publishing: none
+workspace: none
+secret_scan: gitleaks
+duplication: jscpd
+framework: none
+license: apache-2.0
+install_dependencies: true
+run_quality_gates: true
+initialize_git: true
+default_author: ""
+project:
+  name: ""
+  description: ""
+  author: ""
+  repository_url: ""
+extra_dependencies: []
+extra_dev_dependencies: []
+extra_scripts: {}
+ci_commands: []
+workspace_members: []

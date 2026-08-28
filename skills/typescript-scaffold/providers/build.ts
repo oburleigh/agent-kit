@@ -1,0 +1,108 @@
+import type { ProviderContribution } from "../src/types.js";
+import {
+  defaultPackageVersion,
+  defaultPackageVersions,
+  scaffoldDefaults,
+} from "../src/defaults.js";
+import { intersects, validRange } from "semver";
+import { json } from "./helpers.js";
+import { strictTypeScriptOptions } from "./typescript.js";
+
+function tsconfig(
+  module: "esm" | "commonjs",
+  nestjs: boolean,
+  tests: "vitest" | "node-test" | "jest" | "none",
+): string {
+  return json({
+    compilerOptions: {
+      target: scaffoldDefaults.runtime.typescript_target,
+      module: module === "esm" ? "NodeNext" : "Node16",
+      moduleResolution: module === "esm" ? "NodeNext" : "Node16",
+      ...strictTypeScriptOptions(),
+      declaration: true,
+      sourceMap: true,
+      skipLibCheck: true,
+      types: tests === "jest" ? ["node", "jest"] : ["node"],
+      ...(nestjs ? { experimentalDecorators: true, emitDecoratorMetadata: true } : {}),
+    },
+    include: ["src", "test", "*.config.*"],
+  });
+}
+
+function buildTsconfig(): string {
+  return json({
+    extends: "./tsconfig.json",
+    compilerOptions: { rootDir: "src", outDir: "dist" },
+    include: ["src"],
+    exclude: ["test", "**/*.test.ts", "**/*.test.tsx"],
+  });
+}
+
+export const buildProviders: ProviderContribution[] = [
+  {
+    id: "build-tsc",
+    selected: (profile) => profile.build === "tsc" && profile.workspace === "none",
+    devDependencies: defaultPackageVersions(["typescript", "@types/node"], "build-tsc"),
+    scripts: ({ profile }) => ({
+      build: "tsc -p tsconfig.build.json",
+      typecheck: profile.tests === "node-test"
+        ? "tsc --noEmit --allowImportingTsExtensions"
+        : "tsc --noEmit",
+    }),
+    files: (context) => ({
+      "tsconfig.json": tsconfig(
+        context.profile.module,
+        context.profile.http === "nestjs",
+        context.profile.tests,
+      ),
+      "tsconfig.build.json": buildTsconfig(),
+    }),
+  },
+  {
+    id: "build-tsup",
+    selected: (profile) => profile.build === "tsup" && profile.workspace === "none",
+    validate: ({ profile }) => {
+      const typescriptDefault = defaultPackageVersion("typescript", "build-tsup");
+      const typescriptRange = profile.package_versions.typescript ?? typescriptDefault;
+      if (!validRange(typescriptRange) || intersects(typescriptRange, ">=6.0.0")) {
+        throw new Error(
+          `tsup declaration generation requires TypeScript 5.9. Use the tsc build provider for TypeScript 6 or set package_versions.typescript to ${typescriptDefault}.`,
+        );
+      }
+    },
+    devDependencies: defaultPackageVersions(
+      ["typescript", "@types/node", "tsup"],
+      "build-tsup",
+    ),
+    scripts: ({ profile }) => ({
+      build: "tsup",
+      typecheck: profile.tests === "node-test"
+        ? "tsc --noEmit --allowImportingTsExtensions"
+        : "tsc --noEmit",
+    }),
+    files: (context) => ({
+      "tsconfig.json": tsconfig(
+        context.profile.module,
+        context.profile.http === "nestjs",
+        context.profile.tests,
+      ),
+      "tsconfig.build.json": buildTsconfig(),
+      "tsup.config.ts": `import { defineConfig } from "tsup";\n\nexport default defineConfig({\n  entry: ["${entryPoint(context.profile.preset)}"],\n  format: ["${context.profile.module === "esm" ? "esm" : "cjs"}"],\n  dts: true,\n  sourcemap: true,\n  clean: true,\n});\n`,
+    }),
+  },
+  {
+    id: "build-framework",
+    selected: (profile) => profile.build === "framework-owned",
+    validate: ({ profile }) => {
+      if (profile.framework === "none") {
+        throw new Error("framework-owned build requires a framework adapter");
+      }
+    },
+  },
+];
+
+function entryPoint(preset: "library" | "service" | "cli" | "workspace"): string {
+  if (preset === "cli") return "src/cli.ts";
+  if (preset === "service") return "src/server.ts";
+  return "src/index.ts";
+}

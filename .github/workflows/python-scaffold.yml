@@ -3,12 +3,12 @@ name: Python scaffold
 on:
   pull_request:
     paths:
-      - "plugins/python-scaffold/**"
+      - "skills/python-scaffold/**"
       - ".github/workflows/python-scaffold.yml"
   push:
     branches: [main]
     paths:
-      - "plugins/python-scaffold/**"
+      - "skills/python-scaffold/**"
       - ".github/workflows/python-scaffold.yml"
 
 permissions:
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: plugins/python-scaffold/skills/python-scaffold
+        working-directory: skills/python-scaffold
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
@@ -27,7 +27,7 @@ jobs:
           version: "0.12.1"
           python-version: "3.14"
           enable-cache: true
-          working-directory: plugins/python-scaffold/skills/python-scaffold
+          working-directory: skills/python-scaffold
       - run: uv sync --frozen
       - run: uv run --frozen ruff check .
       - run: uv run --frozen ruff format --check .
@@ -51,7 +51,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: plugins/python-scaffold/skills/python-scaffold
+        working-directory: skills/python-scaffold
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
@@ -59,7 +59,7 @@ jobs:
           version: "0.12.1"
           python-version: "3.14"
           enable-cache: true
-          working-directory: plugins/python-scaffold/skills/python-scaffold
+          working-directory: skills/python-scaffold
       - run: uv sync --frozen
       - name: Check create-only transaction behavior
         run: >-
