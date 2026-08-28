@@ -7,11 +7,7 @@ import time
 from collections.abc import Callable, Sequence
 
 
-REQUIRED_WORKFLOWS = (
-    "Plugin distribution",
-    "Python scaffold",
-    "TypeScript scaffold",
-)
+REQUIRED_WORKFLOWS = ("Validation",)
 DEFAULT_DELAYS = (2, 4, 8, 15, 30, 30, 30, 30, 30, 30)
 
 

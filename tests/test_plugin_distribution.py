@@ -112,46 +112,37 @@ class PluginDistributionTest(unittest.TestCase):
         self.assertIn("claude plugin install agent-kit@agent-kit", readme)
         self.assertNotIn("## TypeScript scaffold", readme)
 
-    def test_distribution_workflow_tracks_root_plugin_files(self) -> None:
-        workflow = (ROOT / ".github/workflows/plugin-distribution.yml").read_text(
-            encoding="utf-8"
+    def test_pull_requests_report_all_required_contexts_from_one_workflow(self) -> None:
+        workflow_root = ROOT / ".github/workflows"
+        workflow = (workflow_root / "validation.yml").read_text(encoding="utf-8")
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("pull_request:", workflow)
+        self.assertNotIn("\n  push:", workflow)
+        self.assertIn(
+            "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3",
+            workflow,
         )
+        self.assertIn("predicate-quantifier: some-with-excludes", workflow)
+        self.assertIn("- '!**/*.md'", workflow)
+        self.assertIn("- 'skills/**'", workflow)
+        self.assertIn("- 'plugins/*/skills/**'", workflow)
+        self.assertIn("- 'skills/python-scaffold/**'", workflow)
+        self.assertIn("- 'skills/typescript-scaffold/**'", workflow)
+        self.assertIn("name: ${{ matrix.check }}", workflow)
+        for required_check in (
+            "Plugin distribution",
+            "Python scaffold",
+            "TypeScript scaffold",
+        ):
+            self.assertEqual(workflow.count(f"check: {required_check}\n"), 1)
 
-        self.assertIn('- ".codex-plugin/**"', workflow)
-        self.assertIn('- "README.md"', workflow)
-
-    def test_release_pull_requests_run_both_scaffold_suites(self) -> None:
-        workflows = {
-            "plugin-distribution.yml": "Plugin distribution",
-            "python-scaffold.yml": "Python scaffold",
-            "typescript-scaffold.yml": "TypeScript scaffold",
-        }
-        for workflow_name, required_check in workflows.items():
-            workflow = (ROOT / ".github/workflows" / workflow_name).read_text(
-                encoding="utf-8"
-            )
-            self.assertIn("workflow_dispatch:", workflow)
-            pull_request = workflow.split("pull_request:", 1)[1].split("push:", 1)[0]
-            self.assertNotIn("paths:", pull_request)
-            self.assertEqual(workflow.count(f"name: {required_check}\n"), 2)
-
-        for workflow_name in ("python-scaffold.yml", "typescript-scaffold.yml"):
-            workflow = (ROOT / ".github/workflows" / workflow_name).read_text(
-                encoding="utf-8"
-            )
-            self.assertEqual(workflow.count('- ".release-please-manifest.json"'), 1)
-            self.assertEqual(workflow.count('- "plugins/*/version.txt"'), 1)
-
-        python_workflow = (
-            ROOT / ".github/workflows/python-scaffold.yml"
-        ).read_text(encoding="utf-8")
-        required_job = python_workflow.split("  required:\n", 1)[1]
-        self.assertIn("name: Python scaffold", required_job)
-        self.assertIn("if: always()", required_job)
-        self.assertIn("- verify", required_job)
-        self.assertIn("- create-only-portability", required_job)
-        self.assertIn('test "$VERIFY_RESULT" = "success"', required_job)
-        self.assertIn('test "$PORTABILITY_RESULT" = "success"', required_job)
+        for obsolete in (
+            "plugin-distribution.yml",
+            "python-scaffold.yml",
+            "typescript-scaffold.yml",
+        ):
+            self.assertFalse((workflow_root / obsolete).exists())
 
     def test_release_workflow_reconciles_native_checks_with_scoped_permissions(self) -> None:
         workflow = (ROOT / ".github/workflows/release-please.yml").read_text(
