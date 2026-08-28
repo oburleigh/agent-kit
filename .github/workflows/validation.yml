@@ -178,51 +178,44 @@ jobs:
       - run: npm run typecheck
       - run: npm run check:dist
 
-  distribution-required:
-    name: Plugin distribution
+  required:
+    name: ${{ matrix.check }}
     if: always()
     needs:
       - scope
       - distribution-validation
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require successful distribution jobs
-        env:
-          RELEVANT: ${{ needs.scope.outputs.distribution }}
-          SCOPE_RESULT: ${{ needs.scope.result }}
-          VERIFY_RESULT: ${{ needs.distribution-validation.result }}
-        run: python3 scripts/ci_gate.py "$SCOPE_RESULT" "$RELEVANT" "$VERIFY_RESULT"
-
-  python-required:
-    name: Python scaffold
-    if: always()
-    needs:
-      - scope
       - python-validation
       - python-portability
-    runs-on: ubuntu-latest
-    steps:
-      - name: Require successful Python jobs
-        env:
-          PORTABILITY_RESULT: ${{ needs.python-portability.result }}
-          RELEVANT: ${{ needs.scope.outputs.python }}
-          SCOPE_RESULT: ${{ needs.scope.result }}
-          VERIFY_RESULT: ${{ needs.python-validation.result }}
-        run: >-
-          python3 scripts/ci_gate.py
-          "$SCOPE_RESULT" "$RELEVANT" "$VERIFY_RESULT" "$PORTABILITY_RESULT"
-
-  typescript-required:
-    name: TypeScript scaffold
-    if: always()
-    needs:
-      - scope
       - typescript-validation
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: Plugin distribution
+            relevance: ${{ needs.scope.outputs.distribution }}
+            results: ${{ needs.distribution-validation.result }}
+          - check: Python scaffold
+            relevance: ${{ needs.scope.outputs.python }}
+            results: >-
+              ${{ needs.python-validation.result }}
+              ${{ needs.python-portability.result }}
+          - check: TypeScript scaffold
+            relevance: ${{ needs.scope.outputs.typescript }}
+            results: ${{ needs.typescript-validation.result }}
     runs-on: ubuntu-latest
     steps:
-      - name: Require successful TypeScript jobs
+      - name: Require successful validation jobs
         env:
-          RELEVANT: ${{ needs.scope.outputs.typescript }}
+          RELEVANT: ${{ matrix.relevance }}
+          RESULTS: ${{ matrix.results }}
           SCOPE_RESULT: ${{ needs.scope.result }}
-          VERIFY_RESULT: ${{ needs.typescript-validation.result }}
-        run: python3 scripts/ci_gate.py "$SCOPE_RESULT" "$RELEVANT" "$VERIFY_RESULT"
+        run: |
+          test "$SCOPE_RESULT" = "success"
+          if [[ "$RELEVANT" == "false" ]]; then
+            exit 0
+          fi
+          test "$RELEVANT" = "true"
+          test -n "$RESULTS"
+          for result in $RESULTS; do
+            test "$result" = "success"
+          done
