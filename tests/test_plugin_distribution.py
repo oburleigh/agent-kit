@@ -153,26 +153,27 @@ class PluginDistributionTest(unittest.TestCase):
         self.assertIn('test "$VERIFY_RESULT" = "success"', required_job)
         self.assertIn('test "$PORTABILITY_RESULT" = "success"', required_job)
 
-    def test_release_workflow_dispatches_checks_for_generated_pull_requests(self) -> None:
+    def test_release_workflow_reconciles_native_checks_with_scoped_permissions(self) -> None:
         workflow = (ROOT / ".github/workflows/release-please.yml").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn("actions: write", workflow)
+        release_job, approval_job = workflow.split("  approve-release-checks:\n", 1)
+
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertEqual(workflow.count("if: github.ref == 'refs/heads/main'"), 2)
         self.assertIn("concurrency:", workflow)
         self.assertIn("cancel-in-progress: false", workflow)
-        self.assertIn("steps.release.outputs.prs_created == 'true'", workflow)
-        self.assertIn("steps.release.outputs.prs", workflow)
-        for workflow_name in (
-            "plugin-distribution.yml",
-            "python-scaffold.yml",
-            "typescript-scaffold.yml",
-        ):
-            self.assertIn(
-                f'gh workflow run "{workflow_name}" '
-                '--repo "$GITHUB_REPOSITORY" --ref "$release_branch"',
-                workflow,
-            )
+        self.assertNotIn("actions: write", release_job)
+        self.assertIn("actions: write", approval_job)
+        self.assertIn("needs: release", approval_job)
+        self.assertIn("contents: read", approval_job)
+        self.assertIn("pull-requests: read", approval_job)
+        self.assertIn("persist-credentials: false", approval_job)
+        self.assertIn("needs.release.outputs.release_prs", approval_job)
+        self.assertIn("python3 scripts/approve_release_checks.py", approval_job)
+        self.assertNotIn("steps.release.outputs.prs_created", workflow)
+        self.assertNotIn("gh workflow run", workflow)
 
     def test_release_configuration_passes_repository_validation(self) -> None:
         result = subprocess.run(
