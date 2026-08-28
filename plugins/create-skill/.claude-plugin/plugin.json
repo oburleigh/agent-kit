@@ -2,12 +2,16 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "create-skill",
   "displayName": "Create Skill",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Create and validate reusable Agent Skills through an evidence-led specification workflow.",
   "author": {
     "name": "Oliver Burleigh"
   },
   "license": "MIT",
-  "keywords": ["agent-skills", "skills", "workflow"],
+  "keywords": [
+    "agent-skills",
+    "skills",
+    "workflow"
+  ],
   "skills": "./skills/"
 }
