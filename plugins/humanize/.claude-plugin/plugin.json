@@ -2,12 +2,16 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "humanize",
   "displayName": "Humanize",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Remove common machine-written patterns from professional prose.",
   "author": {
     "name": "Oliver Burleigh"
   },
   "license": "MIT",
-  "keywords": ["editing", "prose", "writing"],
+  "keywords": [
+    "editing",
+    "prose",
+    "writing"
+  ],
   "skills": "./skills/"
 }
