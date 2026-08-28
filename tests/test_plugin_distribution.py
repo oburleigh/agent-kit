@@ -120,11 +120,16 @@ class PluginDistributionTest(unittest.TestCase):
         self.assertIn("pull_request:", workflow)
         self.assertNotIn("\n  push:", workflow)
         self.assertIn(
-            'python3 scripts/ci_scope.py --base "$BASE_SHA" --head "$HEAD_SHA"',
+            "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3",
             workflow,
         )
+        self.assertIn("predicate-quantifier: some-with-excludes", workflow)
+        self.assertIn("- '!**/*.md'", workflow)
+        self.assertIn("- 'skills/**'", workflow)
+        self.assertIn("- 'plugins/*/skills/**'", workflow)
+        self.assertIn("- 'skills/python-scaffold/**'", workflow)
+        self.assertIn("- 'skills/typescript-scaffold/**'", workflow)
         self.assertIn("name: ${{ matrix.check }}", workflow)
-        self.assertEqual(workflow.count("  required:\n"), 1)
         for required_check in (
             "Plugin distribution",
             "Python scaffold",
@@ -138,72 +143,6 @@ class PluginDistributionTest(unittest.TestCase):
             "typescript-scaffold.yml",
         ):
             self.assertFalse((workflow_root / obsolete).exists())
-
-    def test_required_check_matrix_fails_closed(self) -> None:
-        workflow = (ROOT / ".github/workflows/validation.yml").read_text(
-            encoding="utf-8"
-        )
-        required_job = workflow.split("  required:\n", 1)[1]
-        gate = required_job.split("        run: |\n", 1)[1]
-        cases = (
-            (
-                {
-                    "SCOPE_RESULT": "success",
-                    "RELEVANT": "false",
-                    "RESULTS": "skipped",
-                },
-                0,
-            ),
-            (
-                {
-                    "SCOPE_RESULT": "success",
-                    "RELEVANT": "true",
-                    "RESULTS": "success success",
-                },
-                0,
-            ),
-            (
-                {
-                    "SCOPE_RESULT": "success",
-                    "RELEVANT": "true",
-                    "RESULTS": "success failure",
-                },
-                1,
-            ),
-            (
-                {
-                    "SCOPE_RESULT": "failure",
-                    "RELEVANT": "false",
-                    "RESULTS": "skipped",
-                },
-                1,
-            ),
-            (
-                {
-                    "SCOPE_RESULT": "success",
-                    "RELEVANT": "",
-                    "RESULTS": "skipped",
-                },
-                1,
-            ),
-            (
-                {
-                    "SCOPE_RESULT": "success",
-                    "RELEVANT": "true",
-                    "RESULTS": "",
-                },
-                1,
-            ),
-        )
-
-        for environment, expected in cases:
-            with self.subTest(environment=environment):
-                result = subprocess.run(
-                    ["/bin/bash", "-e", "-o", "pipefail", "-c", gate],
-                    env=environment,
-                    check=False,
-                )
-                self.assertEqual(result.returncode, expected)
 
     def test_release_workflow_reconciles_native_checks_with_scoped_permissions(self) -> None:
         workflow = (ROOT / ".github/workflows/release-please.yml").read_text(
