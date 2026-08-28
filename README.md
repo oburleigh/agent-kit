@@ -6,8 +6,6 @@
   </picture>
 </p>
 
-# Agent Kit
-
 Reusable skills for software engineering work with Codex and Claude Code.
 
 The skills are small enough to use independently and work together without imposing a single development process. Install Agent Kit to get the complete set, or install individual skills when you only need part of it.
