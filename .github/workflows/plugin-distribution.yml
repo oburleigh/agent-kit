@@ -7,30 +7,97 @@ on:
     branches: [main]
     paths:
       - ".release-please-manifest.json"
-      - ".agents/**"
-      - ".claude-plugin/**"
-      - ".codex-plugin/**"
-      - ".github/workflows/release-please.yml"
-      - "CHANGELOG.md"
-      - "plugins/**"
+      - ".agents/**/*.json"
+      - ".agents/**/*.yaml"
+      - ".agents/**/*.yml"
+      - ".claude-plugin/**/*.json"
+      - ".claude-plugin/**/*.yaml"
+      - ".claude-plugin/**/*.yml"
+      - ".codex-plugin/**/*.json"
+      - ".codex-plugin/**/*.yaml"
+      - ".codex-plugin/**/*.yml"
+      - ".github/workflows/**/*.yaml"
+      - ".github/workflows/**/*.yml"
+      - "plugins/*/.claude-plugin/**/*.json"
+      - "plugins/*/.codex-plugin/**/*.json"
+      - "plugins/*/.unpublished-plugin"
+      - "plugins/*/LICENSE"
+      - "plugins/*/skills/**"
+      - "plugins/*/version.txt"
       - "release-please-config.json"
-      - "scripts/check_github_actions.py"
+      - "scripts/**/*.js"
+      - "scripts/**/*.mjs"
+      - "scripts/**/*.py"
+      - "scripts/**/*.sh"
+      - "scripts/**/*.ts"
       - "skills/**"
-      - "scripts/sync_plugin_skills.py"
-      - "scripts/validate_releases.py"
-      - "README.md"
-      - "tests/test_github_actions_policy.py"
-      - "tests/test_plugin_distribution.py"
-      - "tests/test_release_configuration.py"
+      - "tests/**/*.json"
+      - "tests/**/*.py"
+      - "tests/**/*.sh"
+      - "tests/**/*.yaml"
+      - "tests/**/*.yml"
       - "version.txt"
-      - ".github/workflows/plugin-distribution.yml"
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect distribution changes
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.force.outputs.relevant || steps.filter.outputs.relevant }}
+    steps:
+      - name: Force validation for manual runs
+        id: force
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "relevant=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: github.event_name == 'push'
+      - name: Detect relevant files
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            relevant:
+              - '.release-please-manifest.json'
+              - '.agents/**/*.json'
+              - '.agents/**/*.yaml'
+              - '.agents/**/*.yml'
+              - '.claude-plugin/**/*.json'
+              - '.claude-plugin/**/*.yaml'
+              - '.claude-plugin/**/*.yml'
+              - '.codex-plugin/**/*.json'
+              - '.codex-plugin/**/*.yaml'
+              - '.codex-plugin/**/*.yml'
+              - '.github/workflows/**/*.yaml'
+              - '.github/workflows/**/*.yml'
+              - 'plugins/*/.claude-plugin/**/*.json'
+              - 'plugins/*/.codex-plugin/**/*.json'
+              - 'plugins/*/.unpublished-plugin'
+              - 'plugins/*/LICENSE'
+              - 'plugins/*/skills/**'
+              - 'plugins/*/version.txt'
+              - 'release-please-config.json'
+              - 'scripts/**/*.js'
+              - 'scripts/**/*.mjs'
+              - 'scripts/**/*.py'
+              - 'scripts/**/*.sh'
+              - 'scripts/**/*.ts'
+              - 'skills/**'
+              - 'tests/**/*.json'
+              - 'tests/**/*.py'
+              - 'tests/**/*.sh'
+              - 'tests/**/*.yaml'
+              - 'tests/**/*.yml'
+              - 'version.txt'
+
   verify:
-    name: Plugin distribution
+    name: Plugin distribution validation
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -94,3 +161,24 @@ jobs:
           CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin install create-skill@agent-kit --scope user
           claude_subset="$(CLAUDE_CONFIG_DIR="$claude_subset_root" claude plugin list --json)"
           test "$(jq -r 'map(.id) | join(",")' <<<"$claude_subset")" = "create-skill@agent-kit"
+
+  required:
+    name: Plugin distribution
+    if: always()
+    needs:
+      - changes
+      - verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful distribution jobs
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          RELEVANT: ${{ needs.changes.outputs.relevant }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: |
+          test "$CHANGES_RESULT" = "success"
+          if [[ "$RELEVANT" == "false" ]]; then
+            exit 0
+          fi
+          test "$RELEVANT" = "true"
+          test "$VERIFY_RESULT" = "success"

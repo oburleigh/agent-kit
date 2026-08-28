@@ -6,17 +6,42 @@ on:
   push:
     branches: [main]
     paths:
-      - ".release-please-manifest.json"
-      - "plugins/*/version.txt"
+      - "plugins/typescript-scaffold/skills/**"
       - "skills/typescript-scaffold/**"
       - ".github/workflows/typescript-scaffold.yml"
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect TypeScript scaffold changes
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.force.outputs.relevant || steps.filter.outputs.relevant }}
+    steps:
+      - name: Force validation for manual runs
+        id: force
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "relevant=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: github.event_name == 'push'
+      - name: Detect relevant files
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            relevant:
+              - 'skills/typescript-scaffold/**'
+              - 'plugins/typescript-scaffold/skills/typescript-scaffold/**'
+              - '.github/workflows/typescript-scaffold.yml'
+
   verify:
-    name: TypeScript scaffold
+    name: TypeScript validation
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,3 +57,24 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run check:dist
+
+  required:
+    name: TypeScript scaffold
+    if: always()
+    needs:
+      - changes
+      - verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful TypeScript jobs
+        env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          RELEVANT: ${{ needs.changes.outputs.relevant }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+        run: |
+          test "$CHANGES_RESULT" = "success"
+          if [[ "$RELEVANT" == "false" ]]; then
+            exit 0
+          fi
+          test "$RELEVANT" = "true"
+          test "$VERIFY_RESULT" = "success"

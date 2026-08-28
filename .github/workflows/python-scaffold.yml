@@ -6,17 +6,42 @@ on:
   push:
     branches: [main]
     paths:
-      - ".release-please-manifest.json"
-      - "plugins/*/version.txt"
+      - "plugins/python-scaffold/skills/**"
       - "skills/python-scaffold/**"
       - ".github/workflows/python-scaffold.yml"
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect Python scaffold changes
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.force.outputs.relevant || steps.filter.outputs.relevant }}
+    steps:
+      - name: Force validation for manual runs
+        id: force
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "relevant=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        if: github.event_name == 'push'
+      - name: Detect relevant files
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            relevant:
+              - 'skills/python-scaffold/**'
+              - 'plugins/python-scaffold/skills/python-scaffold/**'
+              - '.github/workflows/python-scaffold.yml'
+
   verify:
     name: Python validation
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,6 +72,8 @@ jobs:
 
   create-only-portability:
     name: Python create-only portability (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
@@ -73,14 +100,22 @@ jobs:
     name: Python scaffold
     if: always()
     needs:
+      - changes
       - verify
       - create-only-portability
     runs-on: ubuntu-latest
     steps:
       - name: Require successful Python jobs
         env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          RELEVANT: ${{ needs.changes.outputs.relevant }}
           VERIFY_RESULT: ${{ needs.verify.result }}
           PORTABILITY_RESULT: ${{ needs.create-only-portability.result }}
         run: |
+          test "$CHANGES_RESULT" = "success"
+          if [[ "$RELEVANT" == "false" ]]; then
+            exit 0
+          fi
+          test "$RELEVANT" = "true"
           test "$VERIFY_RESULT" = "success"
           test "$PORTABILITY_RESULT" = "success"

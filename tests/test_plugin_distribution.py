@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import sys
 import unittest
@@ -35,6 +36,35 @@ def skill_files(root: Path) -> dict[str, bytes]:
         and path.suffix != ".whl"
         and not path.name.endswith(".tar.gz")
     }
+
+
+def workflow_filter_patterns(workflow: str) -> list[str]:
+    block = workflow.split("filters: |\n", 1)[1].split("\n\n", 1)[0]
+    return [
+        line.strip()[3:-1]
+        for line in block.splitlines()
+        if line.strip().startswith("- '")
+    ]
+
+
+def workflow_push_patterns(workflow: str) -> list[str]:
+    block = workflow.split("  push:\n", 1)[1].split("\n\npermissions:", 1)[0]
+    return [
+        line.strip()[3:-1]
+        for line in block.splitlines()
+        if line.strip().startswith('- "')
+    ]
+
+
+def matches_filter(path: str, patterns: list[str]) -> bool:
+    def pattern_regex(pattern: str) -> str:
+        escaped = re.escape(pattern)
+        escaped = escaped.replace(r"\*\*/", "(?:.*/)?")
+        escaped = escaped.replace(r"\*\*", ".*")
+        escaped = escaped.replace(r"\*", "[^/]*")
+        return f"^{escaped}$"
+
+    return any(re.fullmatch(pattern_regex(pattern), path) for pattern in patterns)
 
 
 class PluginDistributionTest(unittest.TestCase):
@@ -112,15 +142,97 @@ class PluginDistributionTest(unittest.TestCase):
         self.assertIn("claude plugin install agent-kit@agent-kit", readme)
         self.assertNotIn("## TypeScript scaffold", readme)
 
-    def test_distribution_workflow_tracks_root_plugin_files(self) -> None:
+    def test_distribution_workflow_skips_non_skill_markdown(self) -> None:
         workflow = (ROOT / ".github/workflows/plugin-distribution.yml").read_text(
             encoding="utf-8"
         )
 
-        self.assertIn('- ".codex-plugin/**"', workflow)
-        self.assertIn('- "README.md"', workflow)
+        self.assertIn("dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3", workflow)
+        self.assertIn("- 'skills/**'", workflow)
+        self.assertIn("- 'plugins/*/skills/**'", workflow)
+        self.assertNotIn("- 'README.md'", workflow)
+        self.assertNotIn("- 'CHANGELOG.md'", workflow)
+        required_job = workflow.split("  required:\n", 1)[1]
+        self.assertIn("name: Plugin distribution", required_job)
+        self.assertIn('test "$CHANGES_RESULT" = "success"', required_job)
+        self.assertIn('if [[ "$RELEVANT" == "false" ]]', required_job)
+        self.assertIn('test "$RELEVANT" = "true"', required_job)
+        self.assertIn('test "$VERIFY_RESULT" = "success"', required_job)
 
-    def test_release_pull_requests_run_both_scaffold_suites(self) -> None:
+    def test_workflow_filters_scope_markdown_to_skills(self) -> None:
+        workflows = {
+            name: (
+                ROOT / ".github/workflows" / name
+            ).read_text(encoding="utf-8")
+            for name in (
+                "plugin-distribution.yml",
+                "python-scaffold.yml",
+                "typescript-scaffold.yml",
+            )
+        }
+        distribution_filters = (
+            workflow_filter_patterns(workflows["plugin-distribution.yml"]),
+            workflow_push_patterns(workflows["plugin-distribution.yml"]),
+        )
+        python_filters = (
+            workflow_filter_patterns(workflows["python-scaffold.yml"]),
+            workflow_push_patterns(workflows["python-scaffold.yml"]),
+        )
+        typescript_filters = (
+            workflow_filter_patterns(workflows["typescript-scaffold.yml"]),
+            workflow_push_patterns(workflows["typescript-scaffold.yml"]),
+        )
+
+        relevant_distribution_paths = (
+            "skills/humanize/SKILL.md",
+            "plugins/humanize/skills/humanize/README.md",
+            "scripts/validate_releases.py",
+            "tests/test_plugin_distribution.py",
+            ".github/workflows/release-please.yml",
+            ".agents/plugins/marketplace.json",
+            ".codex-plugin/plugin.json",
+            ".release-please-manifest.json",
+            "version.txt",
+        )
+        irrelevant_markdown_paths = (
+            "README.md",
+            "CHANGELOG.md",
+            "docs/README.md",
+            "scripts/README.md",
+            "tests/README.md",
+            ".github/workflows/README.md",
+            ".agents/plugins/README.md",
+            "plugins/humanize/CHANGELOG.md",
+        )
+        for distribution in distribution_filters:
+            for path in relevant_distribution_paths:
+                self.assertTrue(matches_filter(path, distribution), path)
+            for path in irrelevant_markdown_paths:
+                self.assertFalse(matches_filter(path, distribution), path)
+
+        python_skill = "skills/python-scaffold/README.md"
+        packaged_python = (
+            "plugins/python-scaffold/skills/python-scaffold/README.md"
+        )
+        for python in python_filters:
+            self.assertTrue(matches_filter(python_skill, python))
+            self.assertTrue(matches_filter(packaged_python, python))
+            self.assertFalse(matches_filter("skills/humanize/SKILL.md", python))
+            self.assertFalse(matches_filter(".release-please-manifest.json", python))
+
+        typescript_skill = "skills/typescript-scaffold/README.md"
+        packaged_typescript = (
+            "plugins/typescript-scaffold/skills/typescript-scaffold/README.md"
+        )
+        for typescript in typescript_filters:
+            self.assertTrue(matches_filter(typescript_skill, typescript))
+            self.assertTrue(matches_filter(packaged_typescript, typescript))
+            self.assertFalse(matches_filter("skills/humanize/SKILL.md", typescript))
+            self.assertFalse(
+                matches_filter(".release-please-manifest.json", typescript)
+            )
+
+    def test_pull_requests_report_required_contexts_with_scoped_validation(self) -> None:
         workflows = {
             "plugin-distribution.yml": "Plugin distribution",
             "python-scaffold.yml": "Python scaffold",
@@ -134,24 +246,55 @@ class PluginDistributionTest(unittest.TestCase):
             pull_request = workflow.split("pull_request:", 1)[1].split("push:", 1)[0]
             self.assertNotIn("paths:", pull_request)
             self.assertEqual(workflow.count(f"name: {required_check}\n"), 2)
+            self.assertIn("if: github.event_name == 'push'", workflow)
 
         for workflow_name in ("python-scaffold.yml", "typescript-scaffold.yml"):
             workflow = (ROOT / ".github/workflows" / workflow_name).read_text(
                 encoding="utf-8"
             )
-            self.assertEqual(workflow.count('- ".release-please-manifest.json"'), 1)
-            self.assertEqual(workflow.count('- "plugins/*/version.txt"'), 1)
+            self.assertNotIn(".release-please-manifest.json", workflow)
+            self.assertNotIn("plugins/*/version.txt", workflow)
+            self.assertIn(
+                "dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3",
+                workflow,
+            )
+            self.assertIn("outputs:\n      relevant:", workflow)
+            self.assertIn("if: needs.changes.outputs.relevant == 'true'", workflow)
 
         python_workflow = (
             ROOT / ".github/workflows/python-scaffold.yml"
         ).read_text(encoding="utf-8")
+        self.assertIn("- 'skills/python-scaffold/**'", python_workflow)
+        self.assertIn(
+            "- 'plugins/python-scaffold/skills/python-scaffold/**'",
+            python_workflow,
+        )
         required_job = python_workflow.split("  required:\n", 1)[1]
         self.assertIn("name: Python scaffold", required_job)
         self.assertIn("if: always()", required_job)
+        self.assertIn("- changes", required_job)
         self.assertIn("- verify", required_job)
         self.assertIn("- create-only-portability", required_job)
+        self.assertIn('test "$CHANGES_RESULT" = "success"', required_job)
+        self.assertIn('if [[ "$RELEVANT" == "false" ]]', required_job)
+        self.assertIn('test "$RELEVANT" = "true"', required_job)
         self.assertIn('test "$VERIFY_RESULT" = "success"', required_job)
         self.assertIn('test "$PORTABILITY_RESULT" = "success"', required_job)
+
+        typescript_workflow = (
+            ROOT / ".github/workflows/typescript-scaffold.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("- 'skills/typescript-scaffold/**'", typescript_workflow)
+        self.assertIn(
+            "- 'plugins/typescript-scaffold/skills/typescript-scaffold/**'",
+            typescript_workflow,
+        )
+        typescript_required = typescript_workflow.split("  required:\n", 1)[1]
+        self.assertIn("name: TypeScript scaffold", typescript_required)
+        self.assertIn('test "$CHANGES_RESULT" = "success"', typescript_required)
+        self.assertIn('if [[ "$RELEVANT" == "false" ]]', typescript_required)
+        self.assertIn('test "$RELEVANT" = "true"', typescript_required)
+        self.assertIn('test "$VERIFY_RESULT" = "success"', typescript_required)
 
     def test_release_workflow_reconciles_native_checks_with_scoped_permissions(self) -> None:
         workflow = (ROOT / ".github/workflows/release-please.yml").read_text(
