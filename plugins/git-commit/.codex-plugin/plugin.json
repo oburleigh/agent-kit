@@ -1,12 +1,16 @@
 {
   "name": "git-commit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Create safe, reviewable Git commits that follow repository rules and Conventional Commits.",
   "author": {
     "name": "Oliver Burleigh"
   },
   "license": "MIT",
-  "keywords": ["commits", "conventional-commits", "git"],
+  "keywords": [
+    "commits",
+    "conventional-commits",
+    "git"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Git Commit",
@@ -14,7 +18,11 @@
     "longDescription": "Inspect, stage, split, and commit intended changes while following repository rules and Conventional Commits.",
     "developerName": "Oliver Burleigh",
     "category": "Developer Tools",
-    "capabilities": ["Write"],
-    "defaultPrompt": ["Review my changes and create the right Git commit."]
+    "capabilities": [
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Review my changes and create the right Git commit."
+    ]
   }
 }
