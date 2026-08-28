@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "agent-kit",
   "displayName": "Agent Kit",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Focused skills for software engineering work with Codex and Claude Code.",
   "author": {
     "name": "Oliver Burleigh"

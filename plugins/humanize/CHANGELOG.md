@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/oburleigh/agent-kit/compare/humanize-v0.1.1...humanize-v0.1.2) (2026-08-28)
+
+
+### Bug Fixes
+
+* **humanize:** keep corrections outside plugin caches ([#12](https://github.com/oburleigh/agent-kit/issues/12)) ([51e6caf](https://github.com/oburleigh/agent-kit/commit/51e6caf776e3de61c27ace4be7b649a68df56e15))
+
 ## [0.1.1](https://github.com/oburleigh/agent-kit/compare/humanize-v0.1.0...humanize-v0.1.1) (2026-08-28)
 
 
