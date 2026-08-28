@@ -61,6 +61,18 @@ Agents load skills in three levels:
 
 Use relative paths from the skill root: `references/REFERENCE.md`, `scripts/extract.py`. Keep references one level deep from SKILL.md; avoid nested reference chains. Never use `@` force-load links; they consume context immediately.
 
+## Placement by target runtime
+
+Choose the scope before naming a destination. For each target runtime, the collision check has two parts: the active catalog, including built-ins and loaded plugins, followed by its personal and current-project Agent Skills directories. The chosen scope controls the destination:
+
+| Scope | Codex | Claude |
+| --- | --- | --- |
+| Personal | `~/.agents/skills/<name>/`; also check `$CODEX_HOME/skills/<name>/` when configured, otherwise `~/.codex/skills/<name>/`, for an existing skill | `~/.claude/skills/<name>/` |
+| Project-level | `<repo>/.agents/skills/<name>/` | `<repo>/.claude/skills/<name>/` |
+| Distributable plugin | `<plugin>/skills/<name>/` | `<plugin>/skills/<name>/` |
+
+For Codex collision checks, include `~/.agents/skills/`, any configured legacy personal directory, and every `.agents/skills/` directory from the current working directory through the repository root. For Claude, include `~/.claude/skills/` and the current project's `.claude/skills/`. For more than one target runtime, inspect both sets. If the requested scope is personal or project-level, ask whether the user wants separate copies or one distributable plugin. Do not write separate copies unless the user chooses them.
+
 ## Validation
 
 ```bash

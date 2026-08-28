@@ -1,0 +1,64 @@
+{
+  "skill_name": "create-skill",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The Create Skill interview is complete and I approved the spec. Build a personal skill named migration-review for Codex only. Treat every other interview answer as complete. Do not perform filesystem checks or write files. Report only the required collision locations and exact destination directory.",
+      "expected_output": "Checks the active catalog and loaded plugins, checks the Codex personal and current-project Agent Skills locations, and selects the Codex personal destination without substituting Claude paths.",
+      "assertions": [
+        "Checks built-ins and loaded plugins for overlapping jobs",
+        "Selects ~/.agents/skills/migration-review as the destination",
+        "Checks a configured $CODEX_HOME/skills location, otherwise ~/.codex/skills, for an existing skill",
+        "Checks every .agents/skills directory from the current working directory through the repository root",
+        "Does not select ~/.claude/skills as the destination"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The Create Skill interview is complete and I approved the spec. Build a project-level skill named migration-review for Claude only in /tmp/example-repo. Treat every other interview answer as complete. Do not perform filesystem checks or write files. Report only the required collision locations and exact destination directory.",
+      "expected_output": "Checks the active catalog and loaded plugins, checks the Claude personal and project Agent Skills locations, and selects /tmp/example-repo/.claude/skills/migration-review.",
+      "assertions": [
+        "Checks built-ins and loaded plugins for overlapping jobs",
+        "Checks ~/.claude/skills for personal overlap",
+        "Checks /tmp/example-repo/.claude/skills/migration-review",
+        "Selects /tmp/example-repo/.claude/skills/migration-review as the destination",
+        "Does not select a Codex directory as the destination"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "The Create Skill interview is complete except for runtime choice. Create a personal skill named migration-review. I have not chosen an agent runtime yet.",
+      "expected_output": "Continues the interview by asking which runtime must support the skill before naming a runtime-specific directory or writing files.",
+      "assertions": [
+        "Asks which target runtime must support the skill",
+        "Does not infer the target from the runtime executing Create Skill",
+        "Does not name a destination directory before the runtime is selected",
+        "Does not write skill files before spec approval"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The Create Skill interview is complete and I approved the spec. Build a project-level skill named migration-review for Codex only. The repository root is /tmp/example-repo and the current working directory is /tmp/example-repo/services/payments. Do not perform filesystem checks or write files. Report the required collision locations and exact destination directory.",
+      "expected_output": "Checks the active catalog and loaded plugins, checks each Codex project discovery location from the nested working directory through the repository root, and selects the repository-level destination.",
+      "assertions": [
+        "Checks built-ins and loaded plugins for overlapping jobs",
+        "Checks /tmp/example-repo/services/payments/.agents/skills",
+        "Checks /tmp/example-repo/services/.agents/skills",
+        "Checks /tmp/example-repo/.agents/skills",
+        "Selects /tmp/example-repo/.agents/skills/migration-review as the destination"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "The Create Skill interview is complete except for placement strategy. Create a personal skill named migration-review for both Codex and Claude. Treat every other interview answer as complete and approved. I have not chosen between separate copies and a distributable plugin. Do not perform collision checks or write files. Answer only the remaining placement question.",
+      "expected_output": "Continues the interview by asking whether to create separate runtime-specific copies or change the scope to a distributable plugin before naming destinations or writing files.",
+      "assertions": [
+        "Asks whether to create separate Codex and Claude copies or one distributable plugin",
+        "Recommends a distributable plugin when one installable package must serve both runtimes",
+        "Does not silently change the requested scope",
+        "Does not name destination directories before the placement strategy is selected",
+        "Does not write skill files before spec approval"
+      ]
+    }
+  ]
+}
