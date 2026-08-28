@@ -1,0 +1,34 @@
+name: Release Please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      - name: Run checks on the release pull request
+        if: steps.release.outputs.prs_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        run: |
+          release_branch="$(jq -er '.[0].headBranchName' <<<"$RELEASE_PRS")"
+          gh workflow run "plugin-distribution.yml" --ref "$release_branch"
+          gh workflow run "python-scaffold.yml" --ref "$release_branch"
+          gh workflow run "typescript-scaffold.yml" --ref "$release_branch"
