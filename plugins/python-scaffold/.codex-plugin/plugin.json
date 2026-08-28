@@ -1,12 +1,16 @@
 {
   "name": "python-scaffold",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Create configurable Python repositories with tested tooling, documentation, CI, and Git.",
   "author": {
     "name": "Oliver Burleigh"
   },
   "license": "MIT",
-  "keywords": ["python", "scaffold", "workspace"],
+  "keywords": [
+    "python",
+    "scaffold",
+    "workspace"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Python Scaffold",
@@ -14,7 +18,11 @@
     "longDescription": "Create a Python library, service, CLI, or uv workspace from a reusable profile.",
     "developerName": "Oliver Burleigh",
     "category": "Developer Tools",
-    "capabilities": ["Write"],
-    "defaultPrompt": ["Create a Python repository from a scaffold profile."]
+    "capabilities": [
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Create a Python repository from a scaffold profile."
+    ]
   }
 }

@@ -1,13 +1,9 @@
 name: Release Please
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-
-permissions:
-  actions: write
-  contents: write
-  pull-requests: write
 
 concurrency:
   group: release-please-${{ github.ref }}
@@ -15,20 +11,34 @@ concurrency:
 
 jobs:
   release:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pull-requests: write
     runs-on: ubuntu-latest
+    outputs:
+      release_prs: ${{ steps.release.outputs.prs }}
     steps:
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-      - name: Run checks on the release pull request
-        if: steps.release.outputs.prs_created == 'true'
+
+  approve-release-checks:
+    if: github.ref == 'refs/heads/main'
+    needs: release
+    permissions:
+      actions: write
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Approve native checks on the release pull request
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_PRS: ${{ steps.release.outputs.prs }}
-        run: |
-          release_branch="$(jq -er '.[0].headBranchName' <<<"$RELEASE_PRS")"
-          gh workflow run "plugin-distribution.yml" --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
-          gh workflow run "python-scaffold.yml" --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
-          gh workflow run "typescript-scaffold.yml" --repo "$GITHUB_REPOSITORY" --ref "$release_branch"
+          RELEASE_PRS: ${{ needs.release.outputs.release_prs }}
+        run: python3 scripts/approve_release_checks.py
