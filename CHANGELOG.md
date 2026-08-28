@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/oburleigh/agent-kit/compare/agent-kit-v0.2.3...agent-kit-v0.2.4) (2026-08-28)
+
+
+### Bug Fixes
+
+* **create-skill:** make placement runtime neutral ([#13](https://github.com/oburleigh/agent-kit/issues/13)) ([8b01264](https://github.com/oburleigh/agent-kit/commit/8b012647a02d6ef8701d5960739d155fbc27eb03))
+
 ## [0.2.3](https://github.com/oburleigh/agent-kit/compare/agent-kit-v0.2.2...agent-kit-v0.2.3) (2026-08-28)
 
 
