@@ -168,7 +168,11 @@ class PluginDistributionTest(unittest.TestCase):
             "python-scaffold.yml",
             "typescript-scaffold.yml",
         ):
-            self.assertIn(f'gh workflow run "{workflow_name}"', workflow)
+            self.assertIn(
+                f'gh workflow run "{workflow_name}" '
+                '--repo "$GITHUB_REPOSITORY" --ref "$release_branch"',
+                workflow,
+            )
 
     def test_release_configuration_passes_repository_validation(self) -> None:
         result = subprocess.run(
