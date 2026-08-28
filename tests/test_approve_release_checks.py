@@ -42,28 +42,14 @@ class ReleaseCheckApprovalTest(unittest.TestCase):
                         "workflow_runs": [
                             {
                                 "id": 10,
-                                "name": "Plugin distribution",
+                                "name": "Validation",
                                 "head_sha": "release-head",
                                 "status": "completed",
                                 "conclusion": "action_required",
                             },
                             {
-                                "id": 11,
-                                "name": "Python scaffold",
-                                "head_sha": "release-head",
-                                "status": "waiting",
-                                "conclusion": None,
-                            },
-                            {
-                                "id": 12,
-                                "name": "TypeScript scaffold",
-                                "head_sha": "release-head",
-                                "status": "queued",
-                                "conclusion": None,
-                            },
-                            {
                                 "id": 13,
-                                "name": "Plugin distribution",
+                                "name": "Validation",
                                 "head_sha": "other-head",
                                 "status": "completed",
                                 "conclusion": "action_required",
@@ -101,10 +87,6 @@ class ReleaseCheckApprovalTest(unittest.TestCase):
         self.assertEqual(approved, [10])
         self.assertEqual(sleeps, [2])
         self.assertNotIn(
-            ("POST", "repos/oburleigh/agent-kit/actions/runs/11/approve"),
-            api.calls,
-        )
-        self.assertNotIn(
             ("POST", "repos/oburleigh/agent-kit/actions/runs/13/approve"),
             api.calls,
         )
@@ -116,7 +98,7 @@ class ReleaseCheckApprovalTest(unittest.TestCase):
         )
         approval_run = {
             "id": 10,
-            "name": "Plugin distribution",
+            "name": "Validation",
             "head_sha": "release-head",
             "status": "completed",
             "conclusion": "action_required",
