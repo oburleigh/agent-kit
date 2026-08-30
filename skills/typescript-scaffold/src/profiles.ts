@@ -53,9 +53,7 @@ export async function createProfileFromPreset(
   profileName: string,
   directory = resolveProfileDirectory(),
 ): Promise<string> {
-  if (!/^[a-z0-9][a-z0-9._-]*$/i.test(profileName)) {
-    throw new Error("Profile names may contain letters, numbers, dots, underscores, and hyphens");
-  }
+  assertValidProfileName(profileName);
 
   const preset = await loadBundledPreset(presetName);
   const path = join(directory, `${profileName}.yaml`);
@@ -72,6 +70,12 @@ export async function createProfileFromPreset(
     throw error;
   }
   return path;
+}
+
+export function assertValidProfileName(profileName: string): void {
+  if (!/^[a-z0-9][a-z0-9._-]*$/i.test(profileName)) {
+    throw new Error("Profile names may contain letters, numbers, dots, underscores, and hyphens");
+  }
 }
 
 function isExistingPath(error: unknown): error is NodeJS.ErrnoException {

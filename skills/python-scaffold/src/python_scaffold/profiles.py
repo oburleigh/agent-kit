@@ -21,6 +21,7 @@ def resolve_profile(
     *,
     overrides: Mapping[str, Any] | None = None,
     environment: Mapping[str, str] = os.environ,
+    persist_missing: bool = True,
 ) -> Profile:
     identity_overrides = PROFILE_IDENTITY_FIELDS.intersection(overrides or {})
     if identity_overrides:
@@ -37,6 +38,8 @@ def resolve_profile(
             raw = load_bundled_preset(preset)
             raw["profile_name"] = profile_name
             candidate = Profile.model_validate(_merge(raw, overrides or {}))
+            if not persist_missing:
+                return candidate
             if _create_profile_if_absent(raw, persistent_path):
                 return candidate
         raw = _read_yaml(persistent_path)

@@ -9582,14 +9582,14 @@ var require_run_async = __commonJS({
       return function() {
         var args = arguments;
         var originalThis = this;
-        var promise3 = new Promise(function(resolve7, reject) {
+        var promise3 = new Promise(function(resolve8, reject) {
           var resolved = false;
           const wrappedResolve = function(value) {
             if (resolved) {
               console.warn("Run-async promise already resolved.");
             }
             resolved = true;
-            resolve7(value);
+            resolve8(value);
           };
           var rejected = false;
           const wrappedReject = function(value) {
@@ -10380,7 +10380,7 @@ var require_Observable = __commonJS({
       Observable2.prototype.forEach = function(next, promiseCtor) {
         var _this = this;
         promiseCtor = getPromiseCtor(promiseCtor);
-        return new promiseCtor(function(resolve7, reject) {
+        return new promiseCtor(function(resolve8, reject) {
           var subscriber = new Subscriber_1.SafeSubscriber({
             next: function(value) {
               try {
@@ -10391,7 +10391,7 @@ var require_Observable = __commonJS({
               }
             },
             error: reject,
-            complete: resolve7
+            complete: resolve8
           });
           _this.subscribe(subscriber);
         });
@@ -10413,14 +10413,14 @@ var require_Observable = __commonJS({
       Observable2.prototype.toPromise = function(promiseCtor) {
         var _this = this;
         promiseCtor = getPromiseCtor(promiseCtor);
-        return new promiseCtor(function(resolve7, reject) {
+        return new promiseCtor(function(resolve8, reject) {
           var value;
           _this.subscribe(function(x) {
             return value = x;
           }, function(err) {
             return reject(err);
           }, function() {
-            return resolve7(value);
+            return resolve8(value);
           });
         });
       };
@@ -12516,11 +12516,11 @@ var require_innerFrom = __commonJS({
     "use strict";
     var __awaiter = exports && exports.__awaiter || function(thisArg, _arguments, P, generator) {
       function adopt(value) {
-        return value instanceof P ? value : new P(function(resolve7) {
-          resolve7(value);
+        return value instanceof P ? value : new P(function(resolve8) {
+          resolve8(value);
         });
       }
-      return new (P || (P = Promise))(function(resolve7, reject) {
+      return new (P || (P = Promise))(function(resolve8, reject) {
         function fulfilled(value) {
           try {
             step(generator.next(value));
@@ -12536,7 +12536,7 @@ var require_innerFrom = __commonJS({
           }
         }
         function step(result) {
-          result.done ? resolve7(result.value) : adopt(result.value).then(fulfilled, rejected);
+          result.done ? resolve8(result.value) : adopt(result.value).then(fulfilled, rejected);
         }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
       });
@@ -12618,14 +12618,14 @@ var require_innerFrom = __commonJS({
       }, i2);
       function verb(n2) {
         i2[n2] = o2[n2] && function(v) {
-          return new Promise(function(resolve7, reject) {
-            v = o2[n2](v), settle(resolve7, reject, v.done, v.value);
+          return new Promise(function(resolve8, reject) {
+            v = o2[n2](v), settle(resolve8, reject, v.done, v.value);
           });
         };
       }
-      function settle(resolve7, reject, d, v) {
+      function settle(resolve8, reject, d, v) {
         Promise.resolve(v).then(function(v2) {
-          resolve7({ value: v2, done: d });
+          resolve8({ value: v2, done: d });
         }, reject);
       }
     };
@@ -13244,7 +13244,7 @@ var require_lastValueFrom = __commonJS({
     var EmptyError_1 = require_EmptyError();
     function lastValueFrom(source, config2) {
       var hasConfig = typeof config2 === "object";
-      return new Promise(function(resolve7, reject) {
+      return new Promise(function(resolve8, reject) {
         var _hasValue = false;
         var _value;
         source.subscribe({
@@ -13255,9 +13255,9 @@ var require_lastValueFrom = __commonJS({
           error: reject,
           complete: function() {
             if (_hasValue) {
-              resolve7(_value);
+              resolve8(_value);
             } else if (hasConfig) {
-              resolve7(config2.defaultValue);
+              resolve8(config2.defaultValue);
             } else {
               reject(new EmptyError_1.EmptyError());
             }
@@ -13279,16 +13279,16 @@ var require_firstValueFrom = __commonJS({
     var Subscriber_1 = require_Subscriber();
     function firstValueFrom(source, config2) {
       var hasConfig = typeof config2 === "object";
-      return new Promise(function(resolve7, reject) {
+      return new Promise(function(resolve8, reject) {
         var subscriber = new Subscriber_1.SafeSubscriber({
           next: function(value) {
-            resolve7(value);
+            resolve8(value);
             subscriber.unsubscribe();
           },
           error: reject,
           complete: function() {
             if (hasConfig) {
-              resolve7(config2.defaultValue);
+              resolve8(config2.defaultValue);
             } else {
               reject(new EmptyError_1.EmptyError());
             }
@@ -24747,14 +24747,14 @@ var require_async_iterator = __commonJS({
       };
     }
     function readAndResolve(iter) {
-      var resolve7 = iter[kLastResolve];
-      if (resolve7 !== null) {
+      var resolve8 = iter[kLastResolve];
+      if (resolve8 !== null) {
         var data = iter[kStream].read();
         if (data !== null) {
           iter[kLastPromise] = null;
           iter[kLastResolve] = null;
           iter[kLastReject] = null;
-          resolve7(createIterResult(data, false));
+          resolve8(createIterResult(data, false));
         }
       }
     }
@@ -24762,13 +24762,13 @@ var require_async_iterator = __commonJS({
       process.nextTick(readAndResolve, iter);
     }
     function wrapForNext(lastPromise, iter) {
-      return function(resolve7, reject) {
+      return function(resolve8, reject) {
         lastPromise.then(function() {
           if (iter[kEnded]) {
-            resolve7(createIterResult(void 0, true));
+            resolve8(createIterResult(void 0, true));
             return;
           }
-          iter[kHandlePromise](resolve7, reject);
+          iter[kHandlePromise](resolve8, reject);
         }, reject);
       };
     }
@@ -24788,12 +24788,12 @@ var require_async_iterator = __commonJS({
           return Promise.resolve(createIterResult(void 0, true));
         }
         if (this[kStream].destroyed) {
-          return new Promise(function(resolve7, reject) {
+          return new Promise(function(resolve8, reject) {
             process.nextTick(function() {
               if (_this[kError]) {
                 reject(_this[kError]);
               } else {
-                resolve7(createIterResult(void 0, true));
+                resolve8(createIterResult(void 0, true));
               }
             });
           });
@@ -24816,13 +24816,13 @@ var require_async_iterator = __commonJS({
       return this;
     }), _defineProperty(_Object$setPrototypeO, "return", function _return() {
       var _this2 = this;
-      return new Promise(function(resolve7, reject) {
+      return new Promise(function(resolve8, reject) {
         _this2[kStream].destroy(null, function(err) {
           if (err) {
             reject(err);
             return;
           }
-          resolve7(createIterResult(void 0, true));
+          resolve8(createIterResult(void 0, true));
         });
       });
     }), _Object$setPrototypeO), AsyncIteratorPrototype);
@@ -24844,15 +24844,15 @@ var require_async_iterator = __commonJS({
         value: stream._readableState.endEmitted,
         writable: true
       }), _defineProperty(_Object$create, kHandlePromise, {
-        value: function value(resolve7, reject) {
+        value: function value(resolve8, reject) {
           var data = iterator[kStream].read();
           if (data) {
             iterator[kLastPromise] = null;
             iterator[kLastResolve] = null;
             iterator[kLastReject] = null;
-            resolve7(createIterResult(data, false));
+            resolve8(createIterResult(data, false));
           } else {
-            iterator[kLastResolve] = resolve7;
+            iterator[kLastResolve] = resolve8;
             iterator[kLastReject] = reject;
           }
         },
@@ -24871,12 +24871,12 @@ var require_async_iterator = __commonJS({
           iterator[kError] = err;
           return;
         }
-        var resolve7 = iterator[kLastResolve];
-        if (resolve7 !== null) {
+        var resolve8 = iterator[kLastResolve];
+        if (resolve8 !== null) {
           iterator[kLastPromise] = null;
           iterator[kLastResolve] = null;
           iterator[kLastReject] = null;
-          resolve7(createIterResult(void 0, true));
+          resolve8(createIterResult(void 0, true));
         }
         iterator[kEnded] = true;
       });
@@ -24891,7 +24891,7 @@ var require_async_iterator = __commonJS({
 var require_from2 = __commonJS({
   "node_modules/readable-stream/lib/internal/streams/from.js"(exports, module) {
     "use strict";
-    function asyncGeneratorStep(gen, resolve7, reject, _next, _throw, key, arg) {
+    function asyncGeneratorStep(gen, resolve8, reject, _next, _throw, key, arg) {
       try {
         var info = gen[key](arg);
         var value = info.value;
@@ -24900,7 +24900,7 @@ var require_from2 = __commonJS({
         return;
       }
       if (info.done) {
-        resolve7(value);
+        resolve8(value);
       } else {
         Promise.resolve(value).then(_next, _throw);
       }
@@ -24908,13 +24908,13 @@ var require_from2 = __commonJS({
     function _asyncToGenerator(fn) {
       return function() {
         var self2 = this, args = arguments;
-        return new Promise(function(resolve7, reject) {
+        return new Promise(function(resolve8, reject) {
           var gen = fn.apply(self2, args);
           function _next(value) {
-            asyncGeneratorStep(gen, resolve7, reject, _next, _throw, "next", value);
+            asyncGeneratorStep(gen, resolve8, reject, _next, _throw, "next", value);
           }
           function _throw(err) {
-            asyncGeneratorStep(gen, resolve7, reject, _next, _throw, "throw", err);
+            asyncGeneratorStep(gen, resolve8, reject, _next, _throw, "throw", err);
           }
           _next(void 0);
         });
@@ -32680,7 +32680,7 @@ var require_lib = __commonJS({
       return matches;
     };
     exports.analyse = analyse;
-    var detectFile = (filepath, opts = {}) => new Promise((resolve7, reject) => {
+    var detectFile = (filepath, opts = {}) => new Promise((resolve8, reject) => {
       let fd;
       const fs5 = (0, node_1.default)();
       const handler = (err, buffer) => {
@@ -32690,7 +32690,7 @@ var require_lib = __commonJS({
         if (err) {
           reject(err);
         } else if (buffer) {
-          resolve7((0, exports.detect)(buffer));
+          resolve8((0, exports.detect)(buffer));
         } else {
           reject(new Error("No error and no buffer received"));
         }
@@ -43107,7 +43107,7 @@ var require_async2 = __commonJS({
       }
       return dirs;
     }
-    module.exports = function resolve7(x, options, callback2) {
+    module.exports = function resolve8(x, options, callback2) {
       var cb = callback2;
       var opts = options;
       if (typeof options === "function") {
@@ -45833,13 +45833,13 @@ var require_lib6 = __commonJS({
 
 // src/cli.ts
 import { access, readFile as readFile4 } from "node:fs/promises";
-import { join as join4, resolve as resolve6 } from "node:path";
+import { join as join4, resolve as resolve7 } from "node:path";
 import { pathToFileURL as pathToFileURL2 } from "node:url";
 import { parseArgs } from "node:util";
 
 // src/generate.ts
 import { chmod as chmod2, mkdir, rename, rm as rm3, stat as stat3, writeFile as writeFile2 } from "node:fs/promises";
-import { basename as basename2, dirname as dirname2, join as join2, resolve as resolve5 } from "node:path";
+import { basename as basename3, dirname as dirname2, join as join2, resolve as resolve5 } from "node:path";
 import { randomUUID as randomUUID2 } from "node:crypto";
 
 // node_modules/is-plain-obj/index.js
@@ -47412,8 +47412,8 @@ var disconnect = (anyProcess) => {
 // node_modules/execa/lib/utils/deferred.js
 var createDeferred = () => {
   const methods = {};
-  const promise3 = new Promise((resolve7, reject) => {
-    Object.assign(methods, { resolve: resolve7, reject });
+  const promise3 = new Promise((resolve8, reject) => {
+    Object.assign(methods, { resolve: resolve8, reject });
   });
   return Object.assign(promise3, methods);
 };
@@ -51738,11 +51738,11 @@ var addConcurrentStream = (concurrentStreams, stream, waitName) => {
   const promises = weakMap.get(stream);
   const promise3 = createDeferred();
   promises.push(promise3);
-  const resolve7 = promise3.resolve.bind(promise3);
-  return { resolve: resolve7, promises };
+  const resolve8 = promise3.resolve.bind(promise3);
+  return { resolve: resolve8, promises };
 };
-var waitForConcurrentStreams = async ({ resolve: resolve7, promises }, subprocess) => {
-  resolve7();
+var waitForConcurrentStreams = async ({ resolve: resolve8, promises }, subprocess) => {
+  resolve8();
   const [isSubprocessExit] = await Promise.race([
     Promise.allSettled([true, subprocess]),
     Promise.all([false, ...promises])
@@ -68652,9 +68652,9 @@ var Prompt = class {
    * @return {Promise}
    */
   run() {
-    return new Promise((resolve7, reject) => {
+    return new Promise((resolve8, reject) => {
       this._run(
-        (value) => resolve7(value),
+        (value) => resolve8(value),
         (error51) => reject(error51)
       );
     });
@@ -73702,12 +73702,22 @@ var providerCatalog = [
 
 // src/planning.ts
 var import_validate_npm_package_name = __toESM(require_lib6(), 1);
+import { basename as basename2 } from "node:path";
 var packageManagerCommands = {
   pnpm: { command: "pnpm", run: "pnpm" },
   npm: { command: "npm", run: "npm run" },
   yarn: { command: "yarn", run: "yarn" },
   bun: { command: "bun", run: "bun run" }
 };
+function resolveProjectInput(profile, target) {
+  const name = profile.project.name || basename2(target);
+  return {
+    name,
+    description: profile.project.description || `${name} TypeScript ${profile.preset}.`,
+    author: profile.project.author || profile.default_author,
+    ...profile.project.repository_url ? { repositoryUrl: profile.project.repository_url } : {}
+  };
+}
 function createGenerationPlan(profile, project) {
   const packageNameResult = (0, import_validate_npm_package_name.default)(project.name);
   if (!packageNameResult.validForNewPackages) {
@@ -73968,6 +73978,9 @@ async function runOfficialFrameworkGenerator(profile, target, runCommand) {
     await runCommand(command, args, { cwd: target });
   }
 }
+function frameworkGateNames(profile) {
+  return profile.framework === "vite-react" ? ["lint", "build"] : [];
+}
 function viteGeneratorCommand(packageManager, version2) {
   if (packageManager === "pnpm") {
     return ["pnpm", ["create", `vite@${version2}`, ".", "--template", "react-ts"]];
@@ -74050,16 +74063,10 @@ async function generateRepository(profile, target, options = {}) {
   await assertParentDirectory(dirname2(absoluteTarget));
   const workTarget = join2(
     dirname2(absoluteTarget),
-    `.${basename2(absoluteTarget)}.agent-kit-${randomUUID2()}`
+    `.${basename3(absoluteTarget)}.agent-kit-${randomUUID2()}`
   );
   const runCommand = options.runCommand ?? runExternalCommand;
-  const projectName = profile.project.name || basename2(absoluteTarget);
-  const project = {
-    name: projectName,
-    description: profile.project.description || `${projectName} TypeScript ${profile.preset}.`,
-    author: profile.project.author || profile.default_author,
-    ...profile.project.repository_url ? { repositoryUrl: profile.project.repository_url } : {}
-  };
+  const project = resolveProjectInput(profile, absoluteTarget);
   const plan = createGenerationPlan(profile, project);
   await mkdir(workTarget, { recursive: false });
   const unregisterSignalCleanup = registerSignalCleanup(workTarget);
@@ -74454,9 +74461,7 @@ function loadBundledPresetText(input) {
   });
 }
 async function createProfileFromPreset(presetName, profileName, directory = resolveProfileDirectory()) {
-  if (!/^[a-z0-9][a-z0-9._-]*$/i.test(profileName)) {
-    throw new Error("Profile names may contain letters, numbers, dots, underscores, and hyphens");
-  }
+  assertValidProfileName(profileName);
   const preset = await loadBundledPreset(presetName);
   const path15 = join3(directory, `${profileName}.yaml`);
   await mkdir2(directory, { recursive: true });
@@ -74473,32 +74478,127 @@ async function createProfileFromPreset(presetName, profileName, directory = reso
   }
   return path15;
 }
+function assertValidProfileName(profileName) {
+  if (!/^[a-z0-9][a-z0-9._-]*$/i.test(profileName)) {
+    throw new Error("Profile names may contain letters, numbers, dots, underscores, and hyphens");
+  }
+}
 function isExistingPath(error51) {
   return error51 instanceof Error && "code" in error51 && error51.code === "EEXIST";
 }
 
+// src/summary.ts
+import { resolve as resolve6 } from "node:path";
+var providerFields = [
+  "build",
+  "ci",
+  "commit_lint",
+  "duplication",
+  "framework",
+  "hooks",
+  "http",
+  "license",
+  "logging",
+  "publishing",
+  "quality",
+  "runtime_validation",
+  "secret_scan",
+  "tests",
+  "workspace"
+];
+function createPlanSummary(profile, target) {
+  const absoluteTarget = resolve6(target);
+  const project = resolveProjectInput(profile, absoluteTarget);
+  const plan = createGenerationPlan(profile, project);
+  const plannedScripts = { ...plan.packageJson.scripts };
+  for (const name of frameworkGateNames(profile)) {
+    plannedScripts[name] ??= "framework-owned";
+  }
+  const selectedProviders = {
+    module: profile.module,
+    package_manager: `${profile.package_manager}@${profile.package_manager_version}`
+  };
+  const disabledProviders = [];
+  for (const field of providerFields) {
+    const value = profile[field] ?? "none";
+    if (value === "none") disabledProviders.push(field);
+    else selectedProviders[field] = value;
+  }
+  return {
+    schema_version: 1,
+    target: absoluteTarget,
+    preset: profile.preset,
+    project: {
+      name: project.name,
+      description: project.description,
+      author: project.author,
+      repository_url: project.repositoryUrl ?? ""
+    },
+    selected_providers: selectedProviders,
+    disabled_providers: disabledProviders,
+    workspace_members: (profile.workspace_members ?? []).map((member) => ({
+      ...member,
+      package_name: member.package_name.replaceAll("{project}", project.name)
+    })),
+    quality_gates: gatesForScripts(profile, plannedScripts),
+    execution: {
+      install_dependencies: profile.install_dependencies,
+      run_quality_gates: profile.run_quality_gates,
+      initialize_git: profile.initialize_git
+    }
+  };
+}
+
 // src/cli.ts
-async function main(args) {
+async function main(args, environment = process.env) {
+  const result = await executeCli(args, environment);
+  return result.mode === "plan" ? JSON.stringify(result.summary) : result.target;
+}
+async function executeCli(args, environment = process.env) {
   const { values } = parseArgs({
     args,
     allowPositionals: false,
     strict: true,
     options: {
       profile: { type: "string" },
-      target: { type: "string" }
+      target: { type: "string" },
+      plan: { type: "boolean", default: false }
     }
   });
   if (!values.profile || !values.target) {
     throw new Error("--profile and --target are required");
   }
-  const profilePath = await resolveProfileArgument(values.profile);
-  const target = resolve6(values.target);
+  if (values.plan) {
+    const profile2 = await loadProfileForPlan(values.profile, environment);
+    return { mode: "plan", summary: createPlanSummary(profile2, values.target) };
+  }
+  const profilePath = await resolveProfileArgument(values.profile, environment);
+  const target = resolve7(values.target);
   const profile = loadProfileText(await readFile4(profilePath, "utf8"));
   await generateRepository(profile, target);
-  return target;
+  return { mode: "generate", target };
+}
+async function loadProfileForPlan(value, environment) {
+  const selection = await selectProfileArgument(value, environment);
+  if (!("missing" in selection)) {
+    return loadProfileText(await readFile4(selection.path, "utf8"));
+  }
+  return {
+    ...await loadBundledPreset(selection.missing.preset),
+    name: selection.missing.profileName
+  };
 }
 async function resolveProfileArgument(value, environment = process.env) {
-  if (looksLikePath(value)) return resolve6(value);
+  const selection = await selectProfileArgument(value, environment);
+  if (!("missing" in selection)) return selection.path;
+  return createProfileFromPreset(
+    selection.missing.preset,
+    selection.missing.profileName,
+    selection.missing.directory
+  );
+}
+async function selectProfileArgument(value, environment) {
+  if (looksLikePath(value)) return { path: resolve7(value) };
   const [presetCandidate, profileCandidate, ...extra] = value.split(":");
   if (extra.length > 0 || !presetCandidate) {
     throw new Error(`Invalid profile selector: ${value}`);
@@ -74508,14 +74608,18 @@ async function resolveProfileArgument(value, environment = process.env) {
   const profilePath = join4(directory, `${profileName}.yaml`);
   try {
     await access(profilePath);
-    return profilePath;
+    return { path: profilePath };
   } catch (error51) {
     if (!isMissingPath3(error51)) throw error51;
   }
   if (!isPresetName(presetCandidate)) {
     throw new Error(`Profile does not exist: ${profilePath}. Use <preset>:<profile-name> to create it.`);
   }
-  return createProfileFromPreset(presetCandidate, profileName, directory);
+  assertValidProfileName(profileName);
+  return {
+    path: profilePath,
+    missing: { preset: presetCandidate, profileName, directory }
+  };
 }
 function looksLikePath(value) {
   return value.includes("/") || value.includes("\\") || value.endsWith(".yaml") || value.endsWith(".yml") || value.startsWith(".");
@@ -74526,9 +74630,12 @@ function isPresetName(value) {
 function isMissingPath3(error51) {
   return error51 instanceof Error && "code" in error51 && error51.code === "ENOENT";
 }
-var executablePath = process.argv[1] ? pathToFileURL2(resolve6(process.argv[1])).href : "";
+var executablePath = process.argv[1] ? pathToFileURL2(resolve7(process.argv[1])).href : "";
 if (import.meta.url === executablePath) {
-  main(process.argv.slice(2)).then((target) => console.log(`Created ${target}`)).catch((error51) => {
+  const args = process.argv.slice(2);
+  executeCli(args).then((result) => {
+    console.log(result.mode === "plan" ? JSON.stringify(result.summary) : `Created ${result.target}`);
+  }).catch((error51) => {
     console.error(error51 instanceof Error ? error51.message : String(error51));
     process.exitCode = 1;
   });
