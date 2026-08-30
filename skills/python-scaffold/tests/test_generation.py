@@ -382,6 +382,28 @@ def test_selected_execution_steps_run_before_git_initialization(tmp_path: Path) 
     assert ("uv", "run", "pytest") in commands
 
 
+def test_default_commands_use_concise_logged_output(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    raw = load_bundled_preset("library")
+    raw["execution"] = {
+        "install_dependencies": False,
+        "run_quality_gates": False,
+        "initialize_git": True,
+    }
+    log_root = tmp_path / "logs"
+    monkeypatch.setenv("AGENT_KIT_LOG_DIR", str(log_root))
+
+    generate_repository(raw, tmp_path / "logged")
+
+    output = capsys.readouterr().out.splitlines()
+    assert output[0] == "PASS git init --initial-branch=main"
+    assert output[1].startswith("Full command logs: ")
+    sessions = list((log_root / "scaffolds/python").iterdir())
+    assert len(sessions) == 1
+    assert "$ git init --initial-branch=main" in (sessions[0] / "commands.log").read_text()
+
+
 def test_lefthook_is_installed_after_git_initialization(tmp_path: Path) -> None:
     raw = load_bundled_preset("library")
     raw["providers"]["hooks"] = "lefthook"

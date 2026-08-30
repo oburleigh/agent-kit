@@ -311,6 +311,8 @@ The generated README lists disabled providers as `none`, so a minimal or deliber
 
 The scaffold creates new repositories only. It rejects existing targets, runs configured checks before exposing a new target, and initializes Git only after generation and normal checks succeed. It removes staging output after a failure, `SIGINT`, or `SIGTERM`; no process can clean up after `SIGKILL`. It does not create remotes, push, or commit.
 
+Each successful external command prints one `PASS` line. The generator reports the full command-log directory at the end of the run. A failed command includes a short tail from both output streams and keeps the complete logs in the reported directory. Set `AGENT_KIT_LOG_DIR` to choose a different log root.
+
 ## Contributor entry point
 
 The skill calls the bundled generator internally:

@@ -1,18 +1,18 @@
 import { chmod, mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { execa } from "execa";
+import {
+  createCommandSession,
+  type CommandRunner,
+  type CommandSession,
+} from "./command-output.js";
 import { mergeFrameworkOutput, runOfficialFrameworkGenerator } from "./framework-generators.js";
 import { createGenerationPlan } from "./planning.js";
 import { renderPlan } from "./render.js";
 import type { ScaffoldProfile } from "./schema.js";
 import { assertTargetAvailable } from "./target.js";
 
-export type CommandRunner = (
-  command: string,
-  args: string[],
-  options: { cwd: string },
-) => Promise<void>;
+export type { CommandRunner } from "./command-output.js";
 
 export interface GenerationOptions {
   runCommand?: CommandRunner;
@@ -39,7 +39,14 @@ export async function generateRepository(
     dirname(absoluteTarget),
     `.${basename(absoluteTarget)}.agent-kit-${randomUUID()}`,
   );
-  const runCommand = options.runCommand ?? runExternalCommand;
+  let commandSession: CommandSession | undefined;
+  let runCommand: CommandRunner;
+  if (options.runCommand) {
+    runCommand = options.runCommand;
+  } else {
+    commandSession = createCommandSession();
+    runCommand = commandSession.run;
+  }
   const projectName = profile.project.name || basename(absoluteTarget);
   const project = {
     name: projectName,
@@ -52,10 +59,17 @@ export async function generateRepository(
   await mkdir(workTarget, { recursive: false });
   const unregisterSignalCleanup = registerSignalCleanup(workTarget);
   try {
-    const readVersion = options.readPackageManagerVersion
-      ?? (options.runCommand
-        ? async () => profile.package_manager_version
-        : readInstalledPackageManagerVersion);
+    let readVersion = options.readPackageManagerVersion;
+    if (!readVersion && options.runCommand) {
+      readVersion = async () => profile.package_manager_version;
+    }
+    if (!readVersion) {
+      const session = commandSession;
+      if (!session) throw new Error("Command session is unavailable");
+      readVersion = (packageManager, cwd) => (
+        session.readStdout(packageManager, ["--version"], { cwd })
+      );
+    }
     let packageManagerVerified = false;
     if (profile.framework !== "none") {
       await verifyFrameworkPackageManager(profile, workTarget, readVersion);
@@ -100,7 +114,9 @@ export async function generateRepository(
     }
 
     await rename(workTarget, absoluteTarget);
+    commandSession?.report();
   } catch (error) {
+    commandSession?.report();
     await rm(workTarget, { recursive: true, force: true });
     throw error;
   } finally {
@@ -167,13 +183,10 @@ async function readInstalledPackageManagerVersion(
   packageManager: string,
   cwd: string,
 ): Promise<string> {
-  try {
-    const result = await execa(packageManager, ["--version"], { cwd });
-    return result.stdout;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Cannot run ${packageManager} --version: ${message}`);
-  }
+  const session = createCommandSession();
+  const version = await session.readStdout(packageManager, ["--version"], { cwd });
+  session.report();
+  return version;
 }
 
 function needsPackageManager(profile: ScaffoldProfile): boolean {
@@ -217,14 +230,6 @@ const processSignalRuntime: SignalRuntime = {
     process.kill(process.pid, signal);
   },
 };
-
-async function runExternalCommand(
-  command: string,
-  args: string[],
-  options: { cwd: string },
-): Promise<void> {
-  await execa(command, args, { cwd: options.cwd, stdio: "inherit" });
-}
 
 function installCommand(packageManager: ScaffoldProfile["package_manager"]): string[] {
   if (packageManager === "npm") return ["npm", "install", "--ignore-scripts"];

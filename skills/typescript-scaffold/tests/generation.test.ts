@@ -1,7 +1,7 @@
 import { access, mkdtemp, mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { ScaffoldProfile } from "../src/schema.js";
 import type { SignalRuntime } from "../src/generate.js";
 
@@ -99,6 +99,36 @@ describe("repository generation", () => {
       "npm run build",
       "git init --initial-branch=main",
     ]);
+  });
+
+  test("uses concise logged output for default commands", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-default-output-"));
+    const target = join(root, "logged");
+    const logRoot = join(root, "logs");
+    const previousLogRoot = process.env.AGENT_KIT_LOG_DIR;
+    process.env.AGENT_KIT_LOG_DIR = logRoot;
+    const output = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const { generateRepository } = await loadGenerator();
+    let lines: unknown[][] = [];
+
+    try {
+      await generateRepository(profile({ initialize_git: true }), target);
+      lines = output.mock.calls;
+    } finally {
+      output.mockRestore();
+      if (previousLogRoot === undefined) delete process.env.AGENT_KIT_LOG_DIR;
+      else process.env.AGENT_KIT_LOG_DIR = previousLogRoot;
+    }
+
+    expect(lines[0]?.[0]).toBe("PASS git init --initial-branch=main");
+    expect(lines[1]?.[0]).toMatch(/^Full command logs: /);
+    const sessions = await readdir(join(logRoot, "scaffolds", "typescript"));
+    expect(sessions).toHaveLength(1);
+    expect(await readFile(
+      join(logRoot, "scaffolds", "typescript", sessions[0]!, "commands.log"),
+      "utf8",
+    ))
+      .toContain("$ git init --initial-branch=main");
   });
 
   test("formats generated files with the selected quality provider before gates", async () => {
@@ -256,5 +286,26 @@ describe("repository generation", () => {
       async () => "11.12.1\n",
     ))
       .rejects.toThrow(/Expected npm 11\.17\.0.*found 11\.12\.1/);
+  });
+
+  test("routes package-manager version probes through logged output", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-version-output-"));
+    const previousLogRoot = process.env.AGENT_KIT_LOG_DIR;
+    process.env.AGENT_KIT_LOG_DIR = root;
+    const output = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const { assertPackageManagerVersion } = await import("../src/generate.js");
+    let lines: unknown[][] = [];
+
+    try {
+      await assertPackageManagerVersion(process.execPath, process.versions.node, root);
+      lines = output.mock.calls;
+    } finally {
+      output.mockRestore();
+      if (previousLogRoot === undefined) delete process.env.AGENT_KIT_LOG_DIR;
+      else process.env.AGENT_KIT_LOG_DIR = previousLogRoot;
+    }
+
+    expect(lines[0]?.[0]).toBe(`PASS ${process.execPath} --version`);
+    expect(lines[1]?.[0]).toMatch(/^Full command logs: /);
   });
 });
