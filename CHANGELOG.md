@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.2.5](https://github.com/oburleigh/agent-kit/compare/agent-kit-v0.2.4...agent-kit-v0.2.5) (2026-08-30)
+
+
+### Features
+
+* **scaffolds:** add read-only plan output ([95f3633](https://github.com/oburleigh/agent-kit/commit/95f36339a96e5df352d8c72a3564bd0f25ebc8cc))
+* **scaffolds:** add read-only plan output ([08d330b](https://github.com/oburleigh/agent-kit/commit/08d330b51c410745901a93302f063dca1f1ef7cb))
+* **scaffolds:** keep command output concise ([1759305](https://github.com/oburleigh/agent-kit/commit/175930520205a797985a1458b0bda27045d1b6d3))
+* **scaffolds:** keep command output concise ([d13a82a](https://github.com/oburleigh/agent-kit/commit/d13a82a3c428ea92e4230177fe5e88801b47d790))
+
+
+### Bug Fixes
+
+* **scaffolds:** align plans with generation ([7745ee4](https://github.com/oburleigh/agent-kit/commit/7745ee46ab5f8a92dc30cd3a523a482ec57ea27a))
+
 ## [0.2.4](https://github.com/oburleigh/agent-kit/compare/agent-kit-v0.2.3...agent-kit-v0.2.4) (2026-08-28)
 
 
