@@ -54,6 +54,9 @@ Unstage issues with `git restore --staged <path>` before committing.
 
 Conventional Commits v1.0.0 format:
 
+Read [the house-style examples](references/examples.md) when the repository's own
+conventions do not settle the message shape.
+
 ```
 <type>[(scope)][!]: <imperative summary>
 

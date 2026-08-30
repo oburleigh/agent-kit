@@ -133,9 +133,20 @@ class PluginDistributionTest(unittest.TestCase):
         for required_check in (
             "Plugin distribution",
             "Python scaffold",
+            "Skill quality",
             "TypeScript scaffold",
         ):
             self.assertEqual(workflow.count(f"check: {required_check}\n"), 1)
+
+        self.assertIn("skill-quality:", workflow)
+        self.assertIn(
+            "uvx --from skills-ref==0.1.1 agentskills validate \"$skill\"",
+            workflow,
+        )
+        self.assertIn(
+            "uv run --with skills-ref==0.1.1 python scripts/validate_skills.py",
+            workflow,
+        )
 
         for obsolete in (
             "plugin-distribution.yml",

@@ -323,4 +323,4 @@ The skill calls the bundled generator internally:
 node dist/generate.mjs --profile service --target /path/to/example-service
 ```
 
-Run `npm test`, `npm run typecheck`, and `npm run check:dist` after changing the generator. The built file, bundled defaults, and JSON Schema are committed so users do not install dependencies inside the skill.
+Run `npm test`, `npm run typecheck`, and `npm run check:dist` after changing the generator. [`scripts/build.mjs`](scripts/build.mjs) builds the committed generator and uses [`scripts/schema-entry.ts`](scripts/schema-entry.ts) to export the JSON Schema. The built file, bundled defaults, and schema are committed so users do not install dependencies inside the skill.
