@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/oburleigh/agent-kit/compare/humanize-v0.1.2...humanize-v0.1.3) (2026-08-30)
+
+
+### Features
+
+* **ci:** enforce published skill quality ([ba1e2ba](https://github.com/oburleigh/agent-kit/commit/ba1e2bac89b1e5591cec4ed3911d9214d31370e5))
+
 ## [0.1.2](https://github.com/oburleigh/agent-kit/compare/humanize-v0.1.1...humanize-v0.1.2) (2026-08-28)
 
 

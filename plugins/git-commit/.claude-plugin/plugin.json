@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "git-commit",
   "displayName": "Git Commit",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Create safe, reviewable Git commits that follow repository rules and Conventional Commits.",
   "author": {
     "name": "Oliver Burleigh"

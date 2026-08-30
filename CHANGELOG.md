@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.6](https://github.com/oburleigh/agent-kit/compare/agent-kit-v0.2.5...agent-kit-v0.2.6) (2026-08-30)
+
+
+### Features
+
+* **ci:** enforce published skill quality ([ba1e2ba](https://github.com/oburleigh/agent-kit/commit/ba1e2bac89b1e5591cec4ed3911d9214d31370e5))
+* **create-skill:** require evaluation contracts ([16aaf35](https://github.com/oburleigh/agent-kit/commit/16aaf35b2f7d6f59e90f79aeef122f3ef8dc1fbb))
+
+
+### Bug Fixes
+
+* **create-skill:** avoid pinning validator releases ([48226aa](https://github.com/oburleigh/agent-kit/commit/48226aab5c779db34db3ba94338748a15e85e1dc))
+
 ## [0.2.5](https://github.com/oburleigh/agent-kit/compare/agent-kit-v0.2.4...agent-kit-v0.2.5) (2026-08-30)
 
 
