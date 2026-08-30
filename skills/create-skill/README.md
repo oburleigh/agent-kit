@@ -9,9 +9,9 @@ Asked to create a skill from a one-line request, an agent fills every gap with p
 ## What happens on invocation
 
 1. The request is restated and checked against every existing skill for overlap.
-2. An interview runs, one decision at a time: the job and its triggers, where the expertise comes from, workflow, gotchas, inputs and outputs, every number, scripts, boundaries and placement. Vague answers get pushed back on. "Just build it" ends the questioning and logs remaining gaps as assumptions.
-3. A spec summary (name, description, triggers, workflow, gotchas, file plan, assumptions) is presented for approval. Nothing is written before that approval.
-4. The skill is built to the agentskills.io format, validated against a checklist, and offered for trigger and output testing.
+2. An interview runs, one decision at a time: the job and its triggers, expertise, workflow, gotchas, inputs and outputs, numbers, script contracts, evaluation, boundaries and placement. Vague answers get pushed back on. "Just build it" ends the questioning and logs remaining gaps as assumptions.
+3. A spec summary records the proposed skill, script interface, evaluation contract, file plan and assumptions for approval. Nothing is written before that approval.
+4. The skill is built to the agentskills.io format. Distributable skills include evaluation definitions before validation. Running those evaluations remains a separate, optional step because it launches additional model work.
 
 ## Files
 
@@ -20,4 +20,4 @@ Asked to create a skill from a one-line request, an agent fills every gap with p
 | `SKILL.md` | The workflow, interview protocol and validation checklist |
 | `references/spec.md` | The agentskills.io format specification, distilled |
 | `references/best-practices.md` | Authoring guidance: scoping, context economy, descriptions, scripts |
-| `references/evaluation.md` | Trigger and output evaluation methods, loaded only when testing |
+| `references/evaluation.md` | Evaluation definitions for distributable builds and methods for optional model-backed runs |
