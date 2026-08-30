@@ -33,6 +33,8 @@ A profile is optional. State project-specific choices in the request and the ski
 Use typescript-scaffold to create a Bun and Turbo monorepo at ./platform with Biome, Vitest, Lefthook, Commitlint, jscpd, Gitleaks, an application under apps/app, and a library under packages/core.
 ```
 
+Add `--plan` to the generator command to print the resolved project, providers, workspace members, execution settings, and quality gates as JSON. Planning does not create a profile or repository.
+
 ## Presets
 
 - `library`: pnpm 11.24.0, tsup, Biome, Vitest, Lefthook, Commitlint, Gitleaks, jscpd, GitHub Actions, and npm publishing

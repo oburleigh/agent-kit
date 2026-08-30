@@ -25,6 +25,8 @@ The first use of a preset creates a persistent profile. Later requests can reuse
 Use my service profile to create ./billing-api, but use Flask, Mypy, unittest, Lefthook, and GitLab CI for this repository.
 ```
 
+Add `--plan` to the scaffold command to print the resolved project, providers, workspace members, execution settings, and quality gates as JSON. Planning does not create a profile or repository.
+
 ## Presets
 
 - `library`: uv-build, Ruff, pytest, ty, pre-commit, Commitizen, pip-audit, duplicate-only Pylint, Gitleaks, GitHub Actions, and PyPI publishing

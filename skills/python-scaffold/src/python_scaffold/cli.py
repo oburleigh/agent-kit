@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Annotated
 
@@ -5,6 +6,7 @@ import typer
 
 from python_scaffold.generate import generate_repository
 from python_scaffold.profiles import resolve_profile
+from python_scaffold.summary import create_plan_summary
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 
@@ -20,6 +22,7 @@ def create(
     install: Annotated[bool, typer.Option("--install/--no-install")] = True,
     check: Annotated[bool, typer.Option("--check/--no-check")] = True,
     git: Annotated[bool, typer.Option("--git/--no-git")] = True,
+    plan: Annotated[bool, typer.Option("--plan")] = False,
 ) -> None:
     project_overrides = {
         key: value
@@ -41,6 +44,10 @@ def create(
                 "initialize_git": git,
             },
         },
+        persist_missing=not plan,
     )
+    if plan:
+        typer.echo(json.dumps(create_plan_summary(resolved, target), sort_keys=True))
+        return
     created = generate_repository(resolved, target)
     typer.echo(f"Created {created}")
