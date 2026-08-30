@@ -20,14 +20,15 @@ Require Node.js 24, Git when enabled, the selected package manager, and any exte
    - `<preset>:<profile-name>` creates or loads a named persistent profile.
 3. Read the provider fields, compatibility rules, and profile format in [README.md](README.md#provider-fields) when choosing providers or editing a profile.
 4. For per-run changes, copy the persistent profile to a temporary YAML file and change only the requested fields. Fill its `project` section. Never write per-run values back unless the user asks to save them.
-5. State the resolved stack, disabled providers, and initial workspace members before generation. A user should not need to know that a profile exists to understand what will be created. Do not narrate discarded options or scaffold history.
-6. Run:
+5. Run the read-only plan with the resolved profile or temporary profile:
 
    ```sh
-   node <skill-directory>/dist/generate.mjs --profile <profile-or-selector> --target <target>
+   node <skill-directory>/dist/generate.mjs --plan --profile <profile-or-selector> --target <target>
    ```
 
-7. Report the created path, selected providers, and checks that passed.
+6. Use the plan JSON as the authoritative pre-generation summary. State the target, resolved stack, disabled providers, initial workspace members, and planned quality gates. A user should not need to know that a profile exists to understand what will be created. Do not reconstruct the plan from generator source or narrate discarded options and scaffold history.
+7. Run the same command without `--plan`.
+8. After a successful exit, report the created path, selected providers, and checks that passed. Treat the successful deterministic run as the verification evidence. Do not read generator internals, full logs, or every generated file.
 
 ## Boundaries
 
@@ -45,4 +46,4 @@ Require Node.js 24, Git when enabled, the selected package manager, and any exte
 - Preserve official framework-generator structure and commands. Apply agent-kit files as an overlay.
 - Do not create a remote, push, or make an initial commit unless the user requests it.
 
-If generation fails, report the failing command and error. The generator cleans targets it created and preserves user-owned paths.
+If generation fails, use the reported command, bounded failure output, and focused command logs to diagnose it. Inspect only the profile and implementation files implicated by that evidence. Broaden inspection only when the evidence requires it or the user asks for a scaffold review. The generator cleans targets it created and preserves user-owned paths.
