@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "env-paths": "^4.0.0",
-    "execa": "^10.0.1",
     "json-stringify-pretty-compact": "^4.0.0",
     "node-plop": "^0.32.3",
     "semver": "^7.8.5",

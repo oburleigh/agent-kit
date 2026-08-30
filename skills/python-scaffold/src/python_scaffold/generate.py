@@ -1,8 +1,8 @@
-import subprocess
 from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
+from python_scaffold.command_output import CommandSession
 from python_scaffold.models import Profile
 from python_scaffold.providers import build_plan
 from python_scaffold.render import render_repository
@@ -24,7 +24,12 @@ def generate_repository(
     )
     profile = Profile.model_validate(raw)
     plan = build_plan(profile)
-    runner = run_command or _run
+    if run_command is not None:
+        command_session = None
+        runner = run_command
+    else:
+        command_session = CommandSession()
+        runner = command_session.run
 
     def build(staging: Path) -> None:
         render_repository(profile, plan, staging)
@@ -54,8 +59,12 @@ def generate_repository(
             if profile.providers.hooks == "lefthook":
                 runner(("lefthook", "install"), staging)
 
-    return create_only(target, build)
-
-
-def _run(command: tuple[str, ...], cwd: Path) -> None:
-    subprocess.run(command, cwd=cwd, check=True)
+    try:
+        created = create_only(target, build)
+    except Exception:
+        if command_session is not None:
+            command_session.report()
+        raise
+    if command_session is not None:
+        command_session.report()
+    return created
