@@ -1,4 +1,5 @@
 import { providerCatalog } from "../providers/catalog.js";
+import { basename } from "node:path";
 import validatePackageName from "validate-npm-package-name";
 import { scaffoldDefaults } from "./defaults.js";
 import type { ScaffoldProfile } from "./schema.js";
@@ -16,6 +17,21 @@ const packageManagerCommands = {
   yarn: { command: "yarn", run: "yarn" },
   bun: { command: "bun", run: "bun run" },
 } as const;
+
+export function resolveProjectInput(
+  profile: ScaffoldProfile,
+  target: string,
+): ProjectInput {
+  const name = profile.project.name || basename(target);
+  return {
+    name,
+    description: profile.project.description || `${name} TypeScript ${profile.preset}.`,
+    author: profile.project.author || profile.default_author,
+    ...(profile.project.repository_url
+      ? { repositoryUrl: profile.project.repository_url }
+      : {}),
+  };
+}
 
 export function createGenerationPlan(
   profile: ScaffoldProfile,

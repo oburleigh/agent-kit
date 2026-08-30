@@ -25,6 +25,10 @@ export async function runOfficialFrameworkGenerator(
   }
 }
 
+export function frameworkGateNames(profile: ScaffoldProfile): string[] {
+  return profile.framework === "vite-react" ? ["lint", "build"] : [];
+}
+
 function viteGeneratorCommand(
   packageManager: ScaffoldProfile["package_manager"],
   version: string,

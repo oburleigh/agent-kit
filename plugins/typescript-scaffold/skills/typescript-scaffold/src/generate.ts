@@ -7,7 +7,7 @@ import {
   type CommandSession,
 } from "./command-output.js";
 import { mergeFrameworkOutput, runOfficialFrameworkGenerator } from "./framework-generators.js";
-import { createGenerationPlan } from "./planning.js";
+import { createGenerationPlan, resolveProjectInput } from "./planning.js";
 import { renderPlan } from "./render.js";
 import type { ScaffoldProfile } from "./schema.js";
 import { assertTargetAvailable } from "./target.js";
@@ -47,13 +47,7 @@ export async function generateRepository(
     commandSession = createCommandSession();
     runCommand = commandSession.run;
   }
-  const projectName = profile.project.name || basename(absoluteTarget);
-  const project = {
-    name: projectName,
-    description: profile.project.description || `${projectName} TypeScript ${profile.preset}.`,
-    author: profile.project.author || profile.default_author,
-    ...(profile.project.repository_url ? { repositoryUrl: profile.project.repository_url } : {}),
-  };
+  const project = resolveProjectInput(profile, absoluteTarget);
   const plan = createGenerationPlan(profile, project);
 
   await mkdir(workTarget, { recursive: false });
