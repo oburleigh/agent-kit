@@ -83,7 +83,7 @@ Assumptions: <every decision made without an explicit answer>
 - [ ] Every referenced file exists; paths relative to the skill root; no `@` links
 - [ ] Every number, tool choice and threshold traceable to an answer or the Assumptions list
 - [ ] Every distributable skill has `evals/evals.json`; its `skill_name` matches the directory and each case has a unique ID, prompt, expected output and non-empty assertions
-- [ ] `uvx --from skills-ref==0.1.1 agentskills validate <dir>` if `uvx` is available; otherwise the checks above by hand
+- [ ] `uvx --from skills-ref agentskills validate <dir>` if `uvx` is available; otherwise the checks above by hand
 - [ ] Fresh-eyes read: could an agent with zero context execute this?
 
 ## Red flags

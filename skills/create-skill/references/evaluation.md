@@ -10,7 +10,7 @@ Every distributable skill includes its definitions even when execution is deferr
 
 ## Quick verification (minimum bar for every new skill)
 
-1. **Structure**: frontmatter passes the constraints in references/spec.md (`uvx --from skills-ref==0.1.1 agentskills validate ./skill-name` if `uvx` is available).
+1. **Structure**: frontmatter passes the constraints in references/spec.md (`uvx --from skills-ref agentskills validate ./skill-name` if `uvx` is available).
 2. **Trigger sanity check**: try 3-5 realistic prompts manually, mixing should-trigger and should-not-trigger. Use a fresh session or isolated agent context for each prompt so conversation state does not leak between cases.
 3. **Output sanity check**: run one real task with the skill in a clean context and read the execution trace, not just the output. Vague instructions show up as the agent trying several approaches; inapplicable instructions show up as the agent following them anyway.
 
