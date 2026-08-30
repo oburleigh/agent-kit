@@ -59,6 +59,28 @@
         "Does not name destination directories before the placement strategy is selected",
         "Does not write skill files before spec approval"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "The Create Skill interview is complete and I approved the spec. Build a distributable skill named normalize-records for Codex and Claude around a bundled deterministic normalizer. Keep the package small. I do not want to spend additional model usage on behavioural evaluation runs today. Do not perform filesystem checks or write files. Report the required package files and how evaluation is handled.",
+      "expected_output": "Includes evaluation definitions in the distributable skill while deferring their model-backed execution.",
+      "assertions": [
+        "Includes evals/evals.json in the distributable skill",
+        "Requires realistic prompts, expected outputs, and verifiable assertions in the evaluation definitions",
+        "Defers model-backed evaluation execution without treating that deferral as permission to omit evaluation definitions"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "I want Create Skill to package a repository-bootstrap workflow around an existing deterministic generator. It creates many files and settings. Agents must show me the resolved plan before mutation and trust a successful run without reading the generator source. The interview is otherwise complete. Do not inspect files or write the skill. State the script contract fields that must be resolved before you can present the spec for approval.",
+      "expected_output": "Requires separate read-only plan and execution interfaces, bounded structured outputs, exit meanings, success evidence, and a focused condition for source inspection.",
+      "assertions": [
+        "Requires a stable execution command and its inputs",
+        "Requires a read-only plan command or mode that shares resolution logic with execution",
+        "Distinguishes the structured plan schema from the structured execution result",
+        "Requires bounded diagnostics, exit-code meanings, and authoritative success evidence",
+        "Limits implementation inspection to changes or focused failure evidence"
+      ]
     }
   ]
 }

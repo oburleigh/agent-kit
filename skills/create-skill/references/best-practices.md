@@ -71,6 +71,8 @@ One-off commands: reference existing packages directly (`uvx ruff@0.8.0 check .`
 
 Bundled scripts should declare dependencies inline so one command runs them: PEP 723 blocks run via `uv run scripts/x.py`; Deno `npm:` specifiers; Bun auto-install; Ruby `bundler/inline`.
 
+Treat a bundled script as a stable command interface. The agent should be able to invoke it from SKILL.md and `--help` without reading its source. Document its inputs, structured stdout, bounded stderr diagnostics, exit-code meanings and the result that proves success. For batch, create or destructive work, expose a read-only plan from the same resolution logic and give the plan and execution result distinct schemas. Inspect implementation only when changing the script or when focused failure evidence implicates it; successful execution is not a reason to load source into context.
+
 Design for agentic use:
 
 - **Never prompt interactively.** Agents run non-interactive shells; a TTY prompt hangs forever. All input via flags, env vars or stdin. Missing input fails with usage guidance.

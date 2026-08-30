@@ -76,7 +76,7 @@ For Codex collision checks, include `~/.agents/skills/`, any configured legacy p
 ## Validation
 
 ```bash
-skills-ref validate ./my-skill
+uvx --from skills-ref==0.1.1 agentskills validate ./my-skill
 ```
 
-From https://github.com/agentskills/agentskills/tree/main/skills-ref. If not installed, check the frontmatter constraints above by hand: name regex, description length, name matches directory.
+From https://github.com/agentskills/agentskills/tree/main/skills-ref. If `uvx` is unavailable, check the frontmatter constraints above by hand: name regex, description length, name matches directory.

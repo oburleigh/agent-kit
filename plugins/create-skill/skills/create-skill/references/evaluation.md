@@ -2,9 +2,15 @@
 
 Distilled from https://agentskills.io/skill-creation/optimizing-descriptions.md and evaluating-skills.md. Load this when testing whether a new skill triggers and performs; not needed while drafting.
 
+## Definitions and execution
+
+Evaluation definitions are ordinary project files. Creating or validating `evals/evals.json` does not launch evaluator agents or add their model usage beyond the current authoring session. Running trigger or output evaluations does, so treat execution as a separate step that requires the user's agreement.
+
+Every distributable skill includes its definitions even when execution is deferred. Record the deferral in the build report instead of deleting the cases.
+
 ## Quick verification (minimum bar for every new skill)
 
-1. **Structure**: frontmatter passes the constraints in references/spec.md (`skills-ref validate ./skill-name` if available).
+1. **Structure**: frontmatter passes the constraints in references/spec.md (`uvx --from skills-ref==0.1.1 agentskills validate ./skill-name` if `uvx` is available).
 2. **Trigger sanity check**: try 3-5 realistic prompts manually, mixing should-trigger and should-not-trigger. Use a fresh session or isolated agent context for each prompt so conversation state does not leak between cases.
 3. **Output sanity check**: run one real task with the skill in a clean context and read the execution trace, not just the output. Vague instructions show up as the agent trying several approaches; inapplicable instructions show up as the agent following them anyway.
 
@@ -45,7 +51,9 @@ Test cases live in `evals/evals.json` inside the skill directory:
 
 - Start with 2-3 cases; vary phrasing and cover at least one edge case.
 - Run each case **with and without the skill** in clean contexts; the delta is the skill's value. When improving an existing skill, baseline against a snapshot of the previous version.
-- Write assertions after seeing the first outputs. Good assertions are verifiable ("valid JSON", "at least 3 recommendations"); bad ones are vague ("output is good") or brittle (exact phrasing). Style and feel belong to human review, not assertions.
+- Start with provisional assertions derived from the approved contract. After seeing the first with-skill and without-skill outputs, calibrate them: good assertions are verifiable ("valid JSON", "at least 3 recommendations"); bad ones are vague ("output is good") or brittle (exact phrasing). Style and feel belong to human review, not assertions.
 - Grade PASS/FAIL with concrete evidence quoted from the output. A section titled "Summary" containing one vague sentence is a FAIL for "includes a summary".
 - Analyse patterns: drop assertions that always pass in both configurations (the model does not need the skill for them), fix ones that always fail in both, study the with-skill-only passes to learn what is working, tighten instructions where results are inconsistent across runs.
 - Iterate: feed failed assertions, human feedback and execution traces back into the SKILL.md. Generalise fixes rather than patching for one test case; keep the skill lean; explain why rather than stacking ALWAYS/NEVER rules; bundle logic the agent keeps reinventing into scripts. Stop when feedback comes back empty or improvement stalls.
+
+When evaluations run, record the model and harness, pass count, consumed tokens and elapsed time for both configurations. Accuracy shows whether the skill improves the result; tokens and elapsed time show whether it improves efficiency.
