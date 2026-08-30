@@ -1,6 +1,6 @@
 {
   "name": "typescript-scaffold",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Create configurable TypeScript repositories with tested tooling, documentation, CI, and Git.",
   "author": {
     "name": "Oliver Burleigh"

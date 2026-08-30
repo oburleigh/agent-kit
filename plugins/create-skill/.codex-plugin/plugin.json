@@ -1,6 +1,6 @@
 {
   "name": "create-skill",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Create and validate reusable Agent Skills through an evidence-led specification workflow.",
   "author": {
     "name": "Oliver Burleigh"

@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/oburleigh/agent-kit/compare/create-skill-v0.1.2...create-skill-v0.1.3) (2026-08-30)
+
+
+### Features
+
+* **create-skill:** require evaluation contracts ([16aaf35](https://github.com/oburleigh/agent-kit/commit/16aaf35b2f7d6f59e90f79aeef122f3ef8dc1fbb))
+
+
+### Bug Fixes
+
+* **create-skill:** avoid pinning validator releases ([48226aa](https://github.com/oburleigh/agent-kit/commit/48226aab5c779db34db3ba94338748a15e85e1dc))
+
 ## [0.1.2](https://github.com/oburleigh/agent-kit/compare/create-skill-v0.1.1...create-skill-v0.1.2) (2026-08-28)
 
 
