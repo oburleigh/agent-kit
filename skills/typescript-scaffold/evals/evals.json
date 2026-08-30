@@ -1,0 +1,28 @@
+{
+  "skill_name": "typescript-scaffold",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a new TypeScript service repository at /tmp/typescript-scaffold-catalog-api with project name catalog-api, description 'Product catalogue service', author 'Example Maintainer', and the bundled service profile. The target does not exist and all required tools are available.",
+      "expected_output": "Runs the deterministic read-only plan, reports the resolved repository and checks, runs the same generator command without --plan, and uses its bounded success result as evidence without auditing generated files.",
+      "assertions": [
+        "Runs the bundled generator with --plan before generation",
+        "Uses the plan JSON as the authoritative summary",
+        "Runs the same resolved command without --plan only after the plan",
+        "Reports the created path, selected providers, and passing checks",
+        "Does not inspect generator internals or every generated file after success"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create a TypeScript library repository at /tmp/typescript-scaffold-existing-shared-types using the library profile. The target directory already exists and contains package.json that I need to keep. Do not run commands or inspect the filesystem; report only how the skill handles this boundary.",
+      "expected_output": "Refuses to generate into the existing target and preserves its contents because the scaffold is create-only.",
+      "assertions": [
+        "Does not run the generation command against the existing target",
+        "Does not delete, replace, or modify the existing directory",
+        "Explains that TypeScript Scaffold is create-only",
+        "Asks for a new target when the user still wants generation"
+      ]
+    }
+  ]
+}

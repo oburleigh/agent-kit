@@ -133,3 +133,9 @@ Use `additions` for packages and commands that do not need generated integration
 Generation is create-only and atomic. Existing targets are rejected before work starts. Rendering, dependency installation, checks, and Git setup happen in a staging directory; a failed run removes only that staging directory.
 
 Each successful external command prints one `PASS` line. The generator reports the full command-log directory at the end of the run. A failed command includes a short tail from both output streams and keeps the complete logs in the reported directory. Set `AGENT_KIT_LOG_DIR` to choose a different log root.
+
+## Contributor entry point
+
+Run `uv run pytest`, `uv run ruff check .`, `uv run ruff format --check .`, and
+`uv run ty check` after changing the generator. Regenerate the committed JSON
+Schema with [`scripts/export_schema.py`](scripts/export_schema.py).

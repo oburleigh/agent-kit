@@ -114,7 +114,7 @@ Run the distribution checks before publishing changes:
 ```sh
 python3 scripts/validate_releases.py
 python3 scripts/check_github_actions.py
-python3 -m unittest discover -s tests -v
+uv run --with skills-ref==0.1.1 python -m unittest discover -s tests -v
 claude plugin validate .
 ```
 
@@ -126,7 +126,7 @@ Release Please derives versions from Conventional Commits. Before `1.0.0`, fixes
 
 Merges to `main` create or update one reviewable release pull request. They do not create tags or GitHub Releases. Merging the release pull request creates a tag and GitHub Release for each component included in that pull request, using names such as `typescript-scaffold-v0.2.0`.
 
-Repository settings allow GitHub Actions to create the release pull request while keeping the default token read-only. The `main` ruleset requires one approval and the `Plugin distribution`, `Python scaffold`, and `TypeScript scaffold` checks. The distribution check includes runtime manifest validation and clean aggregate and subset installation tests.
+Repository settings allow GitHub Actions to create the release pull request while keeping the default token read-only. The `main` ruleset requires one approval and the `Plugin distribution`, `Python scaffold`, `Skill quality`, and `TypeScript scaffold` checks. The distribution check includes runtime manifest validation and clean aggregate and subset installation tests.
 
 ## Contributing
 

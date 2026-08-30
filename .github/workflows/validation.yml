@@ -46,6 +46,24 @@ jobs:
               - 'skills/typescript-scaffold/**'
               - 'plugins/typescript-scaffold/skills/typescript-scaffold/**'
 
+  skill-quality:
+    name: Skill quality validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.1"
+          enable-cache: true
+      - name: Validate Agent Skills format
+        run: |
+          for skill_file in skills/*/SKILL.md; do
+            skill="${skill_file%/SKILL.md}"
+            uvx --from skills-ref==0.1.1 agentskills validate "$skill"
+          done
+      - name: Check repository skill contracts
+        run: uv run --with skills-ref==0.1.1 python scripts/validate_skills.py
+
   distribution-validation:
     name: Plugin distribution validation
     needs: scope
@@ -56,6 +74,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.12.1"
+          enable-cache: true
       - name: Install plugin clients
         run: npm install --global @openai/codex@0.150.1 @anthropic-ai/claude-code@2.1.247
       - name: Check release configuration
@@ -63,7 +85,7 @@ jobs:
       - name: Check workflow action pins
         run: python3 scripts/check_github_actions.py
       - name: Check distribution contracts
-        run: python3 -m unittest discover -s tests -v
+        run: uv run --with skills-ref==0.1.1 python -m unittest discover -s tests -v
       - name: Validate Claude marketplace
         run: claude plugin validate . --strict
       - name: Validate complete Claude plugin
@@ -197,6 +219,7 @@ jobs:
     if: always()
     needs:
       - scope
+      - skill-quality
       - distribution-validation
       - python-validation
       - python-portability
@@ -213,6 +236,9 @@ jobs:
             results: >-
               ${{ needs.python-validation.result }}
               ${{ needs.python-portability.result }}
+          - check: Skill quality
+            relevance: true
+            results: ${{ needs.skill-quality.result }}
           - check: TypeScript scaffold
             relevance: ${{ needs.scope.outputs.typescript }}
             results: ${{ needs.typescript-validation.result }}

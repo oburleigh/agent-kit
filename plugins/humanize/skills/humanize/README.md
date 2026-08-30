@@ -21,7 +21,7 @@ The skill can maintain user-specific rules and corrections outside the installed
 
 ## Installation
 
-Install the complete Agent Kit plugin or the standalone `humanize` plugin. See the [Agent Kit installation guide](../../../../README.md) for Codex and Claude Code commands.
+Install the complete Agent Kit plugin or the standalone `humanize` plugin. See the [Agent Kit installation guide](https://github.com/oburleigh/agent-kit#installation) for Codex and Claude Code commands.
 
 The skill expects this structure:
 
