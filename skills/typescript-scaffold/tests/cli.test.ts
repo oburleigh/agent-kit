@@ -1,4 +1,4 @@
-import { access, mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { stringify } from "yaml";
@@ -123,5 +123,23 @@ describe("generator CLI", () => {
       ["--profile", "library:bad name", "--target", join(root, "target"), "--plan"],
       { AGENT_KIT_CONFIG_DIR: join(root, "config") },
     )).rejects.toThrow(/Profile names may contain/);
+  });
+
+  test("plans from an existing legacy profile name accepted by generation", async () => {
+    const root = await mkdtemp(join(tmpdir(), "agent-kit-plan-legacy-name-"));
+    const config = join(root, "config");
+    const profileDirectory = join(config, "scaffolds", "typescript");
+    const profilePath = join(profileDirectory, "legacy name.yaml");
+    const profile = await loadBundledPreset("library");
+    await mkdir(profileDirectory, { recursive: true });
+    await writeFile(profilePath, stringify({ ...profile, name: "legacy name" }));
+    const { main } = await loadCli();
+
+    const result = await main(
+      ["--profile", "library:legacy name", "--target", join(root, "target"), "--plan"],
+      { AGENT_KIT_CONFIG_DIR: config },
+    );
+
+    expect(JSON.parse(result)).toMatchObject({ preset: "library" });
   });
 });

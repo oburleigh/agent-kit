@@ -14,10 +14,29 @@ import {
 import type { ScaffoldProfile } from "./schema.js";
 import { createPlanSummary } from "./summary.js";
 
+type CliResult =
+  | { mode: "generate"; target: string }
+  | { mode: "plan"; summary: ReturnType<typeof createPlanSummary> };
+
+type ProfileSelection =
+  | { path: string }
+  | {
+    path: string;
+    missing: { preset: PresetName; profileName: string; directory: string };
+  };
+
 export async function main(
   args: string[],
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<string> {
+  const result = await executeCli(args, environment);
+  return result.mode === "plan" ? JSON.stringify(result.summary) : result.target;
+}
+
+async function executeCli(
+  args: string[],
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<CliResult> {
   const { values } = parseArgs({
     args,
     allowPositionals: false,
@@ -34,47 +53,48 @@ export async function main(
 
   if (values.plan) {
     const profile = await loadProfileForPlan(values.profile, environment);
-    return JSON.stringify(createPlanSummary(profile, values.target));
+    return { mode: "plan", summary: createPlanSummary(profile, values.target) };
   }
 
   const profilePath = await resolveProfileArgument(values.profile, environment);
   const target = resolve(values.target);
   const profile = loadProfileText(await readFile(profilePath, "utf8"));
   await generateRepository(profile, target);
-  return target;
+  return { mode: "generate", target };
 }
 
 async function loadProfileForPlan(
   value: string,
   environment: NodeJS.ProcessEnv,
 ): Promise<ScaffoldProfile> {
-  if (looksLikePath(value)) {
-    return loadProfileText(await readFile(resolve(value), "utf8"));
+  const selection = await selectProfileArgument(value, environment);
+  if (!("missing" in selection)) {
+    return loadProfileText(await readFile(selection.path, "utf8"));
   }
-
-  const [presetCandidate, profileCandidate, ...extra] = value.split(":");
-  if (extra.length > 0 || !presetCandidate) {
-    throw new Error(`Invalid profile selector: ${value}`);
-  }
-  const profileName = profileCandidate || presetCandidate;
-  assertValidProfileName(profileName);
-  const profilePath = join(resolveProfileDirectory(environment), `${profileName}.yaml`);
-  try {
-    return loadProfileText(await readFile(profilePath, "utf8"));
-  } catch (error) {
-    if (!isMissingPath(error)) throw error;
-  }
-  if (!isPresetName(presetCandidate)) {
-    throw new Error(`Profile does not exist: ${profilePath}. Use <preset>:<profile-name> to create it.`);
-  }
-  return { ...await loadBundledPreset(presetCandidate), name: profileName };
+  return {
+    ...await loadBundledPreset(selection.missing.preset),
+    name: selection.missing.profileName,
+  };
 }
 
 export async function resolveProfileArgument(
   value: string,
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<string> {
-  if (looksLikePath(value)) return resolve(value);
+  const selection = await selectProfileArgument(value, environment);
+  if (!("missing" in selection)) return selection.path;
+  return createProfileFromPreset(
+    selection.missing.preset,
+    selection.missing.profileName,
+    selection.missing.directory,
+  );
+}
+
+async function selectProfileArgument(
+  value: string,
+  environment: NodeJS.ProcessEnv,
+): Promise<ProfileSelection> {
+  if (looksLikePath(value)) return { path: resolve(value) };
 
   const [presetCandidate, profileCandidate, ...extra] = value.split(":");
   if (extra.length > 0 || !presetCandidate) {
@@ -85,7 +105,7 @@ export async function resolveProfileArgument(
   const profilePath = join(directory, `${profileName}.yaml`);
   try {
     await access(profilePath);
-    return profilePath;
+    return { path: profilePath };
   } catch (error) {
     if (!isMissingPath(error)) throw error;
   }
@@ -93,7 +113,11 @@ export async function resolveProfileArgument(
   if (!isPresetName(presetCandidate)) {
     throw new Error(`Profile does not exist: ${profilePath}. Use <preset>:<profile-name> to create it.`);
   }
-  return createProfileFromPreset(presetCandidate, profileName, directory);
+  assertValidProfileName(profileName);
+  return {
+    path: profilePath,
+    missing: { preset: presetCandidate, profileName, directory },
+  };
 }
 
 function looksLikePath(value: string): boolean {
@@ -115,9 +139,11 @@ function isMissingPath(error: unknown): error is NodeJS.ErrnoException {
 const executablePath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : "";
 if (import.meta.url === executablePath) {
   const args = process.argv.slice(2);
-  main(args)
+  executeCli(args)
     .then((result) => {
-      console.log(args.includes("--plan") ? result : `Created ${result}`);
+      console.log(result.mode === "plan"
+        ? JSON.stringify(result.summary)
+        : `Created ${result.target}`);
     })
     .catch((error: unknown) => {
       console.error(error instanceof Error ? error.message : String(error));

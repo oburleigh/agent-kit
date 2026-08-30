@@ -73978,6 +73978,9 @@ async function runOfficialFrameworkGenerator(profile, target, runCommand) {
     await runCommand(command, args, { cwd: target });
   }
 }
+function frameworkGateNames(profile) {
+  return profile.framework === "vite-react" ? ["lint", "build"] : [];
+}
 function viteGeneratorCommand(packageManager, version2) {
   if (packageManager === "pnpm") {
     return ["pnpm", ["create", `vite@${version2}`, ".", "--template", "react-ts"]];
@@ -74507,6 +74510,10 @@ function createPlanSummary(profile, target) {
   const absoluteTarget = resolve6(target);
   const project = resolveProjectInput(profile, absoluteTarget);
   const plan = createGenerationPlan(profile, project);
+  const plannedScripts = { ...plan.packageJson.scripts };
+  for (const name of frameworkGateNames(profile)) {
+    plannedScripts[name] ??= "framework-owned";
+  }
   const selectedProviders = {
     module: profile.module,
     package_manager: `${profile.package_manager}@${profile.package_manager_version}`
@@ -74529,8 +74536,11 @@ function createPlanSummary(profile, target) {
     },
     selected_providers: selectedProviders,
     disabled_providers: disabledProviders,
-    workspace_members: profile.workspace_members ?? [],
-    quality_gates: plan.gates,
+    workspace_members: (profile.workspace_members ?? []).map((member) => ({
+      ...member,
+      package_name: member.package_name.replaceAll("{project}", project.name)
+    })),
+    quality_gates: gatesForScripts(profile, plannedScripts),
     execution: {
       install_dependencies: profile.install_dependencies,
       run_quality_gates: profile.run_quality_gates,
@@ -74541,6 +74551,10 @@ function createPlanSummary(profile, target) {
 
 // src/cli.ts
 async function main(args, environment = process.env) {
+  const result = await executeCli(args, environment);
+  return result.mode === "plan" ? JSON.stringify(result.summary) : result.target;
+}
+async function executeCli(args, environment = process.env) {
   const { values } = parseArgs({
     args,
     allowPositionals: false,
@@ -74556,37 +74570,35 @@ async function main(args, environment = process.env) {
   }
   if (values.plan) {
     const profile2 = await loadProfileForPlan(values.profile, environment);
-    return JSON.stringify(createPlanSummary(profile2, values.target));
+    return { mode: "plan", summary: createPlanSummary(profile2, values.target) };
   }
   const profilePath = await resolveProfileArgument(values.profile, environment);
   const target = resolve7(values.target);
   const profile = loadProfileText(await readFile4(profilePath, "utf8"));
   await generateRepository(profile, target);
-  return target;
+  return { mode: "generate", target };
 }
 async function loadProfileForPlan(value, environment) {
-  if (looksLikePath(value)) {
-    return loadProfileText(await readFile4(resolve7(value), "utf8"));
+  const selection = await selectProfileArgument(value, environment);
+  if (!("missing" in selection)) {
+    return loadProfileText(await readFile4(selection.path, "utf8"));
   }
-  const [presetCandidate, profileCandidate, ...extra] = value.split(":");
-  if (extra.length > 0 || !presetCandidate) {
-    throw new Error(`Invalid profile selector: ${value}`);
-  }
-  const profileName = profileCandidate || presetCandidate;
-  assertValidProfileName(profileName);
-  const profilePath = join4(resolveProfileDirectory(environment), `${profileName}.yaml`);
-  try {
-    return loadProfileText(await readFile4(profilePath, "utf8"));
-  } catch (error51) {
-    if (!isMissingPath3(error51)) throw error51;
-  }
-  if (!isPresetName(presetCandidate)) {
-    throw new Error(`Profile does not exist: ${profilePath}. Use <preset>:<profile-name> to create it.`);
-  }
-  return { ...await loadBundledPreset(presetCandidate), name: profileName };
+  return {
+    ...await loadBundledPreset(selection.missing.preset),
+    name: selection.missing.profileName
+  };
 }
 async function resolveProfileArgument(value, environment = process.env) {
-  if (looksLikePath(value)) return resolve7(value);
+  const selection = await selectProfileArgument(value, environment);
+  if (!("missing" in selection)) return selection.path;
+  return createProfileFromPreset(
+    selection.missing.preset,
+    selection.missing.profileName,
+    selection.missing.directory
+  );
+}
+async function selectProfileArgument(value, environment) {
+  if (looksLikePath(value)) return { path: resolve7(value) };
   const [presetCandidate, profileCandidate, ...extra] = value.split(":");
   if (extra.length > 0 || !presetCandidate) {
     throw new Error(`Invalid profile selector: ${value}`);
@@ -74596,14 +74608,18 @@ async function resolveProfileArgument(value, environment = process.env) {
   const profilePath = join4(directory, `${profileName}.yaml`);
   try {
     await access(profilePath);
-    return profilePath;
+    return { path: profilePath };
   } catch (error51) {
     if (!isMissingPath3(error51)) throw error51;
   }
   if (!isPresetName(presetCandidate)) {
     throw new Error(`Profile does not exist: ${profilePath}. Use <preset>:<profile-name> to create it.`);
   }
-  return createProfileFromPreset(presetCandidate, profileName, directory);
+  assertValidProfileName(profileName);
+  return {
+    path: profilePath,
+    missing: { preset: presetCandidate, profileName, directory }
+  };
 }
 function looksLikePath(value) {
   return value.includes("/") || value.includes("\\") || value.endsWith(".yaml") || value.endsWith(".yml") || value.startsWith(".");
@@ -74617,8 +74633,8 @@ function isMissingPath3(error51) {
 var executablePath = process.argv[1] ? pathToFileURL2(resolve7(process.argv[1])).href : "";
 if (import.meta.url === executablePath) {
   const args = process.argv.slice(2);
-  main(args).then((result) => {
-    console.log(args.includes("--plan") ? result : `Created ${result}`);
+  executeCli(args).then((result) => {
+    console.log(result.mode === "plan" ? JSON.stringify(result.summary) : `Created ${result.target}`);
   }).catch((error51) => {
     console.error(error51 instanceof Error ? error51.message : String(error51));
     process.exitCode = 1;

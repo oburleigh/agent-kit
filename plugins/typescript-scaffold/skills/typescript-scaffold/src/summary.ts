@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
-import { createGenerationPlan, resolveProjectInput } from "./planning.js";
+import { frameworkGateNames } from "./framework-generators.js";
+import { createGenerationPlan, gatesForScripts, resolveProjectInput } from "./planning.js";
 import type { ScaffoldProfile } from "./schema.js";
 
 const providerFields = [
@@ -24,6 +25,10 @@ export function createPlanSummary(profile: ScaffoldProfile, target: string) {
   const absoluteTarget = resolve(target);
   const project = resolveProjectInput(profile, absoluteTarget);
   const plan = createGenerationPlan(profile, project);
+  const plannedScripts = { ...plan.packageJson.scripts };
+  for (const name of frameworkGateNames(profile)) {
+    plannedScripts[name] ??= "framework-owned";
+  }
   const selectedProviders: Record<string, string> = {
     module: profile.module,
     package_manager: `${profile.package_manager}@${profile.package_manager_version}`,
@@ -47,8 +52,11 @@ export function createPlanSummary(profile: ScaffoldProfile, target: string) {
     },
     selected_providers: selectedProviders,
     disabled_providers: disabledProviders,
-    workspace_members: profile.workspace_members ?? [],
-    quality_gates: plan.gates,
+    workspace_members: (profile.workspace_members ?? []).map((member) => ({
+      ...member,
+      package_name: member.package_name.replaceAll("{project}", project.name),
+    })),
+    quality_gates: gatesForScripts(profile, plannedScripts),
     execution: {
       install_dependencies: profile.install_dependencies,
       run_quality_gates: profile.run_quality_gates,
